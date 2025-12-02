@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Categoría visible para que los grupos se muestren en la UI -->
+    <record id="category_gb_admin" model="ir.module.category">
+        <field name="name">Global Brigades</field>
+        <field name="description">Access groups for Global Brigades module</field>
+        <field name="sequence">10</field>
+    </record>
+
+    <!-- Grupos -->
+    <record id="group_gb_admin" model="res.groups">
+        <field name="name">GB / Admin</field>
+        <field name="category_id" ref="global_brigades.category_gb_admin"/>
+        <!-- Asignar automáticamente al superadmin -->
+        <field name="users" eval="[(4, ref('base.user_admin'))]"/>
+    </record>
+
+    <record id="group_gb_coordinator" model="res.groups">
+        <field name="name">GB / Coordinator</field>
+        <field name="category_id" ref="global_brigades.category_gb_admin"/>
+    </record>
+
+    <record id="group_gb_pa" model="res.groups">
+        <field name="name">GB / Program Associate (PA)</field>
+        <field name="category_id" ref="global_brigades.category_gb_admin"/>
+    </record>
+</odoo>

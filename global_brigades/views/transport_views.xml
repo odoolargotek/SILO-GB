@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+  <!-- Acción principal: Proveedores de Transporte -->
+  <record id="action_gb_transport_provider" model="ir.actions.act_window">
+    <field name="name">Transport Providers</field>
+    <field name="res_model">gb.transport.provider</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <!-- Acción secundaria: Vehículos -->
+  <record id="action_gb_transport_vehicle" model="ir.actions.act_window">
+    <field name="name">Vehicles</field>
+    <field name="res_model">gb.transport.vehicle</field>
+    <field name="view_mode">list,form</field>
+  </record>
+
+  <!-- Menús: colgamos TODO bajo el menú raíz de Brigades -->
+  <menuitem id="menu_gb_transport"
+            name="Transport"
+            parent="menu_gb_root"
+            sequence="50"
+            groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin"/>
+
+  <menuitem id="menu_gb_transport_providers"
+            name="Providers"
+            parent="menu_gb_transport"
+            action="action_gb_transport_provider"
+            sequence="10"
+            groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin"/>
+
+  <menuitem id="menu_gb_transport_vehicles"
+            name="Vehicles"
+            parent="menu_gb_transport"
+            action="action_gb_transport_vehicle"
+            sequence="20"
+            groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin"/>
+
+</odoo>

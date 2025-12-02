@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+
+  <!-- Botones estadísticos debajo del nombre -->
+  <record id="view_partner_form_inherit_gb_profile_stats" model="ir.ui.view">
+    <field name="name">res.partner.form.inherit.gb.profile.stats</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//form/sheet//div[hasclass('oe_title')]" position="after">
+        <div class="oe_button_box" name="button_box">
+          <button type="object"
+                  name="action_view_gb_hotel_offers"
+                  class="oe_stat_button"
+                  icon="fa-bed"
+                  groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin">
+            <div class="o_stat_info">
+              <span class="o_stat_value">
+                <field name="gb_hotel_offer_count" widget="statinfo"/>
+              </span>
+              <span class="o_stat_text">Hotel Offers</span>
+            </div>
+          </button>
+
+          <button type="object"
+                  name="action_view_gb_transport_vehicles"
+                  class="oe_stat_button"
+                  icon="fa-bus"
+                  groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin">
+            <div class="o_stat_info">
+              <span class="o_stat_value">
+                <field name="gb_transport_vehicle_count" widget="statinfo"/>
+              </span>
+              <span class="o_stat_text">Transport</span>
+            </div>
+          </button>
+        </div>
+      </xpath>
+    </field>
+  </record>
+
+  <!-- PERFIL GB -->
+  <record id="view_partner_form_inherit_gb_profile_tab" model="ir.ui.view">
+    <field name="name">res.partner.form.inherit.gbp.tab</field>
+    <field name="model">res.partner</field>
+    <field name="inherit_id" ref="base.view_partner_form"/>
+    <field name="arch" type="xml">
+      <xpath expr="//form/sheet/notebook" position="inside">
+
+        <!-- TAB: PERFIL GB -->
+        <page string="Perfil GB" name="gb_profile_page">
+          <group>
+            <group string="Información personal">
+              <field name="gb_gender"/>
+              <field name="gb_birthdate"/>
+              <field name="gb_spanish_speaker"/>
+              <field name="gb_tshirt_size"/>
+            </group>
+
+            <group string="Documento &amp; nacionalidad">
+              <field name="gb_passport_no"/>
+              <field name="gb_passport_expiry"/>
+              <field name="gb_citizenship"/>
+            </group>
+          </group>
+
+          <!-- 🔥 NUEVA SECCIÓN: SALUD / CONDICIONES -->
+          <group string="Salud / Condiciones">
+            <group>
+              <field name="gb_medical_condition" string="Medical Condition"/>
+              <field name="gb_diet" string="Diet"/>
+              <field name="gb_allergy" string="Allergies"/>
+            </group>
+          </group>
+          <!-- FIN NUEVA SECCIÓN -->
+
+          <group string="Contacto de emergencia">
+            <group>
+              <field name="gb_emergency_contact_id"/>
+            </group>
+            <group>
+              <field name="gb_medications"/>
+            </group>
+          </group>
+
+          <group string="Rol en brigadas">
+            <group>
+              <field name="gb_brigade_role"/>
+            </group>
+            <group>
+              <field name="gb_is_health_professional"/>
+              <field name="gb_professional_registration"/>
+            </group>
+          </group>
+
+          <group string="Idoneidad profesional">
+            <field name="gb_eligibility_ids">
+              <list editable="bottom">
+                <field name="name"/>
+                <field name="validity_date"/>
+                <field name="attachment" filename="attachment_filename"/>
+              </list>
+              <form string="Eligibility Record">
+                <sheet>
+                  <group>
+                    <field name="name"/>
+                    <field name="validity_date"/>
+                    <field name="attachment" filename="attachment_filename"/>
+                  </group>
+                </sheet>
+              </form>
+            </field>
+          </group>
+        </page>
+
+        <!-- TAB: Business Profile -->
+        <page string="Business Profile" name="gb_business_profile_page">
+          <group>
+            <group string="Enlace externo">
+              <field name="business_profile_link"/>
+            </group>
+          </group>
+          <group string="Written Business Profile">
+            <field name="business_profile_html"/>
+          </group>
+        </page>
+
+      </xpath>
+    </field>
+  </record>
+
+</odoo>

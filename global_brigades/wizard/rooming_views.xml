@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ========================================================= -->
+    <!-- FORM: gb.brigade.rooming                                   -->
+    <!-- ========================================================= -->
+    <record id="view_gb_brigade_rooming_form" model="ir.ui.view">
+        <field name="name">gb.brigade.rooming.form</field>
+        <field name="model">gb.brigade.rooming</field>
+        <field name="arch" type="xml">
+            <form string="Rooming List">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="brigade_id" required="1"/>
+                            <field name="hotel_offer_id" required="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="city" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="date_night" required="1"/>
+                            <field name="total_people" readonly="1"/>
+                            <field name="note"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Room Assignments">
+                            <field name="line_ids" context="{'default_rooming_id': active_id}" >
+                                <list editable="bottom">
+                                    <field name="hotel_room_id" required="1"/>
+                                    <field name="room_number" readonly="1"/>
+                                    <field name="room_type" readonly="1"/>
+                                    <field name="bed_setup" readonly="1"/>
+                                    <field name="pax_count" readonly="1"/>
+                                    <field name="occupant_ids"
+                                           widget="many2many_tags"
+                                           options="{'no_create': True}"/>
+                                    <field name="internal_notes"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- LIST: gb.brigade.rooming                                   -->
+    <!-- ========================================================= -->
+    <record id="view_gb_brigade_rooming_list" model="ir.ui.view">
+        <field name="name">gb.brigade.rooming.list</field>
+        <field name="model">gb.brigade.rooming</field>
+        <field name="arch" type="xml">
+            <list string="Rooming Lists" create="1" edit="1">
+                <field name="date_night"/>
+                <field name="brigade_id"/>
+                <field name="hotel_offer_id"/>
+                <field name="city"/>
+                <field name="total_people"/>
+                <field name="note"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- ACTION                                                     -->
+    <!-- ========================================================= -->
+    <record id="action_gb_brigade_rooming" model="ir.actions.act_window">
+        <field name="name">Rooming Lists</field>
+        <field name="res_model">gb.brigade.rooming</field>
+        <field name="view_mode">list,form</field>
+        <field name="context">{}</field>
+    </record>
+
+    <!-- ========================================================= -->
+    <!-- MENÚ: lo ponemos dentro del menú principal de Brigades     -->
+    <!-- IMPORTANTE: NO creamos un nuevo app en el root             -->
+    <!-- Ajusta parent si ya tienes un menú principal "Brigades"    -->
+    <!-- ========================================================= -->
+    <menuitem id="menu_gb_rooming_root"
+              name="Rooming Lists"
+              parent="global_brigades.menu_gb_main"  <!-- <-- usa el parent correcto de tu módulo -->
+              action="action_gb_brigade_rooming"
+              sequence="60"/>
+</odoo>

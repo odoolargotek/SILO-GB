@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="gb_activity_tag_panama_canal_esclusas_miraflores" model="gb.activity.tag">
+            <field name="name">Panama Canal (Esclusas Miraflores)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_panama_canal_esclusas_agua_clara" model="gb.activity.tag">
+            <field name="name">Panama Canal (Esclusas Agua Clara)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_casco_antiguo_tour" model="gb.activity.tag">
+            <field name="name">Casco Antiguo (Tour)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_causeway_amador" model="gb.activity.tag">
+            <field name="name">Causeway Amador</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_museo_de_canal_del_interoceanico" model="gb.activity.tag">
+            <field name="name">Museo de Canal del Interoceanico</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_museo_de_la_mola" model="gb.activity.tag">
+            <field name="name">Museo de la Mola</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_embera_quera_indigenous_village_visit" model="gb.activity.tag">
+            <field name="name">Embera Quera (Indigenous Village Visit)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_embera_tusipono_indigenous_village_visit" model="gb.activity.tag">
+            <field name="name">Embera Tusipono (Indigenous Village Visit)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_monkey_island" model="gb.activity.tag">
+            <field name="name">Monkey Island</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_cena_especial" model="gb.activity.tag">
+            <field name="name">Cena Especial</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_santuario_del_perezoso" model="gb.activity.tag">
+            <field name="name">Santuario del Perezoso</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_hiking_caminata" model="gb.activity.tag">
+            <field name="name">Hiking (Caminata)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_bio_museo" model="gb.activity.tag">
+            <field name="name">Bio-Museo</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_parque_metropolitano_excursion" model="gb.activity.tag">
+            <field name="name">Parque Metropolitano (Excursión)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_parque_soberania_excursion" model="gb.activity.tag">
+            <field name="name">Parque Soberanía (Excursión)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_instituto_smithsonian" model="gb.activity.tag">
+            <field name="name">Instituto Smithsonian</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_zipline_valle_de_anton" model="gb.activity.tag">
+            <field name="name">Zipline (Valle de Antón)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_mariposario_valle_de_anton" model="gb.activity.tag">
+            <field name="name">Mariposario (Valle de Antón)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_serpentario_valle_de_anton" model="gb.activity.tag">
+            <field name="name">Serpentario (Valle de Antón)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_islas_san_blas_guna_yala" model="gb.activity.tag">
+            <field name="name">Islas San Blas- Guna Yala</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_hiking_valle_de_anton" model="gb.activity.tag">
+            <field name="name">Hiking (Valle de Antón)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_beach_activities" model="gb.activity.tag">
+            <field name="name">Beach activities</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_east_indigenous_community_cultural_exchange" model="gb.activity.tag">
+            <field name="name">East -Indigenous Community Cultural Exchange</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_darien_indigenous_community_cultural_exchange" model="gb.activity.tag">
+            <field name="name">Darien-Indigenous Community Cultural Exchange</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_mola_painting" model="gb.activity.tag">
+            <field name="name">Mola Painting</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_baile_tipico_panameno" model="gb.activity.tag">
+            <field name="name">Baile típico panameño</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_soap_stone_tallado_en_piedra_jabon" model="gb.activity.tag">
+            <field name="name">Soap Stone (Tallado en Piedra Jabón)</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_plato_tipico_panameno" model="gb.activity.tag">
+            <field name="name">Plato tipico panameño</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_hiking_villa_tavida" model="gb.activity.tag">
+            <field name="name">Hiking Villa Tavidá</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_hiking_la_iguana" model="gb.activity.tag">
+            <field name="name">Hiking La Iguana</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_chaquira_y_tatuajes_temporales" model="gb.activity.tag">
+            <field name="name">Chaquira y tatuajes temporales</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_mercardo_de_artesania" model="gb.activity.tag">
+            <field name="name">Mercardo de Artesanía</field>
+            <field name="color">0</field>
+        </record>
+
+        <record id="gb_activity_tag_dia_de_playa" model="gb.activity.tag">
+            <field name="name">Dia de Playa</field>
+            <field name="color">0</field>
+        </record>
+
+    </data>
+</odoo>

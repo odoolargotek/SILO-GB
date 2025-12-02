@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="view_gb_brigade_hotel_booking_form" model="ir.ui.view">
+        <field name="name">gb.brigade.hotel.booking.form</field>
+        <field name="model">gb.brigade.hotel.booking</field>
+        <field name="arch" type="xml">
+            <form string="Rooming Assignment">
+                <sheet>
+                    <group>
+                        <group string="Hotel Stay">
+                            <field name="brigade_id" readonly="1"/>
+                            <field name="hotel_offer_id" required="1"/>
+                            <field name="partner_id" readonly="1"/>
+                            <field name="city" readonly="1"/>
+                            <field name="note"/>
+                        </group>
+
+                        <group string="Dates / Duration">
+                            <field name="check_in_date" required="1"/>
+                            <field name="check_out_date" required="1"/>
+                            <field name="stay_nights" readonly="1"/>
+                        </group>
+
+                        <!-- KPIs en 3 columnas: Roster / Staff / Total -->
+                        <group>
+                            <group string="RoSTER  (HEADCOUNT / CAPACITY)">
+                                <field name="roster_total" readonly="1" string="Roster Total"/>
+                                <field name="assigned_people" readonly="1" string="Assigned"/>
+                                <field name="unassigned_people" readonly="1" string="Not Assigned"/>
+                            </group>
+
+                            <group string="STAFF  (HEADCOUNT / CAPACITY)">
+                                <field name="staff_roster_total" readonly="1" string="Roster Total"/>
+                                <field name="staff_assigned_people" readonly="1" string="Assigned"/>
+                                <field name="staff_unassigned_people" readonly="1" string="Not Assigned"/>
+                            </group>
+
+                            <group string="TOTAL  (HEADCOUNT / CAPACITY)">
+                                <field name="total_headcount" readonly="1" string="Roster Total"/>
+                                <field name="total_assigned_people" readonly="1" string="Assigned"/>
+                                <field name="total_unassigned_people" readonly="1" string="Not Assigned"/>
+                            </group>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <!-- Página original: Roster -->
+                        <page string="Room Assignments (Roster)">
+                            <field name="assignment_ids">
+                                <list editable="bottom">
+                                    <field name="hotel_room_id" required="1" string="Room"/>
+                                    <field name="room_number" readonly="1" string="Room #"/>
+                                    <field name="room_type" readonly="1" string="Type"/>
+                                    <field name="bed_setup" readonly="1" string="Beds"/>
+                                    <field name="pax_count" readonly="1" string="# Pax"/>
+                                    <field name="occupant_ids"
+                                           widget="many2many_tags"
+                                           string="Occupants"
+                                           domain="[('brigade_id','=',parent.brigade_id)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="display_name" invisible="1"/>
+                                </list>
+
+                                <form string="Room Assignment (Roster)">
+                                    <group>
+                                        <group>
+                                            <field name="hotel_room_id" required="1"/>
+                                            <field name="room_number" readonly="1"/>
+                                            <field name="room_type" readonly="1"/>
+                                            <field name="bed_setup" readonly="1"/>
+                                            <field name="pax_count" readonly="1"/>
+                                        </group>
+                                        <group>
+                                            <field name="occupant_ids"
+                                                   widget="many2many_checkboxes"
+                                                   domain="[('brigade_id','=',parent.brigade_id)]"
+                                                   options="{'no_create': True}"/>
+                                        </group>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+
+                        <!-- NUEVA PÁGINA: Staff -->
+                        <page string="Staff Assignments">
+                            <field name="staff_assignment_ids">
+                                <list editable="bottom">
+                                    <field name="hotel_room_id" required="1" string="Room"/>
+                                    <field name="room_number" readonly="1" string="Room #"/>
+                                    <field name="room_type" readonly="1" string="Type"/>
+                                    <field name="bed_setup" readonly="1" string="Beds"/>
+                                    <field name="pax_count" readonly="1" string="# Pax"/>
+                                    <field name="occupant_staff_ids"
+                                           widget="many2many_tags"
+                                           string="Occupants"
+                                           domain="[('brigade_id','=',parent.brigade_id)]"
+                                           options="{'no_create': True}"/>
+                                </list>
+
+                                <form string="Room Assignment (Staff)">
+                                    <group>
+                                        <group>
+                                            <field name="hotel_room_id" required="1"/>
+                                            <field name="room_number" readonly="1"/>
+                                            <field name="room_type" readonly="1"/>
+                                            <field name="bed_setup" readonly="1"/>
+                                            <field name="pax_count" readonly="1"/>
+                                        </group>
+                                        <group>
+                                            <field name="occupant_staff_ids"
+                                                   widget="many2many_checkboxes"
+                                                   domain="[('brigade_id','=',parent.brigade_id)]"
+                                                   options="{'no_create': True}"/>
+                                        </group>
+                                    </group>
+                                </form>
+                            </field>
+                        </page>
+                    </notebook>
+
+                    <footer>
+                        <button string="Guardar"
+                                name="action_save_and_close"
+                                type="object"
+                                class="btn-primary oe_highlight"/>
+                        <button string="Cerrar"
+                                special="cancel"
+                                class="btn-secondary"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+</odoo>

@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- =========================================================
+         BRIGADES REPORT - LIST VIEW
+         ========================================================= -->
+    <record id="view_gb_brigade_report_list" model="ir.ui.view">
+        <field name="name">gb.brigade.report.list</field>
+        <field name="model">gb.brigade</field>
+        <field name="arch" type="xml">
+            <list string="Brigades Report">
+                <!-- Bloque parecido al inicio de tu plantilla: Brigada / #Vol / Tier / Programa -->
+                <field name="brigade_code" string="Código" optional="show"/>
+                <field name="name" string="Brigada"/>
+                <field name="volunteer_count" string="N° Vol" readonly="1"/>
+                <field name="brigade_tier" string="Tier"/>
+                <field name="brigade_program" string="Programa"/>
+
+                <!-- Fechas principales -->
+                <field name="arrival_date" string="Fecha Brigada"/>
+                <field name="departure_date" string="Fin Brigada" optional="show"/>
+
+                <!-- Información de negocio / logística general -->
+                <field name="brigade_type" string="Tipo" optional="show"/>
+                <field name="business_client_id" string="Cliente (Universidad/Capítulo)" optional="show"/>
+                <field name="compound_manager_id" string="Compound Manager" optional="show"/>
+
+                <!-- Responsables operativos -->
+                <field name="coordinator_id" string="Coordinador/a"/>
+                <field name="program_associate_id" string="Program Associate" optional="show"/>
+
+                <!-- KPIs ya existentes en el modelo -->
+                <field name="program_count" string="# Programs" readonly="1" optional="show"/>
+                <field name="activity_count" string="# Activities" readonly="1" optional="show"/>
+                <field name="transport_count" string="# Transports" readonly="1" optional="show"/>
+
+                <!-- Estado de la brigada -->
+                <field name="state" string="Estado" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- =========================================================
+         BRIGADES REPORT - SEARCH VIEW
+         (para filtrar por fechas, programa, tier, etc.)
+         ========================================================= -->
+    <record id="view_gb_brigade_report_search" model="ir.ui.view">
+        <field name="name">gb.brigade.report.search</field>
+        <field name="model">gb.brigade</field>
+        <field name="arch" type="xml">
+            <search string="Brigades Report">
+                <field name="name" string="Brigada"/>
+                <field name="brigade_code" string="Código"/>
+                <field name="brigade_program" string="Programa"/>
+                <field name="brigade_tier" string="Tier"/>
+                <field name="brigade_type" string="Tipo"/>
+                <field name="coordinator_id" string="Coordinador/a"/>
+                <field name="program_associate_id" string="Program Associate"/>
+                <field name="business_client_id" string="Cliente"/>
+                <field name="arrival_date" string="Fecha Brigada"/>
+
+                <!-- Filtros rápidos -->
+                <filter name="state_planned"
+                        string="Planned"
+                        domain="[('state','=','planned')]"/>
+                <filter name="state_ready"
+                        string="Ready"
+                        domain="[('state','=','ready')]"/>
+                <filter name="state_in_field"
+                        string="In Field"
+                        domain="[('state','=','in_field')]"/>
+                <filter name="state_completed"
+                        string="Completed"
+                        domain="[('state','=','completed')]"/>
+
+                <separator/>
+
+                <!-- Agrupaciones frecuentes -->
+                <group expand="0" string="Agrupar por">
+                    <filter name="group_program"
+                            string="Programa"
+                            context="{'group_by': 'brigade_program'}"/>
+                    <filter name="group_tier"
+                            string="Tier"
+                            context="{'group_by': 'brigade_tier'}"/>
+                    <filter name="group_type"
+                            string="Tipo"
+                            context="{'group_by': 'brigade_type'}"/>
+                    <filter name="group_coordinator"
+                            string="Coordinador/a"
+                            context="{'group_by': 'coordinator_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- =========================================================
+         BRIGADES REPORT - ACTION
+         ========================================================= -->
+    <record id="action_gb_brigade_report" model="ir.actions.act_window">
+        <field name="name">Brigades Report</field>
+        <field name="res_model">gb.brigade</field>
+        <!-- list + pivot + graph, para análisis -->
+        <field name="view_mode">list,form,pivot,graph</field>
+        <field name="view_id" ref="view_gb_brigade_report_list"/>
+        <field name="search_view_id" ref="view_gb_brigade_report_search"/>
+        <field name="help">Analytical report of brigades with logistics KPIs.</field>
+    </record>
+
+    <!-- =========================================================
+         MENÚ DE REPORTES
+         (usa menu_gb_root que ya tienes en brigade_views.xml)
+         ========================================================= -->
+    <menuitem
+        id="menu_gb_reports_root"
+        name="Reports"
+        parent="menu_gb_root"
+        sequence="90"/>
+
+    <menuitem
+        id="menu_gb_brigade_report"
+        name="Brigades Report"
+        parent="menu_gb_reports_root"
+        action="action_gb_brigade_report"
+        sequence="10"/>
+
+</odoo>
