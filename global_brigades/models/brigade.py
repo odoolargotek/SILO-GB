@@ -566,29 +566,36 @@ class GBBrigadeRoster(models.Model):
                 rec.phone_display = f"{mobile} / {phone}"
             else:
                 rec.phone_display = mobile or phone or ""
-
 # ===========================================================
-# Arrivals
+# Arrivals (Warning only, no blocking)
 # ===========================================================
 
 class GBBrigadeArrival(models.Model):
     _name = "gb.brigade.arrival"
     _description = "Global Brigades - Arrival Info"
     _order = "date_time_arrival, id"
-    
+
     brigade_id = fields.Many2one(
         "gb.brigade",
         string="Brigade",
         required=True,
         ondelete="cascade",
     )
-    
+
     title = fields.Char(string="Title / Ref", required=True)
     flight_number = fields.Char(string="Flight #")
     date_time_arrival = fields.Datetime(string="Arrival DateTime")
     flight_through_sap = fields.Char(string="Through SAP / Stopover")
-    arrival_hotel_city_time = fields.Char(string="Arrival Hotel / City / Time")
-    
+
+    arrival_hotel_id = fields.Many2one(
+        "gb.hotel.offer",
+        string="Arrival Hotel",
+    )
+
+    arrival_hotel_city_time = fields.Char(
+        string="Arrival Hotel Notes (City / Time)",
+    )
+
     passenger_ids = fields.Many2many(
         "gb.brigade.roster",
         "gb_arrival_roster_rel",
@@ -596,82 +603,133 @@ class GBBrigadeArrival(models.Model):
         "roster_id",
         string="Passengers",
     )
-    
+
     available_passenger_ids = fields.Many2many(
         "gb.brigade.roster",
         compute="_compute_available_passenger_ids",
-        string="Available Passengers",
         store=False,
     )
-    
+
     n_pax = fields.Integer(
         string="# Pax",
         compute="_compute_n_pax",
         store=False,
-        help="Calculated as number of selected passengers.",
     )
-    
+
     special_transport = fields.Boolean(string="Special Transport Needed?")
     extra_charge = fields.Char(string="Extra Charge / Notes")
-    
+
+    # ---------------- COMPUTES ----------------
+
     @api.depends("passenger_ids")
     def _compute_n_pax(self):
         for rec in self:
-            rec.n_pax = len(rec.passenger_ids or [])
-    
-    @api.depends(
-        "brigade_id",
-        "brigade_id.roster_ids",
-        "brigade_id.arrival_ids.passenger_ids",
-        "brigade_id.departure_ids.passenger_ids",
-        "passenger_ids",
-    )
+            rec.n_pax = len(rec.passenger_ids)
+
+    @api.depends("brigade_id", "brigade_id.roster_ids",
+                 "brigade_id.arrival_ids.passenger_ids", "passenger_ids")
     def _compute_available_passenger_ids(self):
         for rec in self:
             if not rec.brigade_id:
                 rec.available_passenger_ids = False
                 continue
-            
+
             all_roster = rec.brigade_id.roster_ids
             other_arrivals_passengers = rec.brigade_id.arrival_ids.filtered(
                 lambda a: a.id != rec.id
             ).mapped("passenger_ids")
-            departures_passengers = rec.brigade_id.departure_ids.mapped("passenger_ids")
-            
-            used = (other_arrivals_passengers | departures_passengers)
+
+            used = other_arrivals_passengers
             available = (all_roster - used) | rec.passenger_ids
             rec.available_passenger_ids = available
-    
+
+    # ---------------- WARNING ONLY ----------------
+
     @api.onchange("passenger_ids")
     def _onchange_passenger_ids_duplicates(self):
-        return self._check_passenger_conflicts("arrival")
-    
-    @api.constrains("brigade_id", "passenger_ids")
-    def _check_unique_passengers_in_brigade_arrivals(self):
-        self._check_passenger_conflicts("arrival", raise_error=True)
+        """
+        Warning only (no constraint). User can still save.
+        """
+        for rec in self:
+            if not rec.brigade_id or not rec.passenger_ids:
+                continue
+
+            passenger_ids = rec.passenger_ids.ids
+            Arrival = self.env["gb.brigade.arrival"]
+
+            other_arrivals = Arrival.search([
+                ("brigade_id", "=", rec.brigade_id.id),
+                ("id", "!=", rec.id),
+                ("passenger_ids", "in", passenger_ids),
+            ])
+
+            if not other_arrivals:
+                continue
+
+            conflicts = {}
+            for other in other_arrivals:
+                common = other.passenger_ids.filtered(
+                    lambda p: p.id in passenger_ids
+                )
+                for p in common:
+                    conflicts.setdefault(
+                        p.partner_id.name or p.display_name, []
+                    ).append(
+                        _("Arrival: %(title)s (%(date)s)") % {
+                            "title": other.title or "",
+                            "date": fields.Datetime.to_string(
+                                other.date_time_arrival
+                            ) if other.date_time_arrival else "",
+                        }
+                    )
+
+            if conflicts:
+                lines = []
+                for name, entries in conflicts.items():
+                    lines.append(f"- {name}: " + "; ".join(entries))
+
+                message = (
+                    "These passengers already appear in another Arrival of this brigade:\n"
+                    + "\n".join(lines)
+                )
+
+                return {
+                    "warning": {
+                        "title": _("Passenger already in another Arrival"),
+                        "message": message,
+                    }
+                }
 
 # ===========================================================
-# Departures
+# Departures (Warning only, no blocking)
 # ===========================================================
 
 class GBBrigadeDeparture(models.Model):
     _name = "gb.brigade.departure"
     _description = "Global Brigades - Departure Info"
     _order = "date_time_departure, id"
-    
+
     brigade_id = fields.Many2one(
         "gb.brigade",
         string="Brigade",
         required=True,
         ondelete="cascade",
     )
-    
+
     title = fields.Char(string="Title / Ref", required=True)
     flight_number = fields.Char(string="Flight #")
     date_time_departure = fields.Datetime(string="Departure DateTime")
     flight_through_sap = fields.Char(string="Through SAP / Stopover")
-    departure_hotel_city = fields.Char(string="Departure Hotel / City")
-    
+
+    departure_hotel_id = fields.Many2one(
+        "gb.hotel.offer",
+        string="Departure Hotel",
+    )
+
+    departure_hotel_city = fields.Char(
+        string="Departure Hotel Notes (City)",
+    )
+
     passenger_ids = fields.Many2many(
         "gb.brigade.roster",
         "gb_departure_roster_rel",
@@ -679,125 +737,99 @@ class GBBrigadeDeparture(models.Model):
         "roster_id",
         string="Passengers",
     )
-    
+
     available_passenger_ids = fields.Many2many(
         "gb.brigade.roster",
         compute="_compute_available_passenger_ids",
-        string="Available Passengers",
         store=False,
     )
-    
+
     n_pax = fields.Integer(
         string="# Pax",
         compute="_compute_n_pax",
         store=False,
-        help="Calculated as number of selected passengers.",
     )
-    
+
     special_transport = fields.Boolean(string="Special Transport Needed?")
     extra_charge = fields.Char(string="Extra Charge / Notes")
-    
+
+    # ---------------- COMPUTES ----------------
+
     @api.depends("passenger_ids")
     def _compute_n_pax(self):
         for rec in self:
-            rec.n_pax = len(rec.passenger_ids or [])
-    
-    @api.depends(
-        "brigade_id",
-        "brigade_id.roster_ids",
-        "brigade_id.arrival_ids.passenger_ids",
-        "brigade_id.departure_ids.passenger_ids",
-        "passenger_ids",
-    )
+            rec.n_pax = len(rec.passenger_ids)
+
+    @api.depends("brigade_id", "brigade_id.roster_ids",
+                 "brigade_id.departure_ids.passenger_ids", "passenger_ids")
     def _compute_available_passenger_ids(self):
         for rec in self:
             if not rec.brigade_id:
                 rec.available_passenger_ids = False
                 continue
-            
+
             all_roster = rec.brigade_id.roster_ids
             other_departures_passengers = rec.brigade_id.departure_ids.filtered(
                 lambda d: d.id != rec.id
             ).mapped("passenger_ids")
-            arrivals_passengers = rec.brigade_id.arrival_ids.mapped("passenger_ids")
-            
-            used = (other_departures_passengers | arrivals_passengers)
+
+            used = other_departures_passengers
             available = (all_roster - used) | rec.passenger_ids
             rec.available_passenger_ids = available
-    
+
+    # ---------------- WARNING ONLY ----------------
+
     @api.onchange("passenger_ids")
     def _onchange_passenger_ids_duplicates(self):
-        return self._check_passenger_conflicts("departure")
-    
-    @api.constrains("brigade_id", "passenger_ids")
-    def _check_unique_passengers_in_brigade_departures(self):
-        self._check_passenger_conflicts("departure", raise_error=True)
-
-    def _check_passenger_conflicts(self, record_type, raise_error=False):
-        """Método reutilizable para validar conflictos de pasajeros."""
+        """
+        Warning only (no constraint). User can still save.
+        """
         for rec in self:
             if not rec.brigade_id or not rec.passenger_ids:
                 continue
-            
+
             passenger_ids = rec.passenger_ids.ids
-            Arrival = self.env["gb.brigade.arrival"]
             Departure = self.env["gb.brigade.departure"]
-            
-            if record_type == "arrival":
-                other_records = Arrival.search([
-                    ("brigade_id", "=", rec.brigade_id.id),
-                    ("id", "!=", rec.id or 0),
-                    ("passenger_ids", "in", passenger_ids),
-                ])
-                other_opposites = Departure.search([
-                    ("brigade_id", "=", rec.brigade_id.id),
-                    ("passenger_ids", "in", passenger_ids),
-                ])
-            else:  # departure
-                other_records = Departure.search([
-                    ("brigade_id", "=", rec.brigade_id.id),
-                    ("id", "!=", rec.id or 0),
-                    ("passenger_ids", "in", passenger_ids),
-                ])
-                other_opposites = Arrival.search([
-                    ("brigade_id", "=", rec.brigade_id.id),
-                    ("passenger_ids", "in", passenger_ids),
-                ])
-            
-            if not (other_records or other_opposites):
+
+            other_departures = Departure.search([
+                ("brigade_id", "=", rec.brigade_id.id),
+                ("id", "!=", rec.id),
+                ("passenger_ids", "in", passenger_ids),
+            ])
+
+            if not other_departures:
                 continue
-            
+
             conflicts = {}
-            date_field = f"date_time_{record_type}"
-            
-            for other in other_records:
-                common = other.passenger_ids.filtered(lambda p: p.id in passenger_ids)
+            for other in other_departures:
+                common = other.passenger_ids.filtered(
+                    lambda p: p.id in passenger_ids
+                )
                 for p in common:
-                    key = p.partner_id.name or p.display_name
-                    conflicts.setdefault(key, []).append(
-                        f"{record_type.capitalize()}: {other.title or ''} "
-                        f"({fields.Datetime.to_string(getattr(other, date_field)) if getattr(other, date_field) else ''})"
+                    conflicts.setdefault(
+                        p.partner_id.name or p.display_name, []
+                    ).append(
+                        _("Departure: %(title)s (%(date)s)") % {
+                            "title": other.title or "",
+                            "date": fields.Datetime.to_string(
+                                other.date_time_departure
+                            ) if other.date_time_departure else "",
+                        }
                     )
-            
-            for other in other_opposites:
-                common = other.passenger_ids.filtered(lambda p: p.id in passenger_ids)
-                for p in common:
-                    key = p.partner_id.name or p.display_name
-                    opp_field = f"date_time_departure" if record_type == "arrival" else "date_time_arrival"
-                    conflicts.setdefault(key, []).append(
-                        f"{'Departure' if record_type == 'arrival' else 'Arrival'}: {other.title or ''} "
-                        f"({fields.Datetime.to_string(getattr(other, opp_field)) if getattr(other, opp_field) else ''})"
-                    )
-            
+
             if conflicts:
-                lines = [f"- {name}: " + "; ".join(entries) for name, entries in conflicts.items()]
-                message = _("Some passengers are already assigned to other flights:\n%s") % "\n".join(lines)
-                
-                if raise_error:
-                    raise ValidationError(message)
+                lines = []
+                for name, entries in conflicts.items():
+                    lines.append(f"- {name}: " + "; ".join(entries))
+
+                message = (
+                    "These passengers already appear in another Departure of this brigade:\n"
+                    + "\n".join(lines)
+                )
+
                 return {
                     "warning": {
-                        "title": _("Passenger already assigned"),
+                        "title": _("Passenger already in another Departure"),
                         "message": message,
                     }
                 }

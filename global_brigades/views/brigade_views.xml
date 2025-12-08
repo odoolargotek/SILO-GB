@@ -300,83 +300,105 @@
                             </field>
                         </page>
 
-                        <!-- ARRIVALS -->
-                        <page string="ARRIVALS">
-                            <field name="arrival_ids">
-                                <list editable="bottom">
-                                    <field name="title" required="1"/>
-                                    <field name="flight_number"/>
-                                    <field name="date_time_arrival"/>
-                                    <field name="flight_through_sap"/>
-                                    <field name="arrival_hotel_city_time"/>
-                                    <field name="passenger_ids"
-                                           widget="many2many_tags"
-                                           domain="[('id', 'in', available_passenger_ids)]"/>
-                                    <field name="n_pax" readonly="1"/>
-                                    <field name="special_transport"/>
-                                    <field name="extra_charge"/>
-                                </list>
-                                <form string="Arrival Detail">
-                                    <sheet>
-                                        <group>
-                                            <group>
-                                                <field name="title" required="1"/>
-                                                <field name="flight_number"/>
-                                                <field name="date_time_arrival"/>
-                                                <field name="flight_through_sap"/>
-                                            </group>
-                                            <group>
-                                                <field name="arrival_hotel_city_time"/>
-                                                <field name="passenger_ids"
-                                                       widget="many2many_tags"
-                                                       domain="[('id', 'in', available_passenger_ids)]"/>
-                                                <field name="special_transport"/>
-                                                <field name="extra_charge"/>
-                                            </group>
-                                        </group>
-                                    </sheet>
-                                </form>
-                            </field>
-                        </page>
+ <!-- =========================================================
+     Pestaña ARRIVALS
+   ========================================================= -->
+<page string="ARRIVALS">
+    <field name="arrival_ids">
+        <list editable="bottom">
+            <field name="title" required="1"/>
+            <field name="flight_number"/>
+            <field name="date_time_arrival"/>
+            <field name="flight_through_sap"/>
 
-                        <!-- DEPARTURES -->
-                        <page string="DEPARTURES">
-                            <field name="departure_ids">
-                                <list editable="bottom">
-                                    <field name="title" required="1"/>
-                                    <field name="flight_number"/>
-                                    <field name="date_time_departure"/>
-                                    <field name="flight_through_sap"/>
-                                    <field name="departure_hotel_city"/>
-                                    <field name="passenger_ids"
-                                           widget="many2many_tags"
-                                           domain="[('id', 'in', available_passenger_ids)]"/>
-                                    <field name="n_pax" readonly="1"/>
-                                    <field name="special_transport"/>
-                                    <field name="extra_charge"/>
-                                </list>
-                                <form string="Departure Detail">
-                                    <sheet>
-                                        <group>
-                                            <group>
-                                                <field name="title" required="1"/>
-                                                <field name="flight_number"/>
-                                                <field name="date_time_departure"/>
-                                                <field name="flight_through_sap"/>
-                                            </group>
-                                            <group>
-                                                <field name="departure_hotel_city"/>
-                                                <field name="passenger_ids"
-                                                       widget="many2many_tags"
-                                                       domain="[('id', 'in', available_passenger_ids)]"/>
-                                                <field name="special_transport"/>
-                                                <field name="extra_charge"/>
-                                            </group>
-                                        </group>
-                                    </sheet>
-                                </form>
-                            </field>
-                        </page>
+            <!-- Hotel seleccionado desde HOTELS -->
+            <field name="arrival_hotel_id" string="Arrival Hotel / City / Time"/>
+
+            <!-- Pasajeros: todos los del roster de la brigada -->
+            <field name="passenger_ids"
+                   widget="many2many_tags"
+                   domain="[('brigade_id', '=', parent.id)]"/>
+
+            <field name="n_pax" readonly="1"/>
+            <field name="special_transport"/>
+            <field name="extra_charge"/>
+        </list>
+
+        <form string="Arrival Detail">
+            <sheet>
+                <group>
+                    <group>
+                        <field name="title" required="1"/>
+                        <field name="flight_number"/>
+                        <field name="date_time_arrival"/>
+                        <field name="flight_through_sap"/>
+                    </group>
+                    <group>
+                        <field name="arrival_hotel_id" string="Arrival Hotel / City / Time"/>
+                        <field name="arrival_hotel_city_time"/>
+                        <field name="passenger_ids"
+                               widget="many2many_tags"
+                               domain="[('brigade_id', '=', parent.id)]"/>
+                        <field name="n_pax" readonly="1"/>
+                        <field name="special_transport"/>
+                        <field name="extra_charge"/>
+                    </group>
+                </group>
+            </sheet>
+        </form>
+    </field>
+</page>
+
+
+<!-- =========================================================
+     Pestaña DEPARTURES
+   ========================================================= -->
+<page string="DEPARTURES">
+    <field name="departure_ids">
+        <list editable="bottom">
+            <field name="title" required="1"/>
+            <field name="flight_number"/>
+            <field name="date_time_departure"/>
+            <field name="flight_through_sap"/>
+
+            <field name="departure_hotel_id" string="Departure Hotel / City"/>
+
+            <!-- Pasajeros: todos los del roster de la brigada -->
+            <field name="passenger_ids"
+                   widget="many2many_tags"
+                   domain="[('brigade_id', '=', parent.id)]"/>
+
+            <field name="n_pax" readonly="1"/>
+            <field name="special_transport"/>
+            <field name="extra_charge"/>
+        </list>
+
+        <form string="Departure Detail">
+            <sheet>
+                <group>
+                    <group>
+                        <field name="title" required="1"/>
+                        <field name="flight_number"/>
+                        <field name="date_time_departure"/>
+                        <field name="flight_through_sap"/>
+                    </group>
+                    <group>
+                        <field name="departure_hotel_id" string="Departure Hotel / City"/>
+                        <field name="departure_hotel_city"/>
+                        <field name="passenger_ids"
+                               widget="many2many_tags"
+                               domain="[('brigade_id', '=', parent.id)]"/>
+                        <field name="n_pax" readonly="1"/>
+                        <field name="special_transport"/>
+                        <field name="extra_charge"/>
+                    </group>
+                </group>
+            </sheet>
+        </form>
+    </field>
+</page>
+
+
 
                         <!-- STAFF -->
                         <page string="STAFF">
