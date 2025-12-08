@@ -4,7 +4,9 @@
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
 
-
+# ===========================================================
+# Cabecera
+# ===========================================================
 class GBBrigade(models.Model):
     _name = "gb.brigade"
     _description = "Global Brigades - Chapter / Brigade"
@@ -365,6 +367,7 @@ class GBBrigade(models.Model):
                 ))
             vals["brigade_code"] = next_code
         return super().create(vals)
+
     # ---------- ASIGNACIÓN DE SECUENCIA ----------
 
     @api.model
@@ -381,6 +384,7 @@ class GBBrigade(models.Model):
                 ))
             vals["brigade_code"] = next_code
         return super().create(vals)
+
     # -------------------------------------------------------------
     # BOTÓN: Abrir formulario desde la vista lista
     # -------------------------------------------------------------
@@ -395,6 +399,7 @@ class GBBrigade(models.Model):
             "res_id": self.id,
             "target": "current",
         }
+
 
 # ===========================================================
 # Program Lines (PROGRAMS tab)
