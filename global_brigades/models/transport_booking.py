@@ -79,6 +79,27 @@ class GBBrigadeTransport(models.Model):
         help="Staff members that will travel in this transport movement.",
     )
 
+    # Lista combinada de todos los pasajeros (Roster + Staff) como partners
+    transport_passenger_partner_ids = fields.Many2many(
+        "res.partner",
+        "gb_transport_passenger_partner_rel",
+        "transport_id",
+        "partner_id",
+        string="All Passengers",
+        compute="_compute_transport_passenger_partner_ids",
+        store=False,
+        readonly=True,
+        help="Combined list of all passengers (Roster + Staff) as partners.",
+    )
+
+    @api.depends("passenger_ids.partner_id", "staff_passenger_ids.person_id")
+    def _compute_transport_passenger_partner_ids(self):
+        for rec in self:
+            roster_partners = rec.passenger_ids.mapped("partner_id")
+            staff_partners = rec.staff_passenger_ids.mapped("person_id")
+            rec.transport_passenger_partner_ids = roster_partners | staff_partners
+
+
     n_pax = fields.Integer(
         string="# Pax",
         compute="_compute_n_pax",
@@ -126,6 +147,23 @@ class GBBrigadeTransport(models.Model):
     def _compute_n_pax(self):
         for rec in self:
             rec.n_pax = len(rec.passenger_ids) + len(rec.staff_passenger_ids)
+
+    @api.depends("passenger_ids.partner_id", "staff_passenger_ids.person_id")
+    def _compute_transport_passenger_partner_ids(self):
+        """
+        Construye una lista combinada de contactos (res.partner)
+        a partir de:
+        - passenger_ids.partner_id  (roster)
+        - staff_passenger_ids.person_id  (staff)
+        Solo para visualización (read-only).
+        """
+        for rec in self:
+            partners = self.env["res.partner"]
+            if rec.passenger_ids:
+                partners |= rec.passenger_ids.mapped("partner_id")
+            if rec.staff_passenger_ids:
+                partners |= rec.staff_passenger_ids.mapped("person_id")
+            rec.transport_passenger_partner_ids = partners
 
     @api.depends(
         "vehicle_line_ids.capacity",

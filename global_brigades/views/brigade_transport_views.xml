@@ -1,29 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- Transport tab on Brigade form -->
+    <!-- ============================================================= -->
+    <!-- 1) Pestaña TRANSPORT en el formulario de Brigades             -->
+    <!-- ============================================================= -->
     <record id="view_gb_brigade_form_transport" model="ir.ui.view">
         <field name="name">gb.brigade.form.transport</field>
         <field name="model">gb.brigade</field>
         <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
         <field name="arch" type="xml">
-            <xpath expr="//notebook" position="inside">
-                <page string="Transport">
+            <xpath expr="//sheet/notebook" position="inside">
+                <page string="Transport" name="transport_tab">
                     <field name="transport_ids">
-                        <!-- LISTA de movimientos de transporte -->
+                        <!-- LISTA PRINCIPAL EN LA PESTAÑA TRANSPORT -->
                         <list editable="bottom">
-                            <field name="title" required="1"/>
-                            <field name="date_time"/>
-                            <field name="provider_id"/>
-                            <field name="vehicle_id"
-                                   domain="[('provider_id', '=', provider_id)]"/>
+                            <field name="title" string="Title / Ref" required="1"/>
+                            <field name="date_time" string="Date / Time"/>
                             <field name="origin"/>
                             <field name="destination"/>
-                            <field name="n_pax" readonly="1"/>
-                            <field name="total_seats" readonly="1"/>
-                            <field name="remaining_seats" readonly="1"/>
+                            <field name="provider_id" string="Transport Provider"/>
+                            <field name="vehicle_id" string="Vehicle"/>
 
-                            <!-- Botones Passenger List -->
+                            <!-- Pasajeros combinados como tags (Roster + Staff) -->
+                            <field name="transport_passenger_partner_ids"
+                                   widget="many2many_tags"
+                                   string="Passengers"
+                                   readonly="1"
+                                   options="{'no_create': True, 'no_quick_create': True, 'no_create_edit': True}"/>
+
+                            <field name="n_pax" string="# Pax" readonly="1"/>
+                            <field name="vehicle_count" string="# Vehicles" readonly="1"/>
+                            <field name="total_seats" string="Total Seats" readonly="1"/>
+                            <field name="total_assigned_pax" string="Assigned Pax" readonly="1"/>
+                            <field name="remaining_seats" string="Free Seats" readonly="1"/>
+
+                            <!-- 🔹 Botones para manejar pasajeros (restaurados) -->
                             <button name="action_open_passenger_wizard"
                                     type="object"
                                     string="Seleccionar"
@@ -38,8 +49,8 @@
                             <field name="notes"/>
                         </list>
 
-                        <!-- FORM de un movimiento de transporte -->
-                        <form string="Transport Assignment">
+                        <!-- FORMULARIO EMBEBIDO DE CADA TRANSPORTE -->
+                        <form string="Brigade Transport Assignment">
                             <sheet>
                                 <!-- Cabecera -->
                                 <group>
@@ -52,48 +63,79 @@
                                         <field name="provider_id"/>
                                         <field name="vehicle_id"
                                                domain="[('provider_id', '=', provider_id)]"/>
+                                    </group>
+                                </group>
+
+                                <group>
+                                    <group>
                                         <field name="origin"/>
+                                    </group>
+                                    <group>
                                         <field name="destination"/>
                                     </group>
                                 </group>
 
-                                <!-- Pasajeros -->
-                                <group>
-                                    <group string="Roster Passengers">
-                                        <field name="passenger_ids"
-                                               widget="many2many_tags"
-                                               domain="[('brigade_id', '=', brigade_id)]"
-                                               options="{'no_create': True}"/>
-                                        <field name="n_pax" readonly="1"/>
-                                        <button name="action_open_passenger_wizard"
-                                                type="object"
-                                                string="Seleccionar"
-                                                icon="fa-users"
-                                                class="btn-link"/>
-                                        <button name="action_add_all_passengers"
-                                                type="object"
-                                                string="Todos"
-                                                class="btn-link"/>
-                                    </group>
+                                <notebook>
+                                    <!-- Página de pasajeros -->
+                                    <page string="Passengers">
+                                        <group>
+                                            <group string="Roster Passengers">
+                                                <field name="passenger_ids"
+                                                       widget="many2many_tags"
+                                                       domain="[('brigade_id', '=', brigade_id)]"
+                                                       options="{'no_create': True}"/>
+                                                <field name="n_pax" readonly="1"/>
+                                                <button name="action_open_passenger_wizard"
+                                                        type="object"
+                                                        string="Seleccionar"
+                                                        icon="fa-users"
+                                                        class="btn-link"/>
+                                                <button name="action_add_all_passengers"
+                                                        type="object"
+                                                        string="Todos"
+                                                        class="btn-link"/>
+                                            </group>
 
-                                    <group string="Staff Passengers">
-                                        <field name="staff_passenger_ids"
-                                               widget="many2many_tags"
-                                               domain="[('brigade_id', '=', brigade_id)]"
-                                               options="{'no_create': True}"/>
-                                    </group>
+                                            <group string="Staff Passengers">
+                                                <field name="staff_passenger_ids"
+                                                       widget="many2many_tags"
+                                                       domain="[('brigade_id', '=', brigade_id)]"
+                                                       options="{'no_create': True}"/>
+                                            </group>
 
-                                    <group string="Capacity Summary">
-                                        <field name="vehicle_count" readonly="1"/>
-                                        <field name="total_seats" readonly="1"/>
-                                        <field name="total_assigned_pax" readonly="1"/>
-                                        <field name="remaining_seats" readonly="1"/>
-                                    </group>
-                                </group>
+                                            <group string="Capacity Summary">
+                                                <field name="vehicle_count" readonly="1"/>
+                                                <field name="total_seats" readonly="1"/>
+                                                <field name="total_assigned_pax" readonly="1"/>
+                                                <field name="remaining_seats" readonly="1"/>
+                                            </group>
+                                        </group>
+                                    </page>
 
-                                <group>
-                                    <field name="notes" colspan="4"/>
-                                </group>
+                                    <!-- Página de asignación de vehículos -->
+                                    <page string="Vehicle Assignment">
+                                        <field name="vehicle_line_ids">
+                                            <list editable="bottom">
+                                                <field name="sequence" invisible="1"/>
+                                                <field name="vehicle_id"/>
+                                                <field name="provider_id" readonly="1"/>
+                                                <field name="capacity" readonly="1"/>
+                                                <field name="roster_passenger_ids"
+                                                       widget="many2many_tags"
+                                                       options="{'no_create': True}"/>
+                                                <field name="staff_passenger_ids"
+                                                       widget="many2many_tags"
+                                                       options="{'no_create': True}"/>
+                                                <field name="total_pax" readonly="1"/>
+                                                <field name="remaining_seats" readonly="1"/>
+                                            </list>
+                                        </field>
+                                    </page>
+
+                                    <page string="Notes">
+                                        <field name="notes"/>
+                                    </page>
+                                </notebook>
                             </sheet>
                         </form>
                     </field>
@@ -101,5 +143,144 @@
             </xpath>
         </field>
     </record>
+
+    <!-- ============================================================= -->
+    <!-- 2) Tree view de gb.brigade.transport (menú Transport Plan)     -->
+    <!-- ============================================================= -->
+    <record id="view_gb_brigade_transport_tree" model="ir.ui.view">
+        <field name="name">gb.brigade.transport.tree</field>
+        <field name="model">gb.brigade.transport</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="brigade_id"/>
+                <field name="title"/>
+                <field name="date_time"/>
+                <field name="origin"/>
+                <field name="destination"/>
+                <field name="provider_id"/>
+                <field name="vehicle_id"/>
+                <field name="n_pax"/>
+                <field name="vehicle_count"/>
+                <field name="total_seats"/>
+                <field name="total_assigned_pax"/>
+                <field name="remaining_seats"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================= -->
+    <!-- 3) Form view de gb.brigade.transport (menú Transport Plan)     -->
+    <!-- ============================================================= -->
+    <record id="view_gb_brigade_transport_form" model="ir.ui.view">
+        <field name="name">gb.brigade.transport.form</field>
+        <field name="model">gb.brigade.transport</field>
+        <field name="arch" type="xml">
+            <form string="Transport Assignment">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="brigade_id" readonly="1"/>
+                            <field name="title"/>
+                            <field name="date_time"/>
+                        </group>
+                        <group>
+                            <field name="provider_id"/>
+                            <field name="vehicle_id"
+                                   domain="[('provider_id', '=', provider_id)]"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <group>
+                            <field name="origin"/>
+                        </group>
+                        <group>
+                            <field name="destination"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Passengers">
+                            <group>
+                                <group string="Roster Passengers">
+                                    <field name="passenger_ids"
+                                           widget="many2many_tags"
+                                           domain="[('brigade_id', '=', brigade_id)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="n_pax" readonly="1"/>
+                                    <button name="action_open_passenger_wizard"
+                                            type="object"
+                                            string="Seleccionar"
+                                            icon="fa-users"
+                                            class="btn-link"/>
+                                    <button name="action_add_all_passengers"
+                                            type="object"
+                                            string="Todos"
+                                            class="btn-link"/>
+                                </group>
+
+                                <group string="Staff Passengers">
+                                    <field name="staff_passenger_ids"
+                                           widget="many2many_tags"
+                                           domain="[('brigade_id', '=', brigade_id)]"
+                                           options="{'no_create': True}"/>
+                                </group>
+
+                                <group string="Capacity Summary">
+                                    <field name="vehicle_count" readonly="1"/>
+                                    <field name="total_seats" readonly="1"/>
+                                    <field name="total_assigned_pax" readonly="1"/>
+                                    <field name="remaining_seats" readonly="1"/>
+                                </group>
+                            </group>
+                        </page>
+
+                        <page string="Vehicle Assignment">
+                            <field name="vehicle_line_ids">
+                                <list editable="bottom">
+                                    <field name="sequence" invisible="1"/>
+                                    <field name="vehicle_id"/>
+                                    <field name="provider_id" readonly="1"/>
+                                    <field name="capacity" readonly="1"/>
+                                    <field name="roster_passenger_ids"
+                                           widget="many2many_tags"
+                                           options="{'no_create': True}"/>
+                                    <field name="staff_passenger_ids"
+                                           widget="many2many_tags"
+                                           options="{'no_create': True}"/>
+                                    <field name="total_pax" readonly="1"/>
+                                    <field name="remaining_seats" readonly="1"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Notes">
+                            <field name="notes"/>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================= -->
+    <!-- 4) Acción y menús                                              -->
+    <!-- ============================================================= -->
+    <record id="action_gb_brigade_transport" model="ir.actions.act_window">
+        <field name="name">Transport Assignments</field>
+        <field name="res_model">gb.brigade.transport</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_gb_transport_root"
+              name="Transport"
+              parent="global_brigades.menu_gb_root"
+              sequence="40"
+              groups="global_brigades.group_gb_admin,global_brigades.group_gb_coordinator,global_brigades.group_gb_pa"/>
+
+    <menuitem id="menu_gb_transport_assignments"
+              name="Transport Plan"
+              parent="menu_gb_transport_root"
+              action="action_gb_brigade_transport"/>
 
 </odoo>

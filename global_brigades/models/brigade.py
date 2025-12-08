@@ -807,112 +807,156 @@ class GBBrigadeDeparture(models.Model):
 # ===========================================================
 
 class GBBrigadeStaff(models.Model):
-    _name = "gb.brigade.staff"
-    _description = "Brigade Staff Assignment"
-    _order = "start_datetime, person_id"
-    _rec_name = "name"
-    
+    _name = 'gb.brigade.staff'
+    _description = 'Brigade Staff Assignment'
+    _order = 'start_datetime, person_id'
+    _rec_name = 'name'
+
+    # Nombre “humano” que usaremos en checkboxes, tags, etc.
     name = fields.Char(
-        string="Name",
-        compute="_compute_name",
+        string='Name',
+        compute='_compute_name',
         store=True,
     )
-    
+
     brigade_id = fields.Many2one(
-        "gb.brigade",
-        string="Brigade",
+        'gb.brigade',
+        string='Brigade',
         required=True,
-        ondelete="cascade",
+        ondelete='cascade',
     )
-    
+
     person_id = fields.Many2one(
-        "res.partner",
-        string="Person",
+        'res.partner',
+        string='Person',
         required=True,
-        help="Person (contact) assigned as staff member in this brigade.",
+        help='Person (contact) assigned as staff member in this brigade.',
     )
-    
-    staff_role = fields.Selection([
-        ("driver", "DRIVER"),
-        ("operations_coord", "OPERATIONS COORDINATOR"),
-        ("interpreter_1", "INTERPRETER 1"),
-        ("interpreter_2", "INTERPRETER 2"),
-        ("interpreter_3", "INTERPRETER 3"),
-        ("interpreter_4", "INTERPRETER 4"),
-        ("interpreter_5", "INTERPRETER 5"),
-        ("interpreter_extra", "INTERPRETER EXTRA"),
-        ("doctor_1", "DOCTOR 1"),
-        ("doctor_2", "DOCTOR 2"),
-        ("doctor_3", "DOCTOR 3"),
-        ("doctor_4", "DOCTOR 4"),
-        ("dentist_1", "DENTIST 1"),
-        ("dentist_2", "DENTIST 2"),
-        ("dentist_3", "DENTIST 3"),
-        ("dentist_4", "DENTIST 4"),
-        ("pharmacist", "PHARMACIST"),
-        ("cashier", "CASHIER"),
-        ("nutritionist", "NUTRITIONIST"),
-        ("public_health_tech", "PUBLIC HEALTH TECHNICIAN"),
-        ("paramedic", "PARAMEDIC"),
-        ("water_technician", "WATER TECHNICIAN"),
-        ("optometrist", "OPTOMETRIST"),
-        ("nurse", "NURSE"),
-        ("obgyn", "OB/GYN"),
-        ("pa_visit", "PA VISIT"),
-        ("emergency_vehicle", "EMERGENCY VEHICLE"),
-        ("physiotherapist", "PHYSIOTHERAPIST"),
-        ("doctor_de_cobertura", "DOCTOR DE COBERTURA"),
-        ("doctor_on_call", "DOCTOR ON CALL"),
-        ("coord_assistant_1", "COORDINATION ASSISTANT 1"),
-        ("coord_assistant_2", "COORDINATION ASSISTANT 2"),
-        ("coord_assistant_3", "COORDINATION ASSISTANT 3"),
-        ("coord_assistant_4", "COORDINATION ASSISTANT 4"),
-        ("coord_assistant_5", "COORDINATION ASSISTANT 5"),
-        ("coord_assistant_extra", "COORDINATION ASSISTANT EXTRA"),
-        ("counselor_1", "COUNSELOR 1"),
-        ("counselor_2", "COUNSELOR 2"),
-        ("counselor_3", "COUNSELOR 3"),
-        ("lead_coord_1", "LEAD COORDINATOR 1"),
-        ("lead_coord_2", "LEAD COORDINATOR 2"),
-        ("lead_coord_3", "LEAD COORDINATOR 3"),
-        ("lead_coord_4", "LEAD COORDINATOR 4"),
-        ("lead_coord_5", "LEAD COORDINATOR 5"),
-        ("lead_coord_extra", "LEAD COORDINATOR EXTRA"),
-        ("psychologist", "PSYCHOLOGIST"),
-        ("therapist", "THERAPIST"),
-        ("other", "OTHER / NOTES IN FIELD"),
-    ], string="Role", help="Role of this person during the brigade.")
-    
+
+    # Datos traídos desde el contacto
+    gender = fields.Selection(
+        related='person_id.gb_gender',
+        string='Gender',
+        readonly=True,
+    )
+
+    diet = fields.Char(
+        related='person_id.gb_diet',
+        string='Diet',
+        readonly=True,
+    )
+
+    allergy = fields.Char(
+        related='person_id.gb_allergy',
+        string='Allergy',
+        readonly=True,
+    )
+
+    professional_registration = fields.Char(
+        string='Professional Registration',
+        compute='_compute_professional_registration',
+        store=False,
+        readonly=True,
+        help='Professional registration / eligibility information pulled from the contact.',
+    )
+
+    staff_role = fields.Selection(
+        [
+            ('driver', 'DRIVER'),
+            ('operations_coord', 'OPERATIONS COORDINATOR'),
+            ('interpreter_1', 'INTERPRETER 1'),
+            ('interpreter_2', 'INTERPRETER 2'),
+            ('interpreter_3', 'INTERPRETER 3'),
+            ('interpreter_4', 'INTERPRETER 4'),
+            ('interpreter_5', 'INTERPRETER 5'),
+            ('interpreter_extra', 'INTERPRETER EXTRA'),
+            ('doctor_1', 'DOCTOR 1'),
+            ('doctor_2', 'DOCTOR 2'),
+            ('doctor_3', 'DOCTOR 3'),
+            ('doctor_4', 'DOCTOR 4'),
+            ('dentist_1', 'DENTIST 1'),
+            ('dentist_2', 'DENTIST 2'),
+            ('dentist_3', 'DENTIST 3'),
+            ('dentist_4', 'DENTIST 4'),
+            ('pharmacist', 'PHARMACIST'),
+            ('cashier', 'CASHIER'),
+            ('nutritionist', 'NUTRITIONIST'),
+            ('public_health_tech', 'PUBLIC HEALTH TECHNICIAN'),
+            ('paramedic', 'PARAMEDIC'),
+            ('water_technician', 'WATER TECHNICIAN'),
+            ('optometrist', 'OPTOMETRIST'),
+            ('nurse', 'NURSE'),
+            ('obgyn', 'OB/GYN'),
+            ('pa_visit', 'PA VISIT'),
+            ('emergency_vehicle', 'EMERGENCY VEHICLE'),
+            ('physiotherapist', 'PHYSIOTHERAPIST'),
+            ('doctor_de_cobertura', 'DOCTOR DE COBERTURA'),
+            ('doctor_on_call', 'DOCTOR ON CALL'),
+            ('coord_assistant_1', 'COORDINATION ASSISTANT 1'),
+            ('coord_assistant_2', 'COORDINATION ASSISTANT 2'),
+            ('coord_assistant_3', 'COORDINATION ASSISTANT 3'),
+            ('coord_assistant_4', 'COORDINATION ASSISTANT 4'),
+            ('coord_assistant_5', 'COORDINATION ASSISTANT 5'),
+            ('coord_assistant_extra', 'COORDINATION ASSISTANT EXTRA'),
+            ('counselor_1', 'COUNSELOR 1'),
+            ('counselor_2', 'COUNSELOR 2'),
+            ('counselor_3', 'COUNSELOR 3'),
+            ('lead_coord_1', 'LEAD COORDINATOR 1'),
+            ('lead_coord_2', 'LEAD COORDINATOR 2'),
+            ('lead_coord_3', 'LEAD COORDINATOR 3'),
+            ('lead_coord_4', 'LEAD COORDINATOR 4'),
+            ('lead_coord_5', 'LEAD COORDINATOR 5'),
+            ('lead_coord_extra', 'LEAD COORDINATOR EXTRA'),
+            ('psychologist', 'PSYCHOLOGIST'),
+            ('therapist', 'THERAPIST'),
+            ('other', 'OTHER / NOTES IN FIELD'),
+        ],
+        string='Role',
+        help='Role of this person during the brigade.',
+    )
+
+    # Fechas propias de la brigada
     start_datetime = fields.Datetime(
-        string="Start Date/Time",
-        help="Date and time when this person starts working with the brigade.",
+        string='Start Date/Time',
+        help='Date and time when this person starts working with the brigade.',
     )
-    
+
     end_datetime = fields.Datetime(
-        string="End Date/Time",
-        help="Date and time when this person stops working with the brigade.",
+        string='End Date/Time',
+        help='Date and time when this person stops working with the brigade.',
     )
-    
+
+    # Campo antiguo (compatibilidad, opcional en vistas)
     diet_allergy_note = fields.Char(
-        string="Diet / Allergy / Notes",
-        help="Relevant dietary restrictions, allergies or short notes.",
+        string='Diet / Allergy / Notes',
+        help='Relevant dietary restrictions, allergies or short notes.',
     )
-    
-    internal_note = fields.Char(
-        string="Internal Note / Justification",
-        help="Internal notes for GB staff (not shown externally).",
+
+    internal_note = fields.Text(
+        string='Internal Notes',
+        help='Internal notes for GB staff (not shown externally).',
     )
-    
+
     provider_id = fields.Many2one(
-        "res.partner",
-        string="Provider",
-        help="Optional provider record, kept for backwards compatibility.",
+        'res.partner',
+        string='Provider',
+        help='Optional provider record, kept for backwards compatibility.',
     )
-    
-    @api.depends("person_id", "person_id.name", "provider_id", "provider_id.name", "staff_role")
+
+    @api.depends('person_id.gb_eligibility_ids', 'person_id.gb_eligibility_ids.name')
+    def _compute_professional_registration(self):
+        """Compute professional registration / eligibility from partner records."""
+        for rec in self:
+            elig_records = rec.person_id.gb_eligibility_ids
+            if elig_records:
+                rec.professional_registration = ", ".join(elig_records.mapped('name'))
+            else:
+                rec.professional_registration = False
+
+    @api.depends('person_id', 'person_id.name', 'provider_id', 'provider_id.name', 'staff_role')
     def _compute_name(self):
-        """Nombre amigable: 'Juan Pérez (LEAD COORDINATOR 1)'."""
-        selection_dict = dict(self._fields["staff_role"].selection)
+        """Nombre amigable para staff: 'Juan Pérez (LEAD COORDINATOR 1)'."""
+        selection_dict = dict(self._fields['staff_role'].selection)
         for rec in self:
             base = rec.person_id.name or rec.provider_id.name or ""
             role_label = selection_dict.get(rec.staff_role, rec.staff_role or "")
@@ -920,10 +964,10 @@ class GBBrigadeStaff(models.Model):
                 rec.name = f"{base} ({role_label})"
             else:
                 rec.name = base or role_label or _("Staff #%s") % rec.id
-    
+
     def name_get(self):
-        selection_dict = dict(self._fields["staff_role"].selection)
         res = []
+        selection_dict = dict(self._fields['staff_role'].selection)
         for rec in self:
             base = rec.person_id.name or rec.provider_id.name or ""
             role_label = selection_dict.get(rec.staff_role, rec.staff_role or "")
@@ -933,6 +977,7 @@ class GBBrigadeStaff(models.Model):
                 name = base or role_label or _("Staff #%s") % rec.id
             res.append((rec.id, name))
         return res
+
 
 # ===========================================================
 # Activity Tag (for itinerary activities)

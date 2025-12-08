@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # License LGPL-3.0 (https://www.gnu.org/licenses/lgpl-3.0.html)
 
-from odoo import api, fields, models
+from odoo import api, fields, models, _
 
 
 class GBHotelOffer(models.Model):
@@ -16,7 +16,7 @@ class GBHotelOffer(models.Model):
     name = fields.Char(
         string="Referencia / Nombre interno",
         required=True,
-        help="Referencia corta para esta oferta de alojamiento."
+        help="Referencia corta para esta oferta de alojamiento.",
     )
 
     partner_id = fields.Many2one(
@@ -24,7 +24,7 @@ class GBHotelOffer(models.Model):
         string="Proveedor / Hotel",
         required=True,
         domain="[('is_company', '=', True)]",
-        help="Empresa / hotel que provee el alojamiento."
+        help="Empresa / hotel que provee el alojamiento.",
     )
 
     phone = fields.Char(
@@ -59,7 +59,7 @@ class GBHotelOffer(models.Model):
         "gb.hotel.offer.room",
         "offer_id",
         string="Habitaciones",
-        help="Inventario detallado de habitaciones disponibles en este hotel."
+        help="Inventario detallado de habitaciones disponibles en este hotel.",
     )
 
     # -----------------------------
@@ -70,14 +70,14 @@ class GBHotelOffer(models.Model):
         string="Total Habitaciones",
         compute="_compute_totals",
         store=False,
-        help="Cantidad de habitaciones cargadas en la pestaña Habitaciones."
+        help="Cantidad de habitaciones cargadas en la pestaña Habitaciones.",
     )
 
     total_pax = fields.Integer(
         string="Total Pax (estimado)",
         compute="_compute_totals",
         store=False,
-        help="Capacidad estimada sumando las habitaciones (según tipo)."
+        help="Capacidad estimada sumando las habitaciones (según tipo o número de camas).",
     )
 
     @api.depends("room_line_ids", "room_line_ids.capacity_guess")
@@ -91,7 +91,8 @@ class GBHotelOffer(models.Model):
 class GBHotelOfferRoom(models.Model):
     _name = "gb.hotel.offer.room"
     _description = "Habitación ofrecida en el hotel"
-    _order = "room_number, id"
+    _order = "sequence, room_number, id"
+    _rec_name = "room_number"  # Usar Hab./Identificador como nombre visible
 
     offer_id = fields.Many2one(
         "gb.hotel.offer",
@@ -100,10 +101,17 @@ class GBHotelOfferRoom(models.Model):
         ondelete="cascade",
     )
 
+    # Para ordenar con drag & drop en la lista
+    sequence = fields.Integer(
+        string="Sequence",
+        default=10,
+        help="Orden manual de la habitación dentro de la oferta.",
+    )
+
     room_number = fields.Char(
         string="Hab./Identificador",
         required=True,
-        help="Ej: 101, Cabaña 2, Bloque A - Hab 3."
+        help="Ej: 101, Cabaña 2, Bloque A - Hab 3.",
     )
 
     room_type = fields.Selection(
@@ -120,31 +128,46 @@ class GBHotelOfferRoom(models.Model):
         help="Clasificación rápida de la habitación.",
     )
 
+    # Texto descriptivo (donde el usuario escribe 1, 2, 3, '3 camas simples', etc.)
     bed_setup = fields.Char(
-        string="Camas",
-        required=True,
-        help="Ej: '1 matrimonial + 1 simple', '3 camas simples', 'literas 2x2'."
+        string="Camas (detalle)",
+        help="Ej: '1', '2', '3 camas simples', '1 matrimonial + 1 simple', etc.",
+    )
+
+    # Número de camas reales (campo técnico, calculado desde bed_setup)
+    beds = fields.Integer(
+        string="Beds",
+        readonly=True,
+        help="Número de camas reales en la habitación. "
+             "Se calcula automáticamente a partir de 'Camas (detalle)'.",
     )
 
     notes = fields.Char(
         string="Notas",
-        help="Restricciones, a quién se sugiere alojar acá, etc."
+        help="Restricciones, a quién se sugiere alojar acá, etc.",
     )
 
     capacity_guess = fields.Integer(
         string="Capacidad Estimada (pax)",
         compute="_compute_capacity_guess",
         store=False,
-        help="Estimación rápida según tipo. Se usa para el total pax arriba."
+        help="Estimación rápida según número de camas o tipo. Se usa para el total pax.",
     )
 
-    @api.depends("room_type")
+    @api.depends("room_type", "beds")
     def _compute_capacity_guess(self):
         """
-        Estimación rápida de cuántas personas caben en esta habitación.
-        Esto lo usamos sólo para el resumen total_pax.
+        Estima cuántas personas caben en esta habitación.
+        Regla:
+          - Si el sistema conoce 'beds', la capacidad = beds.
+          - Si no, se usa un fallback según room_type.
         """
         for rec in self:
+            if rec.beds:
+                rec.capacity_guess = rec.beds
+                continue
+
+            # Fallback por tipo de habitación
             if rec.room_type == "single":
                 rec.capacity_guess = 1
             elif rec.room_type == "double":
@@ -154,6 +177,42 @@ class GBHotelOfferRoom(models.Model):
             elif rec.room_type == "quad":
                 rec.capacity_guess = 4
             elif rec.room_type == "dorm":
-                rec.capacity_guess = 6  # asumimos dormitorio aprox 6 pax
+                rec.capacity_guess = 6  # valor por defecto si no se indica beds
             else:
                 rec.capacity_guess = 1  # fallback para "other"
+
+    @api.onchange("bed_setup")
+    def _onchange_bed_setup_set_beds(self):
+        """
+        Cuando el usuario cambie 'Camas (detalle)', intentamos extraer
+        el primer número y usarlo como 'beds'.
+
+        Ejemplos:
+          - "1"                   -> beds = 1
+          - "2 camas simples"     -> beds = 2
+          - "3+1"                 -> beds = 3   (toma el primer número)
+          - "Litera grande"       -> no cambia beds (se mantiene el valor actual)
+        """
+        for rec in self:
+            if not rec.bed_setup:
+                continue
+
+            digits = "".join(ch if ch.isdigit() else " " for ch in rec.bed_setup)
+            parts = [p for p in digits.split() if p]
+            if parts:
+                try:
+                    rec.beds = int(parts[0])
+                except ValueError:
+                    # Si por alguna razón no podemos parsear, no tocamos beds
+                    pass
+
+    def name_get(self):
+        """
+        Mostrar un nombre amigable en los Many2one:
+        por defecto, solo Hab./Identificador (room_number).
+        """
+        result = []
+        for rec in self:
+            name = rec.room_number or _("Room")
+            result.append((rec.id, name))
+        return result
