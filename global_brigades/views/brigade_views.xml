@@ -140,7 +140,7 @@
                     <group>
                         <group>
                             <field name="external_brigade_code"/>
-                            <field name="brigade_code" readonly="1"/>
+                            <field name="brigade_code" readonly="1" invisible="1"/>
                             <field name="name"/>
                             <field name="state"/>
                             <field name="arrival_date"/>
