@@ -141,43 +141,31 @@ class GBBrigade(models.Model):
     # CONTADORES UNIFICADOS
     # =========================
     volunteer_count = fields.Integer(
-        string="Volunteers",
-        compute="_compute_counts",
+        string="Volunteers", compute="_compute_counts"
     )
-
     program_count = fields.Integer(
-        string="Programs",
-        compute="_compute_counts",
+        string="Programs", compute="_compute_counts"
     )
-
     activity_count = fields.Integer(
-        string="Activities",
-        compute="_compute_counts",
+        string="Activities", compute="_compute_counts"
     )
-
     transport_count = fields.Integer(
-        string="Transports",
-        compute="_compute_counts",
+        string="Transports", compute="_compute_counts"
     )
 
     university_logo = fields.Image(string="University Logo")
-
     compound_manager_id = fields.Many2one(
         "res.partner", string="COMPOUND SUPERVISOR"
     )
-
     arrival_time_compound = fields.Datetime(
         string="Arrival time to Compound"
     )
-
     departure_time_compound = fields.Datetime(
         string="Departure time from Compound"
     )
-
     coordinator_id = fields.Many2one(
         "res.partner", string="LEAD COORDINATOR"
     )
-
     program_associate_id = fields.Many2one(
         "res.partner", string="PROGRAM ADVISOR"
     )
@@ -189,7 +177,6 @@ class GBBrigade(models.Model):
         "roster_id",
         string="Chapter Leader(s)",
     )
-
     chapter_president_faculty_ids = fields.Many2many(
         "gb.brigade.roster",
         "gb_brigade_chapter_president_faculty_rel",
@@ -197,7 +184,6 @@ class GBBrigade(models.Model):
         "roster_id",
         string="Chapter President / Faculty",
     )
-
     professor_chaperone_ids = fields.Many2many(
         "gb.brigade.roster",
         "gb_brigade_professor_chaperone_rel",
@@ -214,31 +200,24 @@ class GBBrigade(models.Model):
     program_line_ids = fields.One2many(
         "gb.brigade.program", "brigade_id", string="Programs"
     )
-
     roster_ids = fields.One2many(
         "gb.brigade.roster", "brigade_id", string="Roster"
     )
-
     arrival_ids = fields.One2many(
         "gb.brigade.arrival", "brigade_id", string="Arrivals"
     )
-
     departure_ids = fields.One2many(
         "gb.brigade.departure", "brigade_id", string="Departures"
     )
-
     staff_ids = fields.One2many(
         "gb.brigade.staff", "brigade_id", string="Temp Staff"
     )
-
     activity_ids = fields.One2many(
         "gb.brigade.activity", "brigade_id", string="Activities"
     )
-
     hotel_booking_ids = fields.One2many(
         "gb.brigade.hotel.booking", "brigade_id", string="Hotel"
     )
-
     transport_ids = fields.One2many(
         "gb.brigade.transport", "brigade_id", string="Transport"
     )
@@ -290,7 +269,7 @@ class GBBrigade(models.Model):
             if rec.lt_itinerary_link:
                 url = rec.lt_itinerary_link.strip()
                 if not (url.startswith("http://") or url.startswith("https://")):
-                    url = "https://{}" .format(url)
+                    url = "https://" + url
                 rec.lt_itinerary_url = url
             else:
                 rec.lt_itinerary_url = False
@@ -335,27 +314,6 @@ class GBBrigade(models.Model):
             "res_id": self.id,
             "target": "current",
         }
-
-    # =========================
-    # IMPORT ROSTER FROM EXCEL
-    # =========================
-    def action_open_roster_import_wizard(self):
-        """
-        Abre el wizard de importación de roster desde Excel
-        para esta brigada.
-        """
-        self.ensure_one()
-        return {
-            "type": "ir.actions.act_window",
-            "name": "Import Roster from Excel",
-            "res_model": "lt.roster.import.wizard",
-            "view_mode": "form",
-            "target": "new",
-            "context": {
-                "default_brigade_id": self.id,
-            },
-        }
-
 
 # ===========================================================
 # Program Lines (PROGRAMS tab)
