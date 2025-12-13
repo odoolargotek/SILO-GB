@@ -137,16 +137,7 @@
         <field name="arch" type="xml">
             <form string="Brigade">
                 <sheet>
-                <header>
-            <!-- 🔥 BOTÓN EXCEL AQUÍ -->
-<!-- ✅ BOTÓN EXCEL - ODOO 18 -->
-<button name="action_open_excel_import" 
-        string="📊 Importar Excel" 
-        type="object" 
-        class="btn-primary me-2"
-        invisible="id == False"/>
 
-        </header>
                     <group>
                         <group>
                             <field name="external_brigade_code"/>

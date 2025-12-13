@@ -383,8 +383,9 @@ class GBBrigadeProgram(models.Model):
         for rec in self:
             rec.location = rec.community_id.name or False
             
+    # 🔥 LT EXCEL IMPORT - AGREGAR AL FINAL DE LA CLASE gb.brigade
     def action_open_excel_import(self):
-        """Abre wizard de importación Excel con esta brigada precargada"""
+        """LT Abrir wizard importación Excel"""
         return {
             'name': _('LT Importar Participantes Excel'),
             'type': 'ir.actions.act_window',
@@ -393,6 +394,7 @@ class GBBrigadeProgram(models.Model):
             'target': 'new',
             'context': {'default_brigade_id': self.id},
         }
+
 
 # ===========================================================
 # Program Lines (PROGRAMS tab)
