@@ -79,7 +79,7 @@
         </field>
     </record>
 
-    <!-- ACTION: abrir ofertas de hotel -->
+    <!-- ACTION -->
     <record id="action_gb_hotel_offer" model="ir.actions.act_window">
         <field name="name">Hotel Offers</field>
         <field name="res_model">gb.hotel.offer</field>
@@ -88,7 +88,7 @@
         <field name="help">Ofertas de alojamiento para brigadas.</field>
     </record>
 
-    <!-- MENU: opción bajo Hotels (ajusta parent si es necesario) -->
+    <!-- MENU (ajusta parent si tu menú raíz es otro) -->
     <menuitem
         id="menu_gb_hotel_offer"
         name="Hotel Offers"
