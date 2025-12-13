@@ -137,12 +137,6 @@
         <field name="arch" type="xml">
             <form string="Brigade">
                 <sheet>
-        <header>
-            <button name="actionopenexcelimport" 
-                    string="📊 Importar Excel" 
-                    type="object" 
-                    class="btn-primary me-2"/>
-        </header>
                     <group>
                         <group>
                             <field name="external_brigade_code"/>

@@ -286,16 +286,6 @@ class GBBrigade(models.Model):
                         _("Itinerary Link está BLOQUEADO. Desactiva el switch primero.")
                     )
         return super().write(vals)
-    def actionopenexcelimport(self):
-        """LT Abrir wizard importación Excel"""
-        return {
-            'name': _('LT Importar Participantes Excel'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'lt.partner.excel.import',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'default_brigade_id': self.id},
-        }
 
     @api.model
     def create(self, vals):
@@ -313,7 +303,17 @@ class GBBrigade(models.Model):
             vals["brigade_code"] = next_code
         return super().create(vals)
 
-
+    def open_form_action(self):
+        """Abre el formulario de la brigada desde la vista lista."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": "Brigade",
+            "res_model": "gb.brigade",
+            "view_mode": "form",
+            "res_id": self.id,
+            "target": "current",
+        }
 
 # ===========================================================
 # Program Lines (PROGRAMS tab)
@@ -382,19 +382,6 @@ class GBBrigadeProgram(models.Model):
         """Cuando se elige una comunidad, copiamos el nombre al campo location."""
         for rec in self:
             rec.location = rec.community_id.name or False
-            
-    # 🔥 LT EXCEL IMPORT - AGREGAR AL FINAL DE LA CLASE gb.brigade
-    def action_open_excel_import(self):
-        """LT Abrir wizard importación Excel"""
-        return {
-            'name': _('LT Importar Participantes Excel'),
-            'type': 'ir.actions.act_window',
-            'res_model': 'lt.partner.excel.import',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {'default_brigade_id': self.id},
-        }
-
 
 # ===========================================================
 # Program Lines (PROGRAMS tab)
