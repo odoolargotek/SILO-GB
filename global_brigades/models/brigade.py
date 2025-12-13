@@ -1,144 +1,238 @@
 # -*- coding: utf-8 -*-
-#
+
 # LT Brigade Module - Mejoras Odoo 18
 # Largotek SRL - Juan Luis Garvía - www.largotek.com
 # License: LGPL-3.0 (https://www.gnu.org/licenses/lgpl-3.0.html)
-#
 
 from odoo import api, fields, models, _
 from odoo.exceptions import ValidationError, UserError
-
 
 
 class GBBrigade(models.Model):
     _name = "gb.brigade"
     _description = "Global Brigades - Chapter / Brigade"
     _order = "id desc"
-    
-    # Identificación básica
+
+    # =========================
+    # IDENTIFICACIÓN BÁSICA
+    # =========================
     external_brigade_code = fields.Char(
         string="Brigade Code",
         help="External reference / code from CRM or other system.",
     )
-    
+
     brigade_code = fields.Char(
         string="Internal Code",
         readonly=True,
         copy=False,
         default="/",
     )
-    
+
     name = fields.Char(string="CHAPTER NAME", required=True)
     arrival_date = fields.Date(string="Arrival Date")
     departure_date = fields.Date(string="Departure Date")
-    
-    # Estado operativo
-    state = fields.Selection([
-        ("draft", "Draft"),
-        ("planned", "Planned"),
-        ("ready", "Ready"),
-        ("in_field", "In Field"),
-        ("completed", "Completed"),
-        ("archived", "Archived"),
-    ], string="Status", default="draft", required=True,
-       help="Operational state of the Brigade")
-    
-    brigade_type = fields.Selection([
-        ("onsite", "In Person"),
-        ("virtual", "Virtual"),
-    ], string="Brigade Type", default="onsite", required=True,
-       help="If set to Virtual, logistics sections should not be used.")
-    
-    brigade_restriction = fields.Selection([
-        ("darien_golfo", "Darien & Golfo de Mosquito"),
-        ("este_darien", "Este y Darien"),
-        ("solo_darien", "Solo Darien"),
-        ("otros", "Otros"),
-    ], string="Restrictions",
-       help="Geographic / operational restrictions.")
-    
-    brigade_program = fields.Selection([
-        ("medical", "Medical"),
-        ("dental", "Dental"),
-        ("business", "Business"),
-        ("water", "Water"),
-        ("public_health", "Public Health"),
-        ("engineering", "Engineering"),
-        ("squads", "Squads"),
-    ], string="Official Program", help="Main official program.")
 
-    # ---------- LT ITINERARY SIMPLE ----------
-    lt_itinerary_link = fields.Char(string="Itinerary Link", help="Pegar link de GDrive")
-    lt_itinerary_locked = fields.Boolean(string="Bloquear Link", default=False)
-    lt_itinerary_url = fields.Char(string="Itinerary URL", widget="url", readonly=True)
-    # ----------------------------------------
+    # =========================
+    # ESTADO OPERATIVO
+    # =========================
+    state = fields.Selection(
+        [
+            ("draft", "Draft"),
+            ("planned", "Planned"),
+            ("ready", "Ready"),
+            ("in_field", "In Field"),
+            ("completed", "Completed"),
+            ("archived", "Archived"),
+        ],
+        string="Status",
+        default="draft",
+        required=True,
+        help="Operational state of the Brigade",
+    )
 
-    
-    business_client_id = fields.Many2one("res.partner", string="Business Client",
-        help="Client when program is Business.")
-    
+    brigade_type = fields.Selection(
+        [
+            ("onsite", "In Person"),
+            ("virtual", "Virtual"),
+        ],
+        string="Brigade Type",
+        default="onsite",
+        required=True,
+        help="If set to Virtual, logistics sections should not be used.",
+    )
+
+    brigade_restriction = fields.Selection(
+        [
+            ("darien_golfo", "Darien & Golfo de Mosquito"),
+            ("este_darien", "Este y Darien"),
+            ("solo_darien", "Solo Darien"),
+            ("otros", "Otros"),
+        ],
+        string="Restrictions",
+        help="Geographic / operational restrictions.",
+    )
+
+    brigade_program = fields.Selection(
+        [
+            ("medical", "Medical"),
+            ("dental", "Dental"),
+            ("business", "Business"),
+            ("water", "Water"),
+            ("public_health", "Public Health"),
+            ("engineering", "Engineering"),
+            ("squads", "Squads"),
+        ],
+        string="Official Program",
+        help="Main official program.",
+    )
+
+    # =========================
+    # LT ITINERARY SIMPLE
+    # =========================
+    lt_itinerary_link = fields.Char(
+        string="Itinerary Link",
+        help="Pegar link de GDrive o cualquier URL.",
+    )
+
+    lt_itinerary_locked = fields.Boolean(
+        string="Bloquear Link",
+        default=False,
+    )
+
+    lt_itinerary_url = fields.Char(
+        string="Itinerary URL",
+        compute="_compute_lt_itinerary_url",
+        store=True,
+        readonly=True,
+    )
+
+    # =========================
+    # BUSINESS / TIER
+    # =========================
+    business_client_id = fields.Many2one(
+        "res.partner",
+        string="Business Client",
+        help="Client when program is Business.",
+    )
+
     business_profile_link = fields.Char(
         string="Business Profile Link",
         related="business_client_id.business_profile_link",
         readonly=True,
     )
-    
+
     @api.onchange("brigade_program")
     def _onchange_brigade_program_business_client(self):
         for record in self:
             if record.brigade_program != "business":
                 record.business_client_id = False
-    
-    brigade_tier = fields.Selection([
-        ("sustainable", "Sustainable"),
-        ("empowered", "Empowered"),
-        ("scaled", "Scaled"),
-    ], string="Brigade Tier",
-       help="Tier: Sustainable(14-25), Empowered(26-39), Scaled(40+).")
-    
+
+    brigade_tier = fields.Selection(
+        [
+            ("sustainable", "Sustainable"),
+            ("empowered", "Empowered"),
+            ("scaled", "Scaled"),
+        ],
+        string="Brigade Tier",
+        help="Tier: Sustainable(14-25), Empowered(26-39), Scaled(40+).",
+    )
+
+    # =========================
     # CONTADORES UNIFICADOS
-    volunteer_count = fields.Integer(string="Volunteers", compute="_compute_counts")
-    program_count = fields.Integer(string="Programs", compute="_compute_counts")
-    activity_count = fields.Integer(string="Activities", compute="_compute_counts")
-    transport_count = fields.Integer(string="Transports", compute="_compute_counts")
-    
+    # =========================
+    volunteer_count = fields.Integer(
+        string="Volunteers", compute="_compute_counts"
+    )
+    program_count = fields.Integer(
+        string="Programs", compute="_compute_counts"
+    )
+    activity_count = fields.Integer(
+        string="Activities", compute="_compute_counts"
+    )
+    transport_count = fields.Integer(
+        string="Transports", compute="_compute_counts"
+    )
+
     university_logo = fields.Image(string="University Logo")
-    
-    compound_manager_id = fields.Many2one("res.partner", string="COMPOUND SUPERVISOR")
-    arrival_time_compound = fields.Datetime(string="Arrival time to Compound")
-    departure_time_compound = fields.Datetime(string="Departure time from Compound")
-    
-    coordinator_id = fields.Many2one("res.partner", string="LEAD COORDINATOR")
-    program_associate_id = fields.Many2one("res.partner", string="PROGRAM ADVISOR")
-    
+    compound_manager_id = fields.Many2one(
+        "res.partner", string="COMPOUND SUPERVISOR"
+    )
+    arrival_time_compound = fields.Datetime(
+        string="Arrival time to Compound"
+    )
+    departure_time_compound = fields.Datetime(
+        string="Departure time from Compound"
+    )
+    coordinator_id = fields.Many2one(
+        "res.partner", string="LEAD COORDINATOR"
+    )
+    program_associate_id = fields.Many2one(
+        "res.partner", string="PROGRAM ADVISOR"
+    )
+
     chapter_leader_ids = fields.Many2many(
-        "gb.brigade.roster", "gb_brigade_chapter_leader_rel",
-        "brigade_id", "roster_id", string="Chapter Leader(s)")
-    
+        "gb.brigade.roster",
+        "gb_brigade_chapter_leader_rel",
+        "brigade_id",
+        "roster_id",
+        string="Chapter Leader(s)",
+    )
     chapter_president_faculty_ids = fields.Many2many(
-        "gb.brigade.roster", "gb_brigade_chapter_president_faculty_rel",
-        "brigade_id", "roster_id", string="Chapter President / Faculty")
-    
+        "gb.brigade.roster",
+        "gb_brigade_chapter_president_faculty_rel",
+        "brigade_id",
+        "roster_id",
+        string="Chapter President / Faculty",
+    )
     professor_chaperone_ids = fields.Many2many(
-        "gb.brigade.roster", "gb_brigade_professor_chaperone_rel",
-        "brigade_id", "roster_id", string="Professor / Chaperone")
-    
+        "gb.brigade.roster",
+        "gb_brigade_professor_chaperone_rel",
+        "brigade_id",
+        "roster_id",
+        string="Professor / Chaperone",
+    )
+
     extra_info = fields.Text(string="Additional Information")
-    
-    # One2many relaciones
-    program_line_ids = fields.One2many("gb.brigade.program", "brigade_id", string="Programs")
-    roster_ids = fields.One2many("gb.brigade.roster", "brigade_id", string="Roster")
-    arrival_ids = fields.One2many("gb.brigade.arrival", "brigade_id", string="Arrivals")
-    departure_ids = fields.One2many("gb.brigade.departure", "brigade_id", string="Departures")
-    staff_ids = fields.One2many("gb.brigade.staff", "brigade_id", string="Temp Staff")
-    activity_ids = fields.One2many("gb.brigade.activity", "brigade_id", string="Activities")
-    hotel_booking_ids = fields.One2many("gb.brigade.hotel.booking", "brigade_id", string="Hotel")
-    transport_ids = fields.One2many("gb.brigade.transport", "brigade_id", string="Transport")
-    
+
+    # =========================
+    # ONE2MANY RELACIONES
+    # =========================
+    program_line_ids = fields.One2many(
+        "gb.brigade.program", "brigade_id", string="Programs"
+    )
+    roster_ids = fields.One2many(
+        "gb.brigade.roster", "brigade_id", string="Roster"
+    )
+    arrival_ids = fields.One2many(
+        "gb.brigade.arrival", "brigade_id", string="Arrivals"
+    )
+    departure_ids = fields.One2many(
+        "gb.brigade.departure", "brigade_id", string="Departures"
+    )
+    staff_ids = fields.One2many(
+        "gb.brigade.staff", "brigade_id", string="Temp Staff"
+    )
+    activity_ids = fields.One2many(
+        "gb.brigade.activity", "brigade_id", string="Activities"
+    )
+    hotel_booking_ids = fields.One2many(
+        "gb.brigade.hotel.booking", "brigade_id", string="Hotel"
+    )
+    transport_ids = fields.One2many(
+        "gb.brigade.transport", "brigade_id", string="Transport"
+    )
+
     _sql_constraints = [
-        ("chapter_code_uniq", "unique(brigade_code)", "Brigade Code must be unique!"),
+        (
+            "chapter_code_uniq",
+            "unique(brigade_code)",
+            "Brigade Code must be unique!",
+        ),
     ]
-    
+
+    # =========================
+    # COMPUTES / CONSTRAINS
+    # =========================
     @api.depends("roster_ids", "program_line_ids", "activity_ids", "transport_ids")
     def _compute_counts(self):
         for rec in self:
@@ -146,117 +240,69 @@ class GBBrigade(models.Model):
             rec.program_count = len(rec.program_line_ids)
             rec.activity_count = len(rec.activity_ids)
             rec.transport_count = len(rec.transport_ids)
-    
-    @api.constrains("brigade_type", "transport_ids", "hotel_booking_ids", "arrival_ids", "departure_ids")
+
+    @api.constrains(
+        "brigade_type",
+        "transport_ids",
+        "hotel_booking_ids",
+        "arrival_ids",
+        "departure_ids",
+    )
     def _check_virtual_no_logistics(self):
         for rec in self:
             if rec.brigade_type == "virtual" and (
-                rec.transport_ids or rec.hotel_booking_ids or 
-                rec.arrival_ids or rec.departure_ids):
-                raise ValidationError(_("Virtual brigades cannot have logistics records."))
-    
+                rec.transport_ids
+                or rec.hotel_booking_ids
+                or rec.arrival_ids
+                or rec.departure_ids
+            ):
+                raise ValidationError(
+                    _("Virtual brigades cannot have logistics records.")
+                )
+
+    # =========================
+    # ITINERARY URL (compute)
+    # =========================
+    @api.depends("lt_itinerary_link")
+    def _compute_lt_itinerary_url(self):
+        for rec in self:
+            if rec.lt_itinerary_link:
+                url = rec.lt_itinerary_link.strip()
+                if not (url.startswith("http://") or url.startswith("https://")):
+                    url = "https://" + url
+                rec.lt_itinerary_url = url
+            else:
+                rec.lt_itinerary_url = False
+
+    # =========================
+    # WRITE / CREATE / ACTIONS
+    # =========================
     def write(self, vals):
-        return super().write(vals)
-
-    
-    @api.model
-    def create(self, vals):
-        code = vals.get("brigade_code") or "/"
-        if code == "/":
-            next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
-            if not next_code:
-                raise ValidationError(_("Sequence 'gb.brigade.code' not found."))
-            vals["brigade_code"] = next_code
-        return super().create(vals)
-    
-    def open_form_action(self):
-        self.ensure_one()
-        return {
-            "type": "ir.actions.act_window",
-            "name": "Brigade",
-            "res_model": "gb.brigade",
-            "view_mode": "form",
-            "res_id": self.id,
-            "target": "current",
-        }
-
-    # ---------- CONTROL DE EDICIÓN DEL ITINERARY LINK ----------
-
-    def write(self, vals):
-        """Controla que el itinerary_link no se cambie sin usar el botón dedicado."""
-        if "itinerary_link" in vals:
-            for rec in self:
-                old_link = rec.itinerary_link or False
-                new_link = vals.get("itinerary_link") or False
-
-                # Si no cambia realmente, nada que hacer
-                if old_link == new_link:
-                    continue
-
-                # Primera vez: antes vacío, ahora con valor -> permitido
-                if not old_link and new_link:
-                    continue
-
-                # Cambio posterior sin contexto especial -> bloquear
-                if old_link and old_link != new_link and not self.env.context.get("force_itinerary_edit"):
-                    raise ValidationError(_(
-                        "The itinerary link is already set and cannot be changed directly.\n"
-                        "Use the 'Edit Itinerary' button to modify it explicitly."
-                    ))
-
-        return super().write(vals)
-
-    def action_open_itinerary_link(self):
-        """Abre el itinerary_link en una nueva pestaña del navegador."""
-        self.ensure_one()
-        if not self.itinerary_link:
-            raise UserError(_("There is no itinerary link set for this brigade."))
-        return {
-            "type": "ir.actions.act_url",
-            "url": self.itinerary_link,
-            "target": "new",
-        }
-    def write(self, vals):
-        """LT: Bloquea edición cuando switch ON."""
-        if 'lt_itinerary_link' in vals:
+        # Bloquea edición del link cuando el switch está activo
+        if "lt_itinerary_link" in vals:
             for rec in self:
                 if rec.lt_itinerary_locked:
-                    raise ValidationError(_("Itinerary Link está BLOQUEADO. Desactiva el switch primero."))
+                    raise ValidationError(
+                        _("Itinerary Link está BLOQUEADO. Desactiva el switch primero.")
+                    )
         return super().write(vals)
-    # ---------- ASIGNACIÓN DE SECUENCIA ----------
 
     @api.model
     def create(self, vals):
-        # Si no viene código o viene con el placeholder "/", tomamos de la secuencia
+        # Asignación de secuencia para brigade_code
         code = vals.get("brigade_code") or "/"
         if code == "/":
             next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
             if not next_code:
-                raise ValidationError(_(
-                    "Could not get sequence 'gb.brigade.code'. "
-                    "Make sure sequence.xml is loaded in the manifest."
-                ))
+                raise ValidationError(
+                    _(
+                        "No se pudo obtener la secuencia 'gb.brigade.code'. "
+                        "Asegúrate de cargar 'sequence.xml' en el manifest."
+                    )
+                )
             vals["brigade_code"] = next_code
         return super().create(vals)
-    # ---------- ASIGNACIÓN DE SECUENCIA ----------
 
-    @api.model
-    def create(self, vals):
-        # Si no viene código o viene con el placeholder "/", tomamos de la secuencia
-        code = vals.get("brigade_code") or "/"
-        if code == "/":
-            self.env.ref("base.sequence_code", raise_if_not_found=False)
-            next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
-            if not next_code:
-                raise ValidationError(_(
-                    "No se pudo obtener la secuencia 'gb.brigade.code'. "
-                    "Asegúrate de cargar 'sequence.xml' en el manifest."
-                ))
-            vals["brigade_code"] = next_code
-        return super().create(vals)
-    # -------------------------------------------------------------
-    # BOTÓN: Abrir formulario desde la vista lista
-    # -------------------------------------------------------------
     def open_form_action(self):
         """Abre el formulario de la brigada desde la vista lista."""
         self.ensure_one()
@@ -268,16 +314,6 @@ class GBBrigade(models.Model):
             "res_id": self.id,
             "target": "current",
         }
-    @api.onchange('lt_itinerary_link')
-    def _onchange_lt_itinerary_link(self):
-        """Convierte texto a URL válida."""
-        if self.lt_itinerary_link:
-            url = self.lt_itinerary_link.strip()
-            if not (url.startswith('http://') or url.startswith('https://')):
-                url = 'https://' + url
-            self.lt_itinerary_url = url
-        else:
-            self.lt_itinerary_url = False
 
 # ===========================================================
 # Program Lines (PROGRAMS tab)
