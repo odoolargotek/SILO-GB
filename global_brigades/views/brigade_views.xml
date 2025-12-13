@@ -161,7 +161,7 @@
                         <group>
                             <field name="brigade_type"/>
                             <field name="brigade_program"/>
-                            <div class="row">
+                            
 
                             <!-- Business Client -->
                             <field name="business_client_id"/>
