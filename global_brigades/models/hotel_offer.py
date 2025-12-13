@@ -75,22 +75,16 @@ class GBHotelOffer(models.Model):
         string="Total Pax (estimado)",
         compute="_compute_totals",
         store=False,
-        help="Capacidad estimada sumando las habitaciones (según número de camas).",
+        help="Capacidad estimada sumando las habitaciones.",
     )
 
-    @api.depends(
-        "room_line_ids",
-        "room_line_ids.beds",
-        "room_line_ids.capacity_guess",
-    )
+    @api.depends("room_line_ids", "room_line_ids.capacity_guess")
     def _compute_totals(self):
-        """Usa siempre las camas (beds) y, si no hay, capacity_guess como respaldo."""
+        """Suma simple de la capacidad de cada habitación."""
         for rec in self:
             rooms = rec.room_line_ids
             rec.total_rooms = len(rooms)
-            rec.total_pax = sum(
-                (r.beds or r.capacity_guess or 0) for r in rooms
-            )
+            rec.total_pax = sum((r.capacity_guess or 0) for r in rooms)
 
 
 class GBHotelOfferRoom(models.Model):
@@ -139,14 +133,10 @@ class GBHotelOfferRoom(models.Model):
         help="Ej: '1', '2', '3 camas simples', '1 matrimonial + 1 simple', etc.",
     )
 
-    # Número de camas reales (editable, propuesto desde bed_setup)
-    beds = fields.Integer(
-        string="Beds",
-        help=(
-            "Número de camas reales en la habitación. "
-            "Se propone automáticamente a partir de 'Camas (detalle)', "
-            "pero se puede ajustar manualmente."
-        ),
+    # Capacidad en pax: valor REAL que se guarda
+    capacity_guess = fields.Integer(
+        string="Capacidad Estimada (pax)",
+        help="Número de pax para esta habitación; se propone desde 'Camas (detalle)'.",
     )
 
     notes = fields.Char(
@@ -154,51 +144,17 @@ class GBHotelOfferRoom(models.Model):
         help="Restricciones, a quién se sugiere alojar acá, etc.",
     )
 
-    capacity_guess = fields.Integer(
-        string="Capacidad Estimada (pax)",
-        compute="_compute_capacity_guess",
-        store=False,
-        help="Estimación según número de camas. Se usa como respaldo para el total pax.",
-    )
-
-    @api.depends("room_type", "beds")
-    def _compute_capacity_guess(self):
-        """
-        Estima cuántas personas caben en esta habitación.
-
-        Regla:
-        - Si el sistema conoce 'beds', la capacidad = beds.
-        - Si no, se usa un pequeño fallback por tipo.
-        """
-        for rec in self:
-            if rec.beds:
-                rec.capacity_guess = rec.beds
-            else:
-                # Fallback muy simple por tipo (por si alguna vez no se llena beds)
-                if rec.room_type == "single":
-                    rec.capacity_guess = 1
-                elif rec.room_type == "double":
-                    rec.capacity_guess = 2
-                elif rec.room_type == "triple":
-                    rec.capacity_guess = 3
-                elif rec.room_type == "quad":
-                    rec.capacity_guess = 4
-                elif rec.room_type == "dorm":
-                    rec.capacity_guess = 0  # no asumimos nada si no hay camas
-                else:
-                    rec.capacity_guess = 0
-
     @api.onchange("bed_setup")
-    def _onchange_bed_setup_set_beds(self):
+    def _onchange_bed_setup_set_capacity(self):
         """
         Cuando el usuario cambie 'Camas (detalle)', intentamos extraer
-        el primer número y usarlo como 'beds'.
+        el primer número y usarlo como capacity_guess.
 
         Ejemplos:
-        - "1" -> beds = 1
-        - "2 camas simples" -> beds = 2
-        - "3+1" -> beds = 3 (toma el primer número)
-        - "Litera grande" -> no cambia beds (se mantiene el valor actual)
+        - '1' -> 1
+        - '2 camas simples' -> 2
+        - '3+1' -> 3 (toma el primer número)
+        - 'Litera grande' -> no cambia capacity_guess
         """
         for rec in self:
             if not rec.bed_setup:
@@ -207,9 +163,9 @@ class GBHotelOfferRoom(models.Model):
             parts = [p for p in digits.split() if p]
             if parts:
                 try:
-                    rec.beds = int(parts[0])
+                    rec.capacity_guess = int(parts[0])
                 except ValueError:
-                    # Si por alguna razón no podemos parsear, no tocamos beds
+                    # Si por alguna razón no podemos parsear, no tocamos capacity_guess
                     pass
 
     def name_get(self):
