@@ -138,8 +138,12 @@
             <form string="Brigade">
                 <sheet>
                   <head>
-                  <!-- ✅ BOTÓN FINAL - FUNCIONARÁ -->
-                  <button name="action_open_excel_import" string="📊 Importar Excel" type="object" class="btn-primary me-2"      invisible="id == False"/>
+                  <!-- ✅ BOTÓN CORREGIDO - NOMBRE EXACTO -->
+<button name="actionopenexcelimport" 
+        string="📊 Importar Excel" 
+        type="object" 
+        class="btn-primary me-2"
+        invisible="id == False"/>
                   </head>
                     <group>
                         <group>
