@@ -175,11 +175,14 @@
                                             string="Go to Itinerary"
                                             class="btn-link"
                                             icon="fa-external-link"/>
+                                     <field name="lt_itinerary_locked" widget="boolean_toggle" string="🔒"/>
+
                                     <button name="action_edit_itinerary_link"
                                             type="object"
                                             string="Edit Itinerary"
                                             class="btn-link"
                                             icon="fa-edit"/>
+                                            
                                 </div>
                             </div>
 

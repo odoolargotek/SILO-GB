@@ -66,7 +66,9 @@ class GBBrigade(models.Model):
         ("engineering", "Engineering"),
         ("squads", "Squads"),
     ], string="Official Program", help="Main official program.")
-    
+
+    lt_itinerary_locked = fields.Boolean(string="Lock Itinerary", default=False)
+        
     itinerary_link = fields.Char(string="Itinerary Link",
         help="Copy & paste link from GDrive or other.")
     
@@ -298,7 +300,12 @@ class GBBrigade(models.Model):
             "res_id": self.id,
             "target": "current",
         }
-
+    # LT - NUEVOS MÉTODOS
+    def action_toggle_itinerary_lock(self):
+        for rec in self:
+            rec.lt_itinerary_locked = not rec.lt_itinerary_locked
+        return True
+    # LT - FIN
 # ===========================================================
 # Program Lines (PROGRAMS tab)
 # ===========================================================
