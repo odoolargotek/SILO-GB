@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
 
-    <!-- TREE: lista de ofertas de hotel -->
+    <!-- LIST: lista de ofertas de hotel -->
     <record id="view_gb_hotel_offer_tree" model="ir.ui.view">
-        <field name="name">gb.hotel.offer.tree</field>
+        <field name="name">gb.hotel.offer.list</field>
         <field name="model">gb.hotel.offer</field>
         <field name="arch" type="xml">
-            <tree string="Hotel Offers">
+            <list string="Hotel Offers">
                 <field name="name"/>
                 <field name="partner_id"/>
                 <field name="city"/>
                 <field name="total_rooms" string="Total Habitaciones" readonly="1"/>
                 <field name="total_pax" string="Total Pax (estimado)" readonly="1"/>
-            </tree>
+            </list>
         </field>
     </record>
 
@@ -47,13 +47,13 @@
                         <!-- Pestaña Habitaciones -->
                         <page string="Habitaciones">
                             <field name="room_line_ids">
-                                <tree editable="bottom" string="Habitaciones">
+                                <list editable="bottom" string="Habitaciones">
                                     <field name="room_number" string="Hab./Identificador"/>
                                     <field name="room_type" string="Tipo"/>
                                     <field name="bed_setup" string="Camas (detalle)"/>
                                     <field name="pax_per_room" string="Pax por habitación"/>
                                     <field name="notes" string="Notas"/>
-                                </tree>
+                                </list>
                                 <form string="Habitación">
                                     <sheet>
                                         <group>
@@ -83,7 +83,7 @@
     <record id="action_gb_hotel_offer" model="ir.actions.act_window">
         <field name="name">Hotel Offers</field>
         <field name="res_model">gb.hotel.offer</field>
-        <field name="view_mode">tree,form</field>
+        <field name="view_mode">list,form</field>
         <field name="view_id" ref="view_gb_hotel_offer_tree"/>
         <field name="help">Ofertas de alojamiento para brigadas.</field>
     </record>
