@@ -12,4 +12,4 @@ from . import brigade_report_stats
 from . import add_participants_wizard
 from . import passenger_list
 from . import hotel_offer
-from . import roster_import_wizard  # NUEVO: import del wizard de Excel
+from . import roster_import_wizard  # NUEVO
