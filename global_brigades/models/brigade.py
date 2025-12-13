@@ -44,7 +44,6 @@ class GBBrigade(models.Model):
     lt_itinerary_locked = fields.Boolean(string="Lock Itinerary", default=False)
     
     businessclientid = fields.Many2one("res.partner", string="Business Client")
-    # CAMPO CORREGIDO: Eliminado related que no existía
     businessprofilelink = fields.Char(string="Business Profile Link")
     
     brigadetier = fields.Selection([
@@ -64,20 +63,21 @@ class GBBrigade(models.Model):
     coordinatorid = fields.Many2one("res.partner", string="LEAD COORDINATOR")
     programassociateid = fields.Many2one("res.partner", string="PROGRAM ADVISOR")
     
-    chapterleaderids = fields.Many2many("gb.brigade.roster", "gb_brigade_chapter_leader_rel", "brigadeid", "rosterid", string="Chapter Leaders")
-    chapterpresidentfacultyids = fields.Many2many("gb.brigade.roster", "gb_brigade_chapter_president_faculty_rel", "brigadeid", "rosterid", string="Chapter President Faculty")
-    professorchaperoneids = fields.Many2many("gb.brigade.roster", "gb_brigade_professor_chaperone_rel", "brigadeid", "rosterid", string="Professor Chaperone")
+    chapterleaderids = fields.Many2many("gb.brigade.roster", "gb_brigade_chapter_leader_rel", "brigade_id", "roster_id", string="Chapter Leaders")
+    chapterpresidentfacultyids = fields.Many2many("gb.brigade.roster", "gb_brigade_chapter_president_faculty_rel", "brigade_id", "roster_id", string="Chapter President Faculty")
+    professorchaperoneids = fields.Many2many("gb.brigade.roster", "gb_brigade_professor_chaperone_rel", "brigade_id", "roster_id", string="Professor Chaperone")
     
     extrainfo = fields.Text(string="Additional Information")
     
-    programlineids = fields.One2many("gb.brigade.program", "brigadeid", string="Programs")
-    rosterids = fields.One2many("gb.brigade.roster", "brigadeid", string="Roster")
-    arrivalids = fields.One2many("gb.brigade.arrival", "brigadeid", string="Arrivals")
-    departureids = fields.One2many("gb.brigade.departure", "brigadeid", string="Departures")
-    staffids = fields.One2many("gb.brigade.staff", "brigadeid", string="Temp Staff")
-    activityids = fields.One2many("gb.brigade.activity", "brigadeid", string="Activities")
-    hotelbookingids = fields.One2many("gb.brigade.hotel.booking", "brigadeid", string="Hotel")
-    transportids = fields.One2many("gb.brigade.transport", "brigadeid", string="Transport")
+    # CORREGIDO: brigade_id en lugar de brigadeid
+    programlineids = fields.One2many("gb.brigade.program", "brigade_id", string="Programs")
+    rosterids = fields.One2many("gb.brigade.roster", "brigade_id", string="Roster")
+    arrivalids = fields.One2many("gb.brigade.arrival", "brigade_id", string="Arrivals")
+    departureids = fields.One2many("gb.brigade.departure", "brigade_id", string="Departures")
+    staffids = fields.One2many("gb.brigade.staff", "brigade_id", string="Temp Staff")
+    activityids = fields.One2many("gb.brigade.activity", "brigade_id", string="Activities")
+    hotelbookingids = fields.One2many("gb.brigade.hotel.booking", "brigade_id", string="Hotel")
+    transportids = fields.One2many("gb.brigade.transport", "brigade_id", string="Transport")
     
     _sql_constraints = [("chaptercodeuniq", "unique(brigadecode)", "Brigade Code must be unique!")]
     
@@ -160,6 +160,7 @@ class GBBrigade(models.Model):
             "res_id": self.id,
             "target": "current",
         }
+
     # ---------------------------------------------
 
     # ---------- ASIGNACIÓN DE SECUENCIA ----------
