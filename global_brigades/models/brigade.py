@@ -163,21 +163,33 @@ class GBBrigade(models.Model):
         return super().write(vals)
     
     def action_open_itinerary_link(self):
-        """LT: FIX DEFINITIVO con // doble slash."""
+        """LT: JavaScript PURO - 100% bypass Odoo act_url."""
         self.ensure_one()
         if not self.itinerarylink:
             raise UserError(_("No itinerary link set."))
         
         url = self.itinerarylink.strip()
-        
-        # FIX DEFINITIVO: doble slash funciona en TODOS los navegadores
         if not (url.startswith('http://') or url.startswith('https://')):
-            url = '//' + url
+            url = 'https://' + url
         
         return {
-            'type': 'ir.actions.act_url',
-            'url': url,
-            'target': 'new',
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': 'Abriendo Itinerario...',
+                'message': url,
+                'type': 'info',
+                'sticky': False,
+                'buttons': [{
+                    'text': 'Abrir Link',
+                    'className': 'btn-primary',
+                    'close': True,
+                    'click': f'''
+                        window.open("{url}", "_blank");
+                        return true;
+                    '''
+                }]
+            }
         }
 
     
