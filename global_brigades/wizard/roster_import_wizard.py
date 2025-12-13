@@ -12,28 +12,18 @@ class GBRosterImportWizard(models.TransientModel):
     _name = "gb.roster.import.wizard"
     _description = "Import Roster from Excel"
 
-    brigade_id = fields.Many2one(
-        "gb.brigade",
-        string="Brigade",
-        required=True,
-    )
+    brigade_id = fields.Many2one("gb.brigade", string="Brigade", required=True)
 
-    upload_file = fields.Binary(
-        string="Excel File (.xlsx)",
-        required=True,
-    )
+    upload_file = fields.Binary(string="Excel File (.xlsx)", required=True)
     upload_filename = fields.Char(string="Filename")
 
     create_missing_contacts = fields.Boolean(
         string="Create contacts if not found",
         default=True,
-        help="If a person is not found by email (or name), create a new contact.",
     )
-
     update_existing_contacts = fields.Boolean(
         string="Update existing contacts",
         default=True,
-        help="If the contact already exists, update its GB fields with the Excel values (when provided).",
     )
 
     def _to_bool(self, value):
@@ -55,7 +45,6 @@ class GBRosterImportWizard(models.TransientModel):
             return value
         if isinstance(value, datetime):
             return value.date()
-        # try parse strings
         s = str(value).strip()
         for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y", "%m-%d-%Y"):
             try:
@@ -70,14 +59,11 @@ class GBRosterImportWizard(models.TransientModel):
     def _get_cell_str(self, v):
         if v is None:
             return ""
-        if isinstance(v, (datetime, date)):
-            return str(v)
         return str(v).strip()
 
     def action_import(self):
         self.ensure_one()
 
-        # Dependencia externa: openpyxl
         try:
             import openpyxl
         except Exception:
@@ -86,15 +72,8 @@ class GBRosterImportWizard(models.TransientModel):
                 "pip install openpyxl"
             ))
 
-        if not self.upload_file:
-            raise UserError(_("Please upload an Excel file (.xlsx)."))
-
         file_bytes = base64.b64decode(self.upload_file)
-        try:
-            wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
-        except Exception as e:
-            raise UserError(_("Could not read the Excel file. Error: %s") % (str(e)))
-
+        wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
         ws = wb.active
         rows = list(ws.iter_rows(values_only=True))
         if not rows:
@@ -102,7 +81,6 @@ class GBRosterImportWizard(models.TransientModel):
 
         headers = [self._normalize_header(h) for h in rows[0]]
 
-        # Header mapping (acepta variantes)
         def idx(*names):
             for n in names:
                 n = self._normalize_header(n)
@@ -111,11 +89,9 @@ class GBRosterImportWizard(models.TransientModel):
             return None
 
         col = {
-            # persona base
             "name": idx("name", "full name", "volunteer name", "participant", "nombre"),
             "email": idx("email", "e-mail", "mail", "correo"),
-            "mobile": idx("mobile", "cell", "cellphone", "phone", "tel", "telefono", "teléfono", "phone number"),
-            # GB fields (partner)
+            "mobile": idx("mobile", "cell", "cellphone", "phone", "telefono", "teléfono"),
             "gender": idx("gender", "sexo", "género", "genero"),
             "birthdate": idx("birthdate", "date of birth", "dob", "fecha de nacimiento"),
             "spanish": idx("spanish speaker", "spanish", "habla español", "habla espanol"),
@@ -127,30 +103,18 @@ class GBRosterImportWizard(models.TransientModel):
             "medical_condition": idx("medical condition", "condition", "condición médica", "condicion medica"),
             "medications": idx("medications", "medication", "medicina", "medicacion", "medicación"),
             "allergy": idx("allergies", "allergy", "alergias", "alergia"),
-            # roster-only
             "brigade_role": idx("brigade role", "role in brigade", "role", "rol"),
             "sa": idx("s.a.", "sa", "s a"),
-            # emergency
             "emergency_name": idx("emergency contact", "emergency contact name", "contacto de emergencia"),
             "emergency_email": idx("emergency contact e-mail", "emergency contact email", "emergency email", "correo emergencia"),
         }
 
         if col["name"] is None and col["email"] is None:
-            raise UserError(_(
-                "Your Excel must include at least a 'Name' column or an 'Email' column in the first row."
-            ))
+            raise UserError(_("Your Excel must include at least a 'Name' or 'Email' column."))
 
         Partner = self.env["res.partner"].with_context(tracking_disable=True)
         Roster = self.env["gb.brigade.roster"].with_context(tracking_disable=True)
 
-        created_contacts = 0
-        updated_contacts = 0
-        created_roster = 0
-        updated_roster = 0
-        skipped = 0
-        errors = []
-
-        # helpers
         def get(row, key):
             i = col.get(key)
             if i is None or i >= len(row):
@@ -173,22 +137,14 @@ class GBRosterImportWizard(models.TransientModel):
             if not v:
                 return None
             s = str(v).strip().lower().replace(" ", "")
-            # allow xs/s/m/l/xl/xxl
-            if s in ("xs",):
-                return "xs"
-            if s in ("s",):
-                return "s"
-            if s in ("m",):
-                return "m"
-            if s in ("l",):
-                return "l"
-            if s in ("xl",):
-                return "xl"
-            if s in ("xxl", "2xl"):
-                return "xxl"
+            if s in ("xs", "s", "m", "l", "xl", "xxl", "2xl"):
+                return "xxl" if s in ("xxl", "2xl") else s
             return None
 
-        for r_index, row in enumerate(rows[1:], start=2):  # excel line number
+        created_contacts = updated_contacts = created_roster = updated_roster = skipped = 0
+        errors = []
+
+        for r_index, row in enumerate(rows[1:], start=2):
             try:
                 name = (self._get_cell_str(get(row, "name"))).strip()
                 email = (self._get_cell_str(get(row, "email"))).strip().lower()
@@ -197,7 +153,6 @@ class GBRosterImportWizard(models.TransientModel):
                     skipped += 1
                     continue
 
-                # Find/create main partner
                 partner = False
                 if email:
                     partner = Partner.search([("email", "=", email)], limit=1)
@@ -214,9 +169,8 @@ class GBRosterImportWizard(models.TransientModel):
                 if email:
                     vals_partner["email"] = email
 
-                mobile = self._get_cell_str(get(row, "mobile")).strip()
+                mobile = (self._get_cell_str(get(row, "mobile"))).strip()
                 if mobile:
-                    # put in mobile by default
                     vals_partner["mobile"] = mobile
 
                 g = map_gender(get(row, "gender"))
@@ -235,7 +189,7 @@ class GBRosterImportWizard(models.TransientModel):
                 if ts:
                     vals_partner["gb_tshirt_size"] = ts
 
-                pno = self._get_cell_str(get(row, "passport_no")).strip()
+                pno = (self._get_cell_str(get(row, "passport_no"))).strip()
                 if pno:
                     vals_partner["gb_passport_no"] = pno
 
@@ -243,23 +197,23 @@ class GBRosterImportWizard(models.TransientModel):
                 if pexp:
                     vals_partner["gb_passport_expiry"] = pexp
 
-                cit = self._get_cell_str(get(row, "citizenship")).strip()
+                cit = (self._get_cell_str(get(row, "citizenship"))).strip()
                 if cit:
                     vals_partner["gb_citizenship"] = cit
 
-                diet = self._get_cell_str(get(row, "diet")).strip()
+                diet = (self._get_cell_str(get(row, "diet"))).strip()
                 if diet:
                     vals_partner["gb_diet"] = diet
 
-                mc = self._get_cell_str(get(row, "medical_condition")).strip()
+                mc = (self._get_cell_str(get(row, "medical_condition"))).strip()
                 if mc:
                     vals_partner["gb_medical_condition"] = mc
 
-                meds = self._get_cell_str(get(row, "medications")).strip()
+                meds = (self._get_cell_str(get(row, "medications"))).strip()
                 if meds:
                     vals_partner["gb_medications"] = meds
 
-                alg = self._get_cell_str(get(row, "allergy")).strip()
+                alg = (self._get_cell_str(get(row, "allergy"))).strip()
                 if alg:
                     vals_partner["gb_allergy"] = alg
 
@@ -271,10 +225,10 @@ class GBRosterImportWizard(models.TransientModel):
                     partner = Partner.create(vals_partner)
                     created_contacts += 1
 
-                # Emergency contact partner (optional)
+                # Emergency contact (optional)
                 emergency_partner = False
-                e_name = self._get_cell_str(get(row, "emergency_name")).strip()
-                e_email = self._get_cell_str(get(row, "emergency_email")).strip().lower()
+                e_name = (self._get_cell_str(get(row, "emergency_name"))).strip()
+                e_email = (self._get_cell_str(get(row, "emergency_email"))).strip().lower()
 
                 if e_name or e_email:
                     if e_email:
@@ -282,23 +236,18 @@ class GBRosterImportWizard(models.TransientModel):
                     if not emergency_partner and e_name:
                         emergency_partner = Partner.search([("name", "=", e_name)], limit=1)
                     if not emergency_partner:
-                        emergency_partner = Partner.create({
-                            "name": e_name or e_email,
-                            "email": e_email or False,
-                        })
+                        emergency_partner = Partner.create({"name": e_name or e_email, "email": e_email or False})
 
-                    # also store in partner GB field (optional, useful)
-                    if emergency_partner and partner and partner.gb_emergency_contact_id != emergency_partner:
+                    if partner.gb_emergency_contact_id != emergency_partner:
                         partner.write({"gb_emergency_contact_id": emergency_partner.id})
 
-                # Roster line create/update
-                roster_line = Roster.search([
-                    ("brigade_id", "=", self.brigade_id.id),
-                    ("partner_id", "=", partner.id),
-                ], limit=1)
+                roster_line = Roster.search(
+                    [("brigade_id", "=", self.brigade_id.id), ("partner_id", "=", partner.id)],
+                    limit=1
+                )
 
                 vals_roster = {}
-                role = self._get_cell_str(get(row, "brigade_role")).strip()
+                role = (self._get_cell_str(get(row, "brigade_role"))).strip()
                 if role:
                     vals_roster["brigade_role"] = role
 
@@ -316,11 +265,7 @@ class GBRosterImportWizard(models.TransientModel):
                     else:
                         skipped += 1
                 else:
-                    # minimum needed
-                    vals_roster.update({
-                        "brigade_id": self.brigade_id.id,
-                        "partner_id": partner.id,
-                    })
+                    vals_roster.update({"brigade_id": self.brigade_id.id, "partner_id": partner.id})
                     Roster.create(vals_roster)
                     created_roster += 1
 
@@ -334,26 +279,13 @@ class GBRosterImportWizard(models.TransientModel):
             "- Roster lines created: %(rc)s\n"
             "- Roster lines updated: %(ru)s\n"
             "- Skipped: %(sk)s\n"
-        ) % {
-            "cc": created_contacts,
-            "cu": updated_contacts,
-            "rc": created_roster,
-            "ru": updated_roster,
-            "sk": skipped,
-        }
+        ) % {"cc": created_contacts, "cu": updated_contacts, "rc": created_roster, "ru": updated_roster, "sk": skipped}
 
         if errors:
             msg += _("\nErrors:\n- ") + "\n- ".join(errors[:50])
-            if len(errors) > 50:
-                msg += _("\n... (%s more)") % (len(errors) - 50)
 
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
                 "title": _("Roster Import"),
-                "message": msg,
-                "type": "success" if not errors else "warning",
-                "sticky": True if errors else False,
-            }
-        }
