@@ -137,6 +137,14 @@
         <field name="arch" type="xml">
             <form string="Brigade">
                 <sheet>
+                <header>
+            <!-- 🔥 BOTÓN EXCEL AQUÍ -->
+            <button name="%(global_brigades.action_partner_excel_import)d" 
+                    string="📊 Importar Excel" 
+                    type="action" 
+                    class="btn-primary me-2"
+                    context="{'default_brigade_id': active_id}"/>
+        </header>
                     <group>
                         <group>
                             <field name="external_brigade_code"/>
