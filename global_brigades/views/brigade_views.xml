@@ -165,7 +165,7 @@
                             <div class="row">
                                 <div class="col-8">
                                     <label for="itinerary_link">Itinerary Link</label>
-                                    <field name="itinerarylink" placeholder="https://drive.google.com/..." 
+                                    <field name="itinerary_link" placeholder="https://drive.google.com/..." 
        attrs="{'readonly': [('lt_itinerary_locked', '=', True)]}"/>
                                 </div>
 
