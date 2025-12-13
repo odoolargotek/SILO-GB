@@ -146,7 +146,7 @@ class GBHotelOfferRoom(models.Model):
         string="Capacidad Estimada (pax)",
         compute="_compute_capacity_guess",
         store=False,
-        help="Capacidad estimada según beds y, si falta, el tipo de habitación.",
+        help="Capacidad estimada según beds o, si falta, el tipo de habitación / camas (detalle).",
     )
 
     notes = fields.Char(
@@ -154,20 +154,22 @@ class GBHotelOfferRoom(models.Model):
         help="Restricciones, a quién se sugiere alojar acá, etc.",
     )
 
-    @api.depends("room_type", "beds")
+    @api.depends("room_type", "beds", "bed_setup")
     def _compute_capacity_guess(self):
         """
         Estima cuántas personas caben en esta habitación.
         Regla:
         - Si el sistema conoce 'beds', la capacidad = beds.
         - Si no, se usa un fallback según room_type.
+          En 'dorm', primero intenta leer el número de bed_setup.
         """
         for rec in self:
+            # 1) Si hay beds, es la fuente principal
             if rec.beds:
                 rec.capacity_guess = rec.beds
                 continue
 
-            # Fallback por tipo de habitación
+            # 2) Fallback por tipo de habitación
             if rec.room_type == "single":
                 rec.capacity_guess = 1
             elif rec.room_type == "double":
@@ -177,7 +179,19 @@ class GBHotelOfferRoom(models.Model):
             elif rec.room_type == "quad":
                 rec.capacity_guess = 4
             elif rec.room_type == "dorm":
-                rec.capacity_guess = 6  # valor por defecto si no se indica beds
+                # Aquí cambiamos el "6" fijo por el número de bed_setup
+                pax = 0
+                if rec.bed_setup:
+                    digits = "".join(
+                        ch if ch.isdigit() else " " for ch in rec.bed_setup
+                    )
+                    parts = [p for p in digits.split() if p]
+                    if parts:
+                        try:
+                            pax = int(parts[0])
+                        except ValueError:
+                            pax = 0
+                rec.capacity_guess = pax or 6  # si no hay número, se mantiene 6 como último recurso
             else:
                 rec.capacity_guess = 1  # fallback para "other"
 
@@ -186,12 +200,6 @@ class GBHotelOfferRoom(models.Model):
         """
         Cuando el usuario cambie 'Camas (detalle)', intentamos extraer
         el primer número y usarlo como 'beds'.
-
-        Ejemplos:
-        - "1" -> beds = 1
-        - "2 camas simples" -> beds = 2
-        - "3+1" -> beds = 3 (toma el primer número)
-        - "Litera grande" -> no cambia beds (se mantiene el valor actual)
         """
         for rec in self:
             if not rec.bed_setup:
