@@ -165,8 +165,8 @@
                             <div class="row">
                                 <div class="col-8">
                                     <label for="itinerary_link">Itinerary Link</label>
-                                    <field name="itinerary_link"
-                                           placeholder="https://drive.google.com/..."/>
+                                    <field name="itinerarylink" placeholder="https://drive.google.com/..." 
+       attrs="{'readonly': [('lt_itinerary_locked', '=', True)]}"/>
                                 </div>
 
                                 <div class="col-4" style="margin-top: 20px;">
@@ -175,7 +175,9 @@
                                             string="Go to Itinerary"
                                             class="btn-link"
                                             icon="fa-external-link"/>
-                                     <field name="lt_itinerary_locked" widget="boolean_toggle" string="🔒"/>
+                                     
+                                     <field name="lt_itinerary_locked" widget="boolean_toggle" string="🔒 Bloqueo de Link"/>
+
 
                                             
                                 </div>
