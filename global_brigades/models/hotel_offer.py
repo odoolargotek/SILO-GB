@@ -146,7 +146,7 @@ class GBHotelOfferRoom(models.Model):
         string="Capacidad Estimada (pax)",
         compute="_compute_capacity_guess",
         store=False,
-        help="Capacidad estimada según el número escrito en 'Camas (detalle)'.",
+        help="Capacidad estimada según beds y, si falta, el tipo de habitación.",
     )
 
     notes = fields.Char(
@@ -154,41 +154,59 @@ class GBHotelOfferRoom(models.Model):
         help="Restricciones, a quién se sugiere alojar acá, etc.",
     )
 
-    @api.depends("bed_setup")
+    @api.depends("room_type", "beds")
     def _compute_capacity_guess(self):
         """
-        La capacidad estimada es el primer número que aparezca en 'Camas (detalle)'.
-        Si no hay número, la capacidad se queda en 0.
+        Estima cuántas personas caben en esta habitación.
+        Regla:
+        - Si el sistema conoce 'beds', la capacidad = beds.
+        - Si no, se usa un fallback según room_type.
         """
         for rec in self:
-            rec.capacity_guess = 0
-            if not rec.bed_setup:
+            if rec.beds:
+                rec.capacity_guess = rec.beds
                 continue
-            digits = "".join(ch if ch.isdigit() else " " for ch in rec.bed_setup)
-            parts = [p for p in digits.split() if p]
-            if parts:
-                try:
-                    rec.capacity_guess = int(parts[0])
-                except ValueError:
-                    rec.capacity_guess = 0
+
+            # Fallback por tipo de habitación
+            if rec.room_type == "single":
+                rec.capacity_guess = 1
+            elif rec.room_type == "double":
+                rec.capacity_guess = 2
+            elif rec.room_type == "triple":
+                rec.capacity_guess = 3
+            elif rec.room_type == "quad":
+                rec.capacity_guess = 4
+            elif rec.room_type == "dorm":
+                rec.capacity_guess = 6  # valor por defecto si no se indica beds
+            else:
+                rec.capacity_guess = 1  # fallback para "other"
 
     @api.onchange("bed_setup")
     def _onchange_bed_setup_set_beds(self):
         """
-        Mantiene 'beds' sincronizado con el primer número de 'Camas (detalle)'.
-        Sirve solo como ayuda visual; el total se calcula con capacity_guess.
+        Cuando el usuario cambie 'Camas (detalle)', intentamos extraer
+        el primer número y usarlo como 'beds'.
+
+        Ejemplos:
+        - "1" -> beds = 1
+        - "2 camas simples" -> beds = 2
+        - "3+1" -> beds = 3 (toma el primer número)
+        - "Litera grande" -> no cambia beds (se mantiene el valor actual)
         """
         for rec in self:
-            rec.beds = 0
             if not rec.bed_setup:
                 continue
-            digits = "".join(ch if ch.isdigit() else " " for ch in rec.bed_setup)
+
+            digits = "".join(
+                ch if ch.isdigit() else " " for ch in rec.bed_setup
+            )
             parts = [p for p in digits.split() if p]
             if parts:
                 try:
                     rec.beds = int(parts[0])
                 except ValueError:
-                    rec.beds = 0
+                    # Si por alguna razón no podemos parsear, no tocamos beds
+                    pass
 
     def name_get(self):
         """
