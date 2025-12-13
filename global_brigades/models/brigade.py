@@ -163,20 +163,24 @@ class GBBrigade(models.Model):
         return super().write(vals)
     
     def action_open_itinerary_link(self):
-        """LT: window.open directo (FIX definitivo)."""
+        """LT: JavaScript window.open directo."""
         self.ensure_one()
         if not self.itinerarylink:
             raise UserError(_("No itinerary link set."))
         
         url = self.itinerarylink.strip()
-        if not (url.startswith('http://') or url.startswith('https://')):
+        if not url.startswith(('http://', 'https://')):
             url = 'https://' + url
-        
+            
         return {
-            'type': 'ir.actions.client',
-            'tag': 'action',
-            'params': {
-                'action': f'window.open("{url}", "_blank");'
+            'type': 'ir.actions.act_window',
+            'res_model': 'gb.brigade',
+            'view_mode': 'form',
+            'res_id': self.id,
+            'target': 'new',
+            'context': {
+                'default_itinerarylink': url,
+                'js_action': f'window.open("{url}", "_blank");'
             }
         }
 
