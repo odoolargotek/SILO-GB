@@ -44,7 +44,8 @@ class GBBrigade(models.Model):
     lt_itinerary_locked = fields.Boolean(string="Lock Itinerary", default=False)
     
     businessclientid = fields.Many2one("res.partner", string="Business Client")
-    businessprofilelink = fields.Char(string="Business Profile Link", related="businessclientid.businessprofilelink", readonly=True)
+    # CAMPO CORREGIDO: Eliminado related que no existía
+    businessprofilelink = fields.Char(string="Business Profile Link")
     
     brigadetier = fields.Selection([
         ("sustainable", "Sustainable"), ("empowered", "Empowered"), ("scaled", "Scaled")
@@ -98,6 +99,7 @@ class GBBrigade(models.Model):
     def _onchange_brigadeprogram_businessclient(self):
         if self.brigadeprogram != "business":
             self.businessclientid = False
+            self.businessprofilelink = False
     
     def write(self, vals):
         if "itinerarylink" in vals:
@@ -137,22 +139,18 @@ class GBBrigade(models.Model):
         for rec in self:
             rec.lt_itinerary_locked = not rec.lt_itinerary_locked
         return True
-  
-    # ---------------------------------------------
     
     @api.model
     def create(self, vals):
-        """Genera código automático desde secuencia."""
         code = vals.get("brigadecode") or "/"
         if code == "/":
             next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
             if not next_code:
-                raise ValidationError(_("Secuencia 'gb.brigade.code' no encontrada. Verifica sequence.xml."))
+                raise ValidationError(_("Sequence 'gb.brigade.code' not found."))
             vals["brigadecode"] = next_code
         return super().create(vals)
     
     def openformaction(self):
-        """Abre formulario desde lista."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
@@ -162,7 +160,6 @@ class GBBrigade(models.Model):
             "res_id": self.id,
             "target": "current",
         }
-
     # ---------------------------------------------
 
     # ---------- ASIGNACIÓN DE SECUENCIA ----------
