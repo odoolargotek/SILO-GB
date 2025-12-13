@@ -161,23 +161,23 @@
                         <group>
                             <field name="brigade_type"/>
                             <field name="brigade_program"/>
-
                             <div class="row">
                                 <div class="col-8">
                                     <label for="itinerary_link">Itinerary Link</label>
-                                    <field name="itinerary_link" placeholder="https://drive.google.com/..." 
-       readonly="lt_itinerary_locked"/>
+                                    <field name="itinerary_link" placeholder="https://drive.google.com/..." readonly="lt_itinerary_locked"/></div>
+                                    <div class="oe_inline" attrs="{'invisible': [('itinerarylink', '=', False)]}">
+    <a t-att-href="itinerarylink" target="_blank" class="btn btn-link">
+        <i class="fa fa-external-link"/> Abrir Itinerario
+    </a>
+</div>
 
-                                </div>
+                                
 
                                 <div class="col-4" style="margin-top: 20px;">
-                                    <button name="action_open_itinerary_link"
-                                            type="object"
-                                            string="Go to Itinerary"
-                                            class="btn-link"
-                                            icon="fa-external-link"/>
+                                    <button name="action_open_itinerary_link" type="object" string="Go to Itinerary" class="btn-link" icon="fa-external-link" attrs="{'invisible': [('itinerarylink', '=', False)]}"/>
                                      
                                      <field name="lt_itinerary_locked" widget="boolean_toggle" string="🔒 Bloqueo de Link"/>
+                                     
 
 
                                             
