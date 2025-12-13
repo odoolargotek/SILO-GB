@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Agregar botón en la pestaña ROSTER de gb.brigade para importar desde Excel -->
+    <record id="view_gb_brigade_form_roster_import" model="ir.ui.view">
+        <field name="name">gb.brigade.form.roster.import.button</field>
+        <field name="model">gb.brigade</field>
+        <field name="inherit_id" ref="brigade_views.view_gb_brigade_form"/>
+        <field name="arch" type="xml">
+            <!-- Buscar la página ROSTER y agregar un botón de importación -->
+            <xpath expr="//page[@string='ROSTER']" position="before">
+                <page string="ROSTER">
+                    <div>
+                        <button name="action_open_roster_import_wizard" 
+                                type="object" 
+                                string="Import from Excel" 
+                                class="btn-primary" 
+                                icon="fa-file-excel-o"/>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
