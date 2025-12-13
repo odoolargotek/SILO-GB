@@ -163,10 +163,22 @@ class GBBrigade(models.Model):
         return super().write(vals)
     
     def action_open_itinerary_link(self):
+        """LT: Abre itinerario externo correctamente (FIX dominio)."""
         self.ensure_one()
-        if not self.itinerary_link:
+        if not self.itinerarylink:
             raise UserError(_("No itinerary link set."))
-        return {"type": "ir.actions.act_url", "url": self.itinerary_link, "target": "new"}
+        
+        # FIX: Asegurar URL completa
+        url = self.itinerarylink.strip()
+        if not (url.startswith('http://') or url.startswith('https://')):
+            url = 'https://' + url
+        
+        return {
+            'type': 'ir.actions.act_url',
+            'url': url,
+            'target': 'new',
+        }
+    
     
     def action_edit_itinerary_link(self):
         self.ensure_one()
