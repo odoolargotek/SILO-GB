@@ -171,18 +171,10 @@
                attrs="{'readonly': [('itinerary_locked', '=', True)]}"/>
     </div>
     <div class="col-4" style="margin-top: 20px;">
-        <field name="itinerary_locked" widget="toggle" string="Locked"/>
-        <button name="action_open_itinerary_link"
-                type="object"
-                string="Go to Itinerary"
-                class="btn-link"
-                icon="fa-external-link"/>
-        <button name="action_edit_itinerary_link"
-                type="object"
-                string="Edit Itinerary"
-                class="btn-link"
-                icon="fa-edit"/>
-    </div>
+    <field name="lt_itinerary_locked" widget="boolean_toggle" string="Locked"/>
+    <button name="action_open_itinerary_link" type="object" string="Go to Itinerary" class="btn-link" icon="fa-external-link"/>
+    <button name="action_edit_itinerary_link" type="object" string="Edit Itinerary" class="btn-link" icon="fa-edit"/>
+</div>
 </div>
 
                             <!-- Business Client -->
