@@ -17,12 +17,12 @@ class GBBrigade(models.Model):
     
     # Identificación básica
     external_brigade_code = fields.Char(
-        string="Brigade Code",
+        string="External Brigade Code",
         help="External reference / code from CRM or other system.",
     )
     
     brigade_code = fields.Char(
-        string="INTERNAL BRIGADE CODE",
+        string="BRIGADE CODE",
         readonly=True,
         copy=False,
         default="/",
