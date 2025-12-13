@@ -139,11 +139,11 @@
                 <sheet>
                 <header>
             <!-- 🔥 BOTÓN EXCEL AQUÍ -->
-            <button name="%(global_brigades.action_partner_excel_import)d" 
-                    string="📊 Importar Excel" 
-                    type="action" 
-                    class="btn-primary me-2"
-                    context="{'default_brigade_id': active_id}"/>
+            <button name="action_open_excel_import" 
+        string="📊 Importar Excel" 
+        type="object" 
+        class="btn-primary me-2"
+        attrs="{'invisible': [('id', '=', False)]}"/>
         </header>
                     <group>
                         <group>
