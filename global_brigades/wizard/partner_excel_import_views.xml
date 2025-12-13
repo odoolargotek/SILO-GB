@@ -10,14 +10,14 @@
             <field name="context">{'default_brigade_id': active_id}</field>
         </record>
 
-        <!-- Menú PRINCIPAL - SIN PADRE (aparece en Apps > Brigadas) -->
+        <!-- Menú PRINCIPAL - SIN PADRE -->
         <menuitem id="menu_partner_excel_import"
             name="📊 LT Importar Excel"
             action="action_partner_excel_import"
             sequence="35"
             parent=""/>
 
-        <!-- Vista del wizard -->
+        <!-- Vista del wizard - Odoo 18 compatible -->
         <record id="view_partner_excel_import_form" model="ir.ui.view">
             <field name="name">lt.partner.excel.import.form</field>
             <field name="model">lt.partner.excel.import</field>
@@ -26,9 +26,9 @@
                     <header>
                         <button name="action_import_excel" string="🚀 Importar Ahora" 
                                 type="object" class="btn-primary oe_highlight"
-                                attrs="{'invisible': [('state', '!=', 'ready')]}"/>
+                                invisible="state != 'ready'"/>
                         <button string="Finalizar" class="btn-success"
-                                attrs="{'invisible': [('state', '!=', 'done')]}"
+                                invisible="state != 'done'"
                                 special="cancel"/>
                         <field name="state" widget="statusbar" statusbar_visible="draft,ready,done"/>
                     </header>
@@ -51,7 +51,7 @@
                         </group>
                         <div class="oe_structure"/>
                         <notebook>
-                            <page string="📋 Vista Previa" attrs="{'invisible': [('state', '!=', 'ready')]}">
+                            <page string="📋 Vista Previa" invisible="state != 'ready'">
                                 <div class="alert alert-info">
                                     <strong>✅ Archivo listo para importar</strong><br/>
                                     Se detectaron <field name="total_lines"/> líneas de datos.
@@ -61,7 +61,7 @@
                                     A: nombre | B: apellido | C: identificación | D: email | E: teléfono
                                 </p>
                             </page>
-                            <page string="✅ Resultado" attrs="{'invisible': [('state', '!=', 'done')]}">
+                            <page string="✅ Resultado" invisible="state != 'done'">
                                 <div class="alert alert-success">
                                     <h4>¡Importación completada!</h4>
                                     <p><strong><field name="imported_count"/></strong> participantes creados exitosamente</p>
