@@ -5,20 +5,30 @@
 # License: LGPL-3.0 (https://www.gnu.org/licenses/lgpl-3.0.html)
 
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError, UserError
+from odoo.exceptions import ValidationError
 
 
 class GBBrigade(models.Model):
     _name = "gb.brigade"
     _description = "Global Brigades - Chapter / Brigade"
     _order = "id desc"
+    _inherit = ["mail.thread", "mail.activity.mixin"]
 
     # =========================
     # IDENTIFICACIÓN BÁSICA
     # =========================
+    company_id = fields.Many2one(
+        "res.company",
+        string="Company",
+        default=lambda self: self.env.company,
+        required=True,
+        index=True,
+    )
+
     external_brigade_code = fields.Char(
         string="Brigade Code",
         help="External reference / code from CRM or other system.",
+        tracking=True,
     )
 
     brigade_code = fields.Char(
@@ -26,11 +36,12 @@ class GBBrigade(models.Model):
         readonly=True,
         copy=False,
         default="/",
+        tracking=True,
     )
 
-    name = fields.Char(string="CHAPTER NAME", required=True)
-    arrival_date = fields.Date(string="Arrival Date")
-    departure_date = fields.Date(string="Departure Date")
+    name = fields.Char(string="CHAPTER NAME", required=True, tracking=True)
+    arrival_date = fields.Date(string="Arrival Date", tracking=True)
+    departure_date = fields.Date(string="Departure Date", tracking=True)
 
     # =========================
     # ESTADO OPERATIVO
@@ -47,6 +58,7 @@ class GBBrigade(models.Model):
         string="Status",
         default="draft",
         required=True,
+        tracking=True,
         help="Operational state of the Brigade",
     )
 
@@ -58,6 +70,7 @@ class GBBrigade(models.Model):
         string="Brigade Type",
         default="onsite",
         required=True,
+        tracking=True,
         help="If set to Virtual, logistics sections should not be used.",
     )
 
@@ -69,6 +82,7 @@ class GBBrigade(models.Model):
             ("otros", "Otros"),
         ],
         string="Restrictions",
+        tracking=True,
         help="Geographic / operational restrictions.",
     )
 
@@ -83,6 +97,7 @@ class GBBrigade(models.Model):
             ("squads", "Squads"),
         ],
         string="Official Program",
+        tracking=True,
         help="Main official program.",
     )
 
@@ -92,11 +107,13 @@ class GBBrigade(models.Model):
     lt_itinerary_link = fields.Char(
         string="Itinerary Link",
         help="Pegar link de GDrive o cualquier URL.",
+        tracking=True,
     )
 
     lt_itinerary_locked = fields.Boolean(
         string="Bloquear Link",
         default=False,
+        tracking=True,
     )
 
     lt_itinerary_url = fields.Char(
@@ -113,6 +130,7 @@ class GBBrigade(models.Model):
         "res.partner",
         string="Business Client",
         help="Client when program is Business.",
+        tracking=True,
     )
 
     business_profile_link = fields.Char(
@@ -134,41 +152,34 @@ class GBBrigade(models.Model):
             ("scaled", "Scaled"),
         ],
         string="Brigade Tier",
+        tracking=True,
         help="Tier: Sustainable(14-25), Empowered(26-39), Scaled(40+).",
     )
 
     # =========================
     # CONTADORES UNIFICADOS
     # =========================
-    volunteer_count = fields.Integer(
-        string="Volunteers", compute="_compute_counts"
-    )
-    program_count = fields.Integer(
-        string="Programs", compute="_compute_counts"
-    )
-    activity_count = fields.Integer(
-        string="Activities", compute="_compute_counts"
-    )
-    transport_count = fields.Integer(
-        string="Transports", compute="_compute_counts"
-    )
+    volunteer_count = fields.Integer(string="Volunteers", compute="_compute_counts")
+    program_count = fields.Integer(string="Programs", compute="_compute_counts")
+    activity_count = fields.Integer(string="Activities", compute="_compute_counts")
+    transport_count = fields.Integer(string="Transports", compute="_compute_counts")
 
+    roster_count = fields.Integer(string="Roster Count", compute="_compute_roster_count")
+
+    @api.depends("roster_ids")
+    def _compute_roster_count(self):
+        for rec in self:
+            rec.roster_count = len(rec.roster_ids)
+
+    # =========================
+    # DATOS GENERALES
+    # =========================
     university_logo = fields.Image(string="University Logo")
-    compound_manager_id = fields.Many2one(
-        "res.partner", string="COMPOUND SUPERVISOR"
-    )
-    arrival_time_compound = fields.Datetime(
-        string="Arrival time to Compound"
-    )
-    departure_time_compound = fields.Datetime(
-        string="Departure time from Compound"
-    )
-    coordinator_id = fields.Many2one(
-        "res.partner", string="LEAD COORDINATOR"
-    )
-    program_associate_id = fields.Many2one(
-        "res.partner", string="PROGRAM ADVISOR"
-    )
+    compound_manager_id = fields.Many2one("res.partner", string="COMPOUND SUPERVISOR")
+    arrival_time_compound = fields.Datetime(string="Arrival time to Compound")
+    departure_time_compound = fields.Datetime(string="Departure time from Compound")
+    coordinator_id = fields.Many2one("res.partner", string="LEAD COORDINATOR")
+    program_associate_id = fields.Many2one("res.partner", string="PROGRAM ADVISOR")
 
     chapter_leader_ids = fields.Many2many(
         "gb.brigade.roster",
@@ -222,6 +233,20 @@ class GBBrigade(models.Model):
         "gb.brigade.transport", "brigade_id", string="Transport"
     )
 
+    # =========================
+    # NUEVA DEFINICIÓN: PROGRAMS (Many2many)
+    # - No reemplaza program_line_ids, es complementario.
+    # =========================
+    programs = fields.Many2many(
+        "gb.program",
+        "gb_brigade_program_rel",
+        "brigade_id",
+        "program_id",
+        string="Programs",
+        tracking=True,
+        help="Program catalog linked directly to the brigade (Many2many).",
+    )
+
     _sql_constraints = [
         (
             "chapter_code_uniq",
@@ -256,9 +281,7 @@ class GBBrigade(models.Model):
                 or rec.arrival_ids
                 or rec.departure_ids
             ):
-                raise ValidationError(
-                    _("Virtual brigades cannot have logistics records.")
-                )
+                raise ValidationError(_("Virtual brigades cannot have logistics records."))
 
     # =========================
     # ITINERARY URL (compute)
@@ -267,8 +290,8 @@ class GBBrigade(models.Model):
     def _compute_lt_itinerary_url(self):
         for rec in self:
             if rec.lt_itinerary_link:
-                url = rec.lt_itinerary_link.strip()
-                if not (url.startswith("http://") or url.startswith("https://")):
+                url = (rec.lt_itinerary_link or "").strip()
+                if url and not (url.startswith("http://") or url.startswith("https://")):
                     url = "https://" + url
                 rec.lt_itinerary_url = url
             else:
@@ -308,80 +331,27 @@ class GBBrigade(models.Model):
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": "Brigade",
+            "name": _("Brigade"),
             "res_model": "gb.brigade",
             "view_mode": "form",
             "res_id": self.id,
             "target": "current",
         }
 
-# ===========================================================
-# Program Lines (PROGRAMS tab)
-# ===========================================================
-class GBBrigadeProgram(models.Model):
-    _name = "gb.brigade.program"
-    _description = "Brigade Program Line"
-    _order = "sequence, id"
+    def action_open_roster_import_wizard(self):
+        """Abre el wizard para importar roster desde Excel."""
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Import Roster"),
+            "res_model": "gb.roster.import.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_brigade_id": self.id,
+            },
+        }
 
-    brigade_id = fields.Many2one(
-        "gb.brigade",
-        string="Brigade",
-        ondelete="cascade",
-        required=True,
-    )
-
-    sequence = fields.Integer(
-        string="Sequence",
-        default=10,
-        help="Order of this program line in the list.",
-    )
-
-    program_id = fields.Many2one(
-        "gb.program",
-        string="Program",
-        required=True,
-        help="Program type (Medical, Dental, Business, etc.) for this line.",
-    )
-
-    start_date = fields.Date(
-        string="Start Date",
-        help="When this program begins for this brigade.",
-    )
-
-    end_date = fields.Date(
-        string="End Date",
-        help="When this program ends for this brigade.",
-    )
-
-    # NUEVO: selección de comunidad desde el nuevo modelo
-    community_id = fields.Many2one(
-        "gb.community",
-        string="Community",
-        help="Community where this program activity will take place.",
-    )
-
-    # Seguimos usando el campo location para guardar el nombre de la comunidad
-    location = fields.Char(
-        string="Location / Community / Site",
-        help="Where this program activity will take place.",
-    )
-
-    coordinator_id = fields.Many2one(
-        "res.partner",
-        string="Program Lead / Coordinator",
-        help="Main staff contact for this program line.",
-    )
-
-    notes = fields.Char(
-        string="Notes / Focus Area",
-        help="Extra notes about this program line (focus, goals, etc.).",
-    )
-
-    @api.onchange("community_id")
-    def _onchange_community_id(self):
-        """Cuando se elige una comunidad, copiamos el nombre al campo location."""
-        for rec in self:
-            rec.location = rec.community_id.name or False
 
 # ===========================================================
 # Program Lines (PROGRAMS tab)
