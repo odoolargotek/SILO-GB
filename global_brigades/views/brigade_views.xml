@@ -221,6 +221,14 @@
 
                         <!-- ROSTER -->
                         <page string="ROSTER">
+                        
+                            <group>
+        <button name="action_open_roster_import_wizard"
+                type="object"
+                string="Import Roster (Excel)"
+                class="btn-primary"
+                icon="fa-upload"/>
+    </group>
                             <field name="roster_ids">
                                 <!-- LISTA: columnas en el orden solicitado -->
                                 <list editable="bottom">
