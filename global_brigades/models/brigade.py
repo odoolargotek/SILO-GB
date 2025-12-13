@@ -69,8 +69,10 @@ class GBBrigade(models.Model):
 
     # ---------- LT ITINERARY SIMPLE ----------
     lt_itinerary_link = fields.Char(string="Itinerary Link", help="Pegar link de GDrive")
+    lt_itinerary_locked = fields.Boolean(string="Bloquear Link", default=False)
     lt_itinerary_url = fields.Char(string="Itinerary URL", widget="url", readonly=True)
     # ----------------------------------------
+
     
     business_client_id = fields.Many2one("res.partner", string="Business Client",
         help="Client when program is Business.")
@@ -214,7 +216,13 @@ class GBBrigade(models.Model):
             "url": self.itinerary_link,
             "target": "new",
         }
-
+    def write(self, vals):
+        """LT: Bloquea edición cuando switch ON."""
+        if 'lt_itinerary_link' in vals:
+            for rec in self:
+                if rec.lt_itinerary_locked:
+                    raise ValidationError(_("Itinerary Link está BLOQUEADO. Desactiva el switch primero."))
+        return super().write(vals)
     # ---------- ASIGNACIÓN DE SECUENCIA ----------
 
     @api.model
