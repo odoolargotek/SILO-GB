@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # License LGPL-3.0 (https://www.gnu.org/licenses/lgpl-3.0.html)
 
 from odoo import api, fields, models, _
@@ -12,7 +13,6 @@ class GBHotelOffer(models.Model):
     # -----------------------------
     # Datos generales del hotel
     # -----------------------------
-
     name = fields.Char(
         string="Referencia / Nombre interno",
         required=True,
@@ -54,7 +54,6 @@ class GBHotelOffer(models.Model):
     # -----------------------------
     # Habitaciones detalladas
     # -----------------------------
-
     room_line_ids = fields.One2many(
         "gb.hotel.offer.room",
         "offer_id",
@@ -65,7 +64,6 @@ class GBHotelOffer(models.Model):
     # -----------------------------
     # Resumen calculado
     # -----------------------------
-
     total_rooms = fields.Integer(
         string="Total Habitaciones",
         compute="_compute_totals",
@@ -77,15 +75,18 @@ class GBHotelOffer(models.Model):
         string="Total Pax (estimado)",
         compute="_compute_totals",
         store=False,
-        help="Capacidad estimada sumando las habitaciones (según tipo o número de camas).",
+        help="Capacidad estimada sumando las habitaciones.",
     )
 
     @api.depends("room_line_ids", "room_line_ids.capacity_guess")
     def _compute_totals(self):
+        """
+        Suma simple de la capacidad estimada de cada habitación.
+        """
         for rec in self:
             rooms = rec.room_line_ids
             rec.total_rooms = len(rooms)
-            rec.total_pax = sum(r.capacity_guess or 0 for r in rooms)
+            rec.total_pax = sum((r.capacity_guess or 0) for r in rooms)
 
 
 class GBHotelOfferRoom(models.Model):
@@ -128,18 +129,24 @@ class GBHotelOfferRoom(models.Model):
         help="Clasificación rápida de la habitación.",
     )
 
-    # Texto descriptivo (donde el usuario escribe 1, 2, 3, '3 camas simples', etc.)
+    # Texto libre donde el usuario escribe: "10", "12 camas", etc.
     bed_setup = fields.Char(
         string="Camas (detalle)",
         help="Ej: '1', '2', '3 camas simples', '1 matrimonial + 1 simple', etc.",
     )
 
-    # Número de camas reales (campo técnico, calculado desde bed_setup)
+    # Número de camas (técnico, sincronizado con bed_setup)
     beds = fields.Integer(
         string="Beds",
-        readonly=True,
-        help="Número de camas reales en la habitación. "
-             "Se calcula automáticamente a partir de 'Camas (detalle)'.",
+        help="Número de camas reales en la habitación, extraído de 'Camas (detalle)'.",
+    )
+
+    # Capacidad estimada usada para el total
+    capacity_guess = fields.Integer(
+        string="Capacidad Estimada (pax)",
+        compute="_compute_capacity_guess",
+        store=False,
+        help="Capacidad estimada según el número escrito en 'Camas (detalle)'.",
     )
 
     notes = fields.Char(
@@ -147,64 +154,41 @@ class GBHotelOfferRoom(models.Model):
         help="Restricciones, a quién se sugiere alojar acá, etc.",
     )
 
-    capacity_guess = fields.Integer(
-        string="Capacidad Estimada (pax)",
-        compute="_compute_capacity_guess",
-        store=False,
-        help="Estimación rápida según número de camas o tipo. Se usa para el total pax.",
-    )
-
-    @api.depends("room_type", "beds")
+    @api.depends("bed_setup")
     def _compute_capacity_guess(self):
         """
-        Estima cuántas personas caben en esta habitación.
-        Regla:
-          - Si el sistema conoce 'beds', la capacidad = beds.
-          - Si no, se usa un fallback según room_type.
+        La capacidad estimada es el primer número que aparezca en 'Camas (detalle)'.
+        Si no hay número, la capacidad se queda en 0.
         """
         for rec in self:
-            if rec.beds:
-                rec.capacity_guess = rec.beds
+            rec.capacity_guess = 0
+            if not rec.bed_setup:
                 continue
-
-            # Fallback por tipo de habitación
-            if rec.room_type == "single":
-                rec.capacity_guess = 1
-            elif rec.room_type == "double":
-                rec.capacity_guess = 2
-            elif rec.room_type == "triple":
-                rec.capacity_guess = 3
-            elif rec.room_type == "quad":
-                rec.capacity_guess = 4
-            elif rec.room_type == "dorm":
-                rec.capacity_guess = 6  # valor por defecto si no se indica beds
-            else:
-                rec.capacity_guess = 1  # fallback para "other"
+            digits = "".join(ch if ch.isdigit() else " " for ch in rec.bed_setup)
+            parts = [p for p in digits.split() if p]
+            if parts:
+                try:
+                    rec.capacity_guess = int(parts[0])
+                except ValueError:
+                    rec.capacity_guess = 0
 
     @api.onchange("bed_setup")
     def _onchange_bed_setup_set_beds(self):
         """
-        Cuando el usuario cambie 'Camas (detalle)', intentamos extraer
-        el primer número y usarlo como 'beds'.
-
-        Ejemplos:
-          - "1"                   -> beds = 1
-          - "2 camas simples"     -> beds = 2
-          - "3+1"                 -> beds = 3   (toma el primer número)
-          - "Litera grande"       -> no cambia beds (se mantiene el valor actual)
+        Mantiene 'beds' sincronizado con el primer número de 'Camas (detalle)'.
+        Sirve solo como ayuda visual; el total se calcula con capacity_guess.
         """
         for rec in self:
+            rec.beds = 0
             if not rec.bed_setup:
                 continue
-
             digits = "".join(ch if ch.isdigit() else " " for ch in rec.bed_setup)
             parts = [p for p in digits.split() if p]
             if parts:
                 try:
                     rec.beds = int(parts[0])
                 except ValueError:
-                    # Si por alguna razón no podemos parsear, no tocamos beds
-                    pass
+                    rec.beds = 0
 
     def name_get(self):
         """
