@@ -9,10 +9,10 @@
             <field name="target">new</field>
         </record>
 
-        <!-- Menú en Brigadas -->
+        <!-- Menú CORREGIDO - en Brigadas (menú existente) -->
         <menuitem id="menu_partner_excel_import"
             name="📊 Importar Excel"
-            parent="brigade_menu_root"
+            parent="brigade_action_menu" 
             action="action_partner_excel_import"
             sequence="35"/>
 
@@ -23,42 +23,52 @@
             <field name="arch" type="xml">
                 <form string="LT Importar Participantes desde Excel">
                     <header>
-                        <button name="action_import_excel" string="Importar Ahora" 
-                                type="object" class="btn-primary"
+                        <button name="action_import_excel" string="🚀 Importar Ahora" 
+                                type="object" class="btn-primary oe_highlight"
                                 attrs="{'invisible': [('state', '!=', 'ready')]}"/>
-                        <button name="action_import_excel" string="Finalizar" 
-                                type="object" class="btn-success"
-                                attrs="{'invisible': [('state', '!=', 'done')]}"/>
-                        <field name="state" invisible="1"/>
+                        <button string="Finalizar" class="btn-success"
+                                attrs="{'invisible': [('state', '!=', 'done')]}"
+                                special="cancel"/>
+                        <field name="state" widget="statusbar" statusbar_visible="draft,ready,done"/>
                     </header>
                     <sheet>
+                        <div class="oe_title">
+                            <h1>
+                                <field name="brigade_id" options="{'no_create': True}"/>
+                            </h1>
+                        </div>
                         <group>
                             <group>
-                                <field name="brigade_id" options="{'no_create': True}"/>
                                 <field name="import_file" filename="filename"/>
                                 <field name="filename" invisible="1"/>
                             </group>
                             <group>
-                                <field name="total_lines"/>
-                                <field name="imported_count"/>
-                                <field name="error_count"/>
+                                <field name="total_lines" string="📊 Total Líneas"/>
+                                <field name="imported_count" string="✅ Importados"/>
+                                <field name="error_count" string="❌ Errores"/>
                             </group>
                         </group>
+                        <div class="oe_structure"/>
                         <notebook>
-                            <page string="Vista Previa" attrs="{'invisible': [('preview_lines', '=', False)]}">
-                                <field name="preview_lines" nolabel="1" readonly="1" 
-                                       attrs="{'invisible': [('state', '!=', 'ready')]}"/>
-                            </page>
-                            <page string="Resultado" attrs="{'invisible': [('state', '!=', 'done')]}">
+                            <page string="📋 Vista Previa" attrs="{'invisible': [('state', '!=', 'ready')]}">
                                 <div class="alert alert-info">
-                                    ✅ Importación completada exitosamente
+                                    <strong>✅ Archivo listo para importar</strong><br/>
+                                    Se detectaron <field name="total_lines"/> líneas de datos.
+                                </div>
+                                <p class="text-muted">
+                                    Columnas esperadas: A=nombre, B=apellido, C=identificación, D=email, etc.
+                                </p>
+                            </page>
+                            <page string="✅ Resultado" attrs="{'invisible': [('state', '!=', 'done')]}">
+                                <div class="alert alert-success">
+                                    <h4>¡Importación completada!</h4>
+                                    <p><strong><field name="imported_count"/></strong> participantes creados exitosamente</p>
+                                    <p>Errores: <strong><field name="error_count"/></strong></p>
+                                    <field name="preview_lines" nolabel="1"/>
                                 </div>
                             </page>
                         </notebook>
                     </sheet>
-                    <footer>
-                        <button string="Cancelar" class="btn-secondary" special="cancel"/>
-                    </footer>
                 </form>
             </field>
         </record>
