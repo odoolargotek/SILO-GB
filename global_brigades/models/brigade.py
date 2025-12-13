@@ -163,13 +163,19 @@ class GBBrigade(models.Model):
         return super().write(vals)
     
     def action_open_itinerary_link(self):
-        """LT: Abre itinerario externo correctamente (FIX dominio)."""
+        """LT: Fuerza URL externa completa (FIX definitivo)."""
         self.ensure_one()
         if not self.itinerarylink:
             raise UserError(_("No itinerary link set."))
         
-        # FIX: Asegurar URL completa
-        url = self.itinerarylink.strip()
+        # Normalizar y forzar HTTPS externo
+        url = self.itinerarylink.strip().lower()
+        
+        # Casos especiales que Odoo confunde con rutas internas
+        if url.startswith('www.') or url.startswith('drive.google.com') or url.startswith('docs.google.com'):
+            url = 'https://' + url
+        
+        # Asegurar protocolo completo
         if not (url.startswith('http://') or url.startswith('https://')):
             url = 'https://' + url
         
