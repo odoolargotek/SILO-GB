@@ -382,6 +382,17 @@ class GBBrigadeProgram(models.Model):
         """Cuando se elige una comunidad, copiamos el nombre al campo location."""
         for rec in self:
             rec.location = rec.community_id.name or False
+            
+    def action_open_excel_import(self):
+        """Abre wizard de importación Excel con esta brigada precargada"""
+        return {
+            'name': _('LT Importar Participantes Excel'),
+            'type': 'ir.actions.act_window',
+            'res_model': 'lt.partner.excel.import',
+            'view_mode': 'form',
+            'target': 'new',
+            'context': {'default_brigade_id': self.id},
+        }
 
 # ===========================================================
 # Program Lines (PROGRAMS tab)

@@ -139,11 +139,13 @@
                 <sheet>
                 <header>
             <!-- 🔥 BOTÓN EXCEL AQUÍ -->
-            <button name="action_open_excel_import" 
+<!-- ✅ BOTÓN EXCEL - ODOO 18 -->
+<button name="action_open_excel_import" 
         string="📊 Importar Excel" 
         type="object" 
         class="btn-primary me-2"
-        attrs="{'invisible': [('id', '=', False)]}"/>
+        invisible="id == False"/>
+
         </header>
                     <group>
                         <group>
