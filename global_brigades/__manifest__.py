@@ -10,6 +10,7 @@
     "depends": [
         "base",
         "contacts",
+        'spreadsheet',
     ],
         "data": [
         "data/sequence.xml",
@@ -27,6 +28,7 @@
         'views/brigade_report_views.xml',
         "views/brigade_extended_report_views.xml",
         "data/gb_activity_tag_data.xml",
+        'wizard/partner_excel_import_views.xml',
     ],
 
     "application": True,

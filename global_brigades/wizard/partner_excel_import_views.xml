@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Acción del wizard -->
+        <record id="action_partner_excel_import" model="ir.actions.act_window">
+            <field name="name">LT Importar Participantes Excel</field>
+            <field name="res_model">lt.partner.excel.import</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <!-- Menú en Brigadas -->
+        <menuitem id="menu_partner_excel_import"
+            name="📊 Importar Excel"
+            parent="brigade_menu_root"
+            action="action_partner_excel_import"
+            sequence="35"/>
+
+        <!-- Vista del wizard -->
+        <record id="view_partner_excel_import_form" model="ir.ui.view">
+            <field name="name">lt.partner.excel.import.form</field>
+            <field name="model">lt.partner.excel.import</field>
+            <field name="arch" type="xml">
+                <form string="LT Importar Participantes desde Excel">
+                    <header>
+                        <button name="action_import_excel" string="Importar Ahora" 
+                                type="object" class="btn-primary"
+                                attrs="{'invisible': [('state', '!=', 'ready')]}"/>
+                        <button name="action_import_excel" string="Finalizar" 
+                                type="object" class="btn-success"
+                                attrs="{'invisible': [('state', '!=', 'done')]}"/>
+                        <field name="state" invisible="1"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="brigade_id" options="{'no_create': True}"/>
+                                <field name="import_file" filename="filename"/>
+                                <field name="filename" invisible="1"/>
+                            </group>
+                            <group>
+                                <field name="total_lines"/>
+                                <field name="imported_count"/>
+                                <field name="error_count"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Vista Previa" attrs="{'invisible': [('preview_lines', '=', False)]}">
+                                <field name="preview_lines" nolabel="1" readonly="1" 
+                                       attrs="{'invisible': [('state', '!=', 'ready')]}"/>
+                            </page>
+                            <page string="Resultado" attrs="{'invisible': [('state', '!=', 'done')]}">
+                                <div class="alert alert-info">
+                                    ✅ Importación completada exitosamente
+                                </div>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <footer>
+                        <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
