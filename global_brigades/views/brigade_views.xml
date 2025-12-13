@@ -166,7 +166,8 @@
                                 <div class="col-8">
                                     <label for="itinerary_link">Itinerary Link</label>
                                     <field name="itinerary_link" placeholder="https://drive.google.com/..." 
-       attrs="{'readonly': [('lt_itinerary_locked', '=', True)]}"/>
+       readonly="lt_itinerary_locked"/>
+
                                 </div>
 
                                 <div class="col-4" style="margin-top: 20px;">
