@@ -162,26 +162,28 @@
                             <field name="brigade_type"/>
                             <field name="brigade_program"/>
 
-                            <div class="row">
-                                <div class="col-8">
-                                    <label for="itinerary_link">Itinerary Link</label>
-                                    <field name="itinerary_link"
-                                           placeholder="https://drive.google.com/..."/>
-                                </div>
-
-                                <div class="col-4" style="margin-top: 20px;">
-                                    <button name="action_open_itinerary_link"
-                                            type="object"
-                                            string="Go to Itinerary"
-                                            class="btn-link"
-                                            icon="fa-external-link"/>
-                                    <button name="action_edit_itinerary_link"
-                                            type="object"
-                                            string="Edit Itinerary"
-                                            class="btn-link"
-                                            icon="fa-edit"/>
-                                </div>
-                            </div>
+                            <!-- En la vista form de gb.brigade -->
+<div class="row">
+    <div class="col-8">
+        <label for="itinerary_link" string="Itinerary Link"/>
+        <field name="itinerary_link"
+               placeholder="https://drive.google.com/..."
+               attrs="{'readonly': [('itinerary_locked', '=', True)]}"/>
+    </div>
+    <div class="col-4" style="margin-top: 20px;">
+        <field name="itinerary_locked" widget="toggle" string="Locked"/>
+        <button name="action_open_itinerary_link"
+                type="object"
+                string="Go to Itinerary"
+                class="btn-link"
+                icon="fa-external-link"/>
+        <button name="action_edit_itinerary_link"
+                type="object"
+                string="Edit Itinerary"
+                class="btn-link"
+                icon="fa-edit"/>
+    </div>
+</div>
 
                             <!-- Business Client -->
                             <field name="business_client_id"/>

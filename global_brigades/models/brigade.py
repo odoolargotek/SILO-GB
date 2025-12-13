@@ -200,52 +200,55 @@ class GBBrigade(models.Model):
             "res_id": self.id,
             "target": "current",
         }
-
-    # ---------- CONTROL DE EDICIÓN DEL ITINERARY LINK ----------
+    # ---------- CONTROL DE EDICIÓN DEL ITINERARY LINK (LT) ----------
+    lt_itinerary_locked = fields.Boolean(
+        string="Lock Itinerary Link",
+        default=False,
+        help="Si está activado, el enlace del itinerario no se puede editar directamente.",
+    )
 
     def write(self, vals):
-        """Controla que el itinerary_link no se cambie sin usar el botón dedicado."""
-        if "itinerary_link" in vals:
+        """Controla que el itinerarylink no se cambie sin usar el botón dedicado."""
+        if "itinerarylink" in vals:
             for rec in self:
-                old_link = rec.itinerary_link or False
-                new_link = vals.get("itinerary_link") or False
+                old_link = rec.itinerarylink or False
+                new_link = vals.get("itinerarylink") or False
 
-                # Si no cambia realmente, nada que hacer
-                if old_link == new_link:
-                    continue
-
-                # Primera vez: antes vacío, ahora con valor -> permitido
-                if not old_link and new_link:
-                    continue
-
-                # Cambio posterior sin contexto especial -> bloquear
-                if old_link and old_link != new_link and not self.env.context.get("force_itinerary_edit"):
+                # Si está bloqueado y se intenta cambiar el link, solo permitir con contexto especial
+                if rec.lt_itinerary_locked and old_link != new_link and not self.env.context.get("force_itinerary_edit"):
                     raise ValidationError(_(
-                        "The itinerary link is already set and cannot be changed directly.\n"
-                        "Use the 'Edit Itinerary' button to modify it explicitly."
+                        "El enlace del itinerario está BLOQUEADO.\n"
+                        "Desactiva el switch o usa el botón 'Edit Itinerary'."
+                    ))
+
+                # Si NO estaba bloqueado pero ya había link, mantener protección contra cambios accidentales
+                if (not rec.lt_itinerary_locked) and old_link and old_link != new_link and not self.env.context.get("force_itinerary_edit"):
+                    raise ValidationError(_(
+                        "El enlace del itinerario ya está configurado y no se puede cambiar directamente.\n"
+                        "Usa el botón 'Edit Itinerary' o desbloquéalo para modificarlo."
                     ))
 
         return super().write(vals)
 
     def action_open_itinerary_link(self):
-        """Abre el itinerary_link en una nueva pestaña del navegador."""
+        """Abre el itinerarylink en una nueva pestaña del navegador."""
         self.ensure_one()
-        if not self.itinerary_link:
-            raise UserError(_("There is no itinerary link set for this brigade."))
+        if not self.itinerarylink:
+            raise UserError(_("No hay un enlace de itinerario configurado para esta brigada."))
         return {
             "type": "ir.actions.act_url",
-            "url": self.itinerary_link,
+            "url": self.itinerarylink,
             "target": "new",
         }
 
     def action_edit_itinerary_link(self):
-        """Recarga el formulario permitiendo editar el itinerary_link."""
+        """Recarga el formulario permitiendo editar el itinerarylink."""
         self.ensure_one()
         ctx = dict(self.env.context or {})
         ctx["force_itinerary_edit"] = True
         return {
             "type": "ir.actions.act_window",
-            "name": _("Edit Itinerary Link"),
+            "name": _("Editar Enlace de Itinerario"),
             "res_model": "gb.brigade",
             "view_mode": "form",
             "res_id": self.id,
@@ -253,46 +256,38 @@ class GBBrigade(models.Model):
             "context": ctx,
         }
 
-    # ---------- ASIGNACIÓN DE SECUENCIA ----------
+    def action_toggle_itinerary_lock(self):
+        """Switch rápido bloqueado/desbloqueado."""
+        for rec in self:
+            rec.lt_itinerary_locked = not rec.lt_itinerary_locked
+        return True
+    # ---------------------------------------------
 
+    # ---------- ASIGNACIÓN DE SECUENCIA ----------
     @api.model
     def create(self, vals):
-        # Si no viene código o viene con el placeholder "/", tomamos de la secuencia
-        code = vals.get("brigade_code") or "/"
+        """Si no viene código o viene con el placeholder '/', tomamos de la secuencia."""
+        code = vals.get("brigadecode") or "/"
         if code == "/":
             next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
             if not next_code:
                 raise ValidationError(_(
-                    "Could not get sequence 'gb.brigade.code'. "
-                    "Make sure sequence.xml is loaded in the manifest."
-                ))
-            vals["brigade_code"] = next_code
-        return super().create(vals)
-    # ---------- ASIGNACIÓN DE SECUENCIA ----------
-
-    @api.model
-    def create(self, vals):
-        # Si no viene código o viene con el placeholder "/", tomamos de la secuencia
-        code = vals.get("brigade_code") or "/"
-        if code == "/":
-            self.env.ref("base.sequence_code", raise_if_not_found=False)
-            next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
-            if not next_code:
-                raise ValidationError(_(
-                    "No se pudo obtener la secuencia 'gb.brigade.code'. "
+                    "No se pudo obtener la secuencia 'gb.brigade.code'.\n"
                     "Asegúrate de cargar 'sequence.xml' en el manifest."
                 ))
-            vals["brigade_code"] = next_code
+            vals["brigadecode"] = next_code
         return super().create(vals)
+    # ---------------------------------------------
+
     # -------------------------------------------------------------
     # BOTÓN: Abrir formulario desde la vista lista
     # -------------------------------------------------------------
-    def open_form_action(self):
+    def openformaction(self):
         """Abre el formulario de la brigada desde la vista lista."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
-            "name": "Brigade",
+            "name": _("Brigade"),
             "res_model": "gb.brigade",
             "view_mode": "form",
             "res_id": self.id,
