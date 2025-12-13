@@ -75,16 +75,16 @@ class GBHotelOffer(models.Model):
         string="Total Pax (estimado)",
         compute="_compute_totals",
         store=False,
-        help="Capacidad estimada sumando las habitaciones.",
+        help="Suma de Pax por habitación.",
     )
 
-    @api.depends("room_line_ids", "room_line_ids.capacity_guess")
+    @api.depends("room_line_ids", "room_line_ids.pax_per_room")
     def _compute_totals(self):
-        """Suma simple de la capacidad de cada habitación."""
+        """Suma simple de pax_per_room."""
         for rec in self:
             rooms = rec.room_line_ids
             rec.total_rooms = len(rooms)
-            rec.total_pax = sum((r.capacity_guess or 0) for r in rooms)
+            rec.total_pax = sum((r.pax_per_room or 0) for r in rooms)
 
 
 class GBHotelOfferRoom(models.Model):
@@ -127,46 +127,21 @@ class GBHotelOfferRoom(models.Model):
         help="Clasificación rápida de la habitación.",
     )
 
-    # Texto descriptivo (donde el usuario escribe 1, 2, 3, '3 camas simples', etc.)
     bed_setup = fields.Char(
         string="Camas (detalle)",
-        help="Ej: '1', '2', '3 camas simples', '1 matrimonial + 1 simple', etc.",
+        help="Texto libre: '3 camas simples', '1 matrimonial + 1 simple', etc.",
     )
 
-    # Capacidad en pax: valor REAL que se guarda
-    capacity_guess = fields.Integer(
-        string="Capacidad Estimada (pax)",
-        help="Número de pax para esta habitación; se propone desde 'Camas (detalle)'.",
+    # NUEVO: campo manual de capacidad
+    pax_per_room = fields.Integer(
+        string="Pax por habitación",
+        help="Número de personas que se planea alojar en esta habitación.",
     )
 
     notes = fields.Char(
         string="Notas",
         help="Restricciones, a quién se sugiere alojar acá, etc.",
     )
-
-    @api.onchange("bed_setup")
-    def _onchange_bed_setup_set_capacity(self):
-        """
-        Cuando el usuario cambie 'Camas (detalle)', intentamos extraer
-        el primer número y usarlo como capacity_guess.
-
-        Ejemplos:
-        - '1' -> 1
-        - '2 camas simples' -> 2
-        - '3+1' -> 3 (toma el primer número)
-        - 'Litera grande' -> no cambia capacity_guess
-        """
-        for rec in self:
-            if not rec.bed_setup:
-                continue
-            digits = "".join(ch if ch.isdigit() else " " for ch in rec.bed_setup)
-            parts = [p for p in digits.split() if p]
-            if parts:
-                try:
-                    rec.capacity_guess = int(parts[0])
-                except ValueError:
-                    # Si por alguna razón no podemos parsear, no tocamos capacity_guess
-                    pass
 
     def name_get(self):
         """
