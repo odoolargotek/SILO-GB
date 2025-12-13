@@ -137,14 +137,12 @@
         <field name="arch" type="xml">
             <form string="Brigade">
                 <sheet>
-                  <head>
-                  <!-- ✅ BOTÓN CORREGIDO - NOMBRE EXACTO -->
-<button name="actionopenexcelimport" 
-        string="📊 Importar Excel" 
-        type="object" 
-        class="btn-primary me-2"
-        invisible="id == False"/>
-                  </head>
+        <header>
+            <button name="actionopenexcelimport" 
+                    string="📊 Importar Excel" 
+                    type="object" 
+                    class="btn-primary me-2"/>
+        </header>
                     <group>
                         <group>
                             <field name="external_brigade_code"/>
