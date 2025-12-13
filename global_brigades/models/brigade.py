@@ -67,10 +67,10 @@ class GBBrigade(models.Model):
         ("squads", "Squads"),
     ], string="Official Program", help="Main official program.")
 
-    lt_itinerary_locked = fields.Boolean(string="Lock Itinerary", default=False)
-        
-    itinerary_link = fields.Char(string="Itinerary Link",
-        help="Copy & paste link from GDrive or other.")
+    # ---------- LT ITINERARY SIMPLE ----------
+    lt_itinerary_link = fields.Char(string="Itinerary Link", help="Pegar link de GDrive")
+    lt_itinerary_url = fields.Char(string="Itinerary URL", widget="url", readonly=True)
+    # ----------------------------------------
     
     business_client_id = fields.Many2one("res.partner", string="Business Client",
         help="Client when program is Business.")
@@ -260,6 +260,16 @@ class GBBrigade(models.Model):
             "res_id": self.id,
             "target": "current",
         }
+    @api.onchange('lt_itinerary_link')
+    def _onchange_lt_itinerary_link(self):
+        """Convierte texto a URL válida."""
+        if self.lt_itinerary_link:
+            url = self.lt_itinerary_link.strip()
+            if not (url.startswith('http://') or url.startswith('https://')):
+                url = 'https://' + url
+            self.lt_itinerary_url = url
+        else:
+            self.lt_itinerary_url = False
 
 # ===========================================================
 # Program Lines (PROGRAMS tab)

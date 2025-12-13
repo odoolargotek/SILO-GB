@@ -161,6 +161,9 @@
                         <group>
                             <field name="brigade_type"/>
                             <field name="brigade_program"/>
+                             <!-- LT ITINERARY SIMPLE -->
+    <field name="lt_itinerary_link" placeholder="drive.google.com/... o www.google.com"/>
+    <field name="lt_itinerary_url" widget="url"/>
                             
 
                             <!-- Business Client -->
