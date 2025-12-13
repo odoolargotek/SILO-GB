@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+
 # License LGPL-3.0 (https://www.gnu.org/licenses/lgpl-3.0.html)
 
 from odoo import api, fields, models, _
@@ -12,7 +13,6 @@ class GBHotelOffer(models.Model):
     # -----------------------------
     # Datos generales del hotel
     # -----------------------------
-
     name = fields.Char(
         string="Referencia / Nombre interno",
         required=True,
@@ -54,7 +54,6 @@ class GBHotelOffer(models.Model):
     # -----------------------------
     # Habitaciones detalladas
     # -----------------------------
-
     room_line_ids = fields.One2many(
         "gb.hotel.offer.room",
         "offer_id",
@@ -65,7 +64,6 @@ class GBHotelOffer(models.Model):
     # -----------------------------
     # Resumen calculado
     # -----------------------------
-
     total_rooms = fields.Integer(
         string="Total Habitaciones",
         compute="_compute_totals",
@@ -77,7 +75,7 @@ class GBHotelOffer(models.Model):
         string="Total Pax (estimado)",
         compute="_compute_totals",
         store=False,
-        help="Capacidad estimada sumando las habitaciones (según tipo o número de camas).",
+        help="Capacidad estimada sumando las habitaciones (según número de camas).",
     )
 
     @api.depends("room_line_ids", "room_line_ids.capacity_guess")
@@ -134,12 +132,14 @@ class GBHotelOfferRoom(models.Model):
         help="Ej: '1', '2', '3 camas simples', '1 matrimonial + 1 simple', etc.",
     )
 
-    # Número de camas reales (campo técnico, calculado desde bed_setup)
+    # Número de camas reales (editable, propuesto desde bed_setup)
     beds = fields.Integer(
         string="Beds",
-        readonly=True,
-        help="Número de camas reales en la habitación. "
-             "Se calcula automáticamente a partir de 'Camas (detalle)'.",
+        help=(
+            "Número de camas reales en la habitación. "
+            "Se propone automáticamente a partir de 'Camas (detalle)', "
+            "pero se puede ajustar manualmente."
+        ),
     )
 
     notes = fields.Char(
@@ -151,35 +151,24 @@ class GBHotelOfferRoom(models.Model):
         string="Capacidad Estimada (pax)",
         compute="_compute_capacity_guess",
         store=False,
-        help="Estimación rápida según número de camas o tipo. Se usa para el total pax.",
+        help="Estimación según número de camas. Se usa para el total pax.",
     )
 
     @api.depends("room_type", "beds")
     def _compute_capacity_guess(self):
         """
         Estima cuántas personas caben en esta habitación.
+
         Regla:
-          - Si el sistema conoce 'beds', la capacidad = beds.
-          - Si no, se usa un fallback según room_type.
+        - Si el sistema conoce 'beds', la capacidad = beds.
+        - Si no, la capacidad = 0 (así no vuelve al default 6).
         """
         for rec in self:
             if rec.beds:
                 rec.capacity_guess = rec.beds
-                continue
-
-            # Fallback por tipo de habitación
-            if rec.room_type == "single":
-                rec.capacity_guess = 1
-            elif rec.room_type == "double":
-                rec.capacity_guess = 2
-            elif rec.room_type == "triple":
-                rec.capacity_guess = 3
-            elif rec.room_type == "quad":
-                rec.capacity_guess = 4
-            elif rec.room_type == "dorm":
-                rec.capacity_guess = 6  # valor por defecto si no se indica beds
             else:
-                rec.capacity_guess = 1  # fallback para "other"
+                # Si no tenemos beds, no asumimos nada.
+                rec.capacity_guess = 0
 
     @api.onchange("bed_setup")
     def _onchange_bed_setup_set_beds(self):
@@ -188,15 +177,14 @@ class GBHotelOfferRoom(models.Model):
         el primer número y usarlo como 'beds'.
 
         Ejemplos:
-          - "1"                   -> beds = 1
-          - "2 camas simples"     -> beds = 2
-          - "3+1"                 -> beds = 3   (toma el primer número)
-          - "Litera grande"       -> no cambia beds (se mantiene el valor actual)
+        - "1" -> beds = 1
+        - "2 camas simples" -> beds = 2
+        - "3+1" -> beds = 3 (toma el primer número)
+        - "Litera grande" -> no cambia beds (se mantiene el valor actual)
         """
         for rec in self:
             if not rec.bed_setup:
                 continue
-
             digits = "".join(ch if ch.isdigit() else " " for ch in rec.bed_setup)
             parts = [p for p in digits.split() if p]
             if parts:
