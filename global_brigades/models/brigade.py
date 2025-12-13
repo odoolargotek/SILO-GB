@@ -163,25 +163,21 @@ class GBBrigade(models.Model):
         return super().write(vals)
     
     def action_open_itinerary_link(self):
-        """LT: JavaScript window.open directo."""
+        """LT: FIX DEFINITIVO con // doble slash."""
         self.ensure_one()
         if not self.itinerarylink:
             raise UserError(_("No itinerary link set."))
         
         url = self.itinerarylink.strip()
-        if not url.startswith(('http://', 'https://')):
-            url = 'https://' + url
-            
+        
+        # FIX DEFINITIVO: doble slash funciona en TODOS los navegadores
+        if not (url.startswith('http://') or url.startswith('https://')):
+            url = '//' + url
+        
         return {
-            'type': 'ir.actions.act_window',
-            'res_model': 'gb.brigade',
-            'view_mode': 'form',
-            'res_id': self.id,
+            'type': 'ir.actions.act_url',
+            'url': url,
             'target': 'new',
-            'context': {
-                'default_itinerarylink': url,
-                'js_action': f'window.open("{url}", "_blank");'
-            }
         }
 
     
