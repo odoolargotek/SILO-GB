@@ -78,12 +78,19 @@ class GBHotelOffer(models.Model):
         help="Capacidad estimada sumando las habitaciones (según número de camas).",
     )
 
-    @api.depends("room_line_ids", "room_line_ids.capacity_guess")
+    @api.depends(
+        "room_line_ids",
+        "room_line_ids.beds",
+        "room_line_ids.capacity_guess",
+    )
     def _compute_totals(self):
+        """Usa siempre las camas (beds) y, si no hay, capacity_guess como respaldo."""
         for rec in self:
             rooms = rec.room_line_ids
             rec.total_rooms = len(rooms)
-            rec.total_pax = sum(r.capacity_guess or 0 for r in rooms)
+            rec.total_pax = sum(
+                (r.beds or r.capacity_guess or 0) for r in rooms
+            )
 
 
 class GBHotelOfferRoom(models.Model):
@@ -151,7 +158,7 @@ class GBHotelOfferRoom(models.Model):
         string="Capacidad Estimada (pax)",
         compute="_compute_capacity_guess",
         store=False,
-        help="Estimación según número de camas. Se usa para el total pax.",
+        help="Estimación según número de camas. Se usa como respaldo para el total pax.",
     )
 
     @api.depends("room_type", "beds")
@@ -161,14 +168,25 @@ class GBHotelOfferRoom(models.Model):
 
         Regla:
         - Si el sistema conoce 'beds', la capacidad = beds.
-        - Si no, la capacidad = 0 (así no vuelve al default 6).
+        - Si no, se usa un pequeño fallback por tipo.
         """
         for rec in self:
             if rec.beds:
                 rec.capacity_guess = rec.beds
             else:
-                # Si no tenemos beds, no asumimos nada.
-                rec.capacity_guess = 0
+                # Fallback muy simple por tipo (por si alguna vez no se llena beds)
+                if rec.room_type == "single":
+                    rec.capacity_guess = 1
+                elif rec.room_type == "double":
+                    rec.capacity_guess = 2
+                elif rec.room_type == "triple":
+                    rec.capacity_guess = 3
+                elif rec.room_type == "quad":
+                    rec.capacity_guess = 4
+                elif rec.room_type == "dorm":
+                    rec.capacity_guess = 0  # no asumimos nada si no hay camas
+                else:
+                    rec.capacity_guess = 0
 
     @api.onchange("bed_setup")
     def _onchange_bed_setup_set_beds(self):
