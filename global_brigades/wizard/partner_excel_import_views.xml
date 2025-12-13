@@ -7,14 +7,15 @@
             <field name="res_model">lt.partner.excel.import</field>
             <field name="view_mode">form</field>
             <field name="target">new</field>
+            <field name="context">{'default_brigade_id': active_id}</field>
         </record>
 
-        <!-- Menú CORREGIDO - en Brigadas (menú existente) -->
+        <!-- Menú PRINCIPAL - SIN PADRE (aparece en Apps > Brigadas) -->
         <menuitem id="menu_partner_excel_import"
-            name="📊 Importar Excel"
-            parent="brigade_action_menu" 
+            name="📊 LT Importar Excel"
             action="action_partner_excel_import"
-            sequence="35"/>
+            sequence="35"
+            parent=""/>
 
         <!-- Vista del wizard -->
         <record id="view_partner_excel_import_form" model="ir.ui.view">
@@ -56,7 +57,8 @@
                                     Se detectaron <field name="total_lines"/> líneas de datos.
                                 </div>
                                 <p class="text-muted">
-                                    Columnas esperadas: A=nombre, B=apellido, C=identificación, D=email, etc.
+                                    Columnas esperadas:<br/>
+                                    A: nombre | B: apellido | C: identificación | D: email | E: teléfono
                                 </p>
                             </page>
                             <page string="✅ Resultado" attrs="{'invisible': [('state', '!=', 'done')]}">
