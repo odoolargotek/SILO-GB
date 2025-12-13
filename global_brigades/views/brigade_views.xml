@@ -236,7 +236,7 @@ PA:
 <field name="brigade_role" string="Brigade Role"/>
 <field name="sa" string="S.A."/>
 </group>
-<group string="Passport & Health">
+<group string="Passport and Health">
 <field name="passport_no" string="Passport N°"/>
 <field name="passport_expiry" string="Passport Expiration Date"/>
 <field name="citizenship" string="Citizenship"/>
