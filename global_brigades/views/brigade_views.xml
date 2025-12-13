@@ -162,19 +162,6 @@
                             <field name="brigade_type"/>
                             <field name="brigade_program"/>
                             <div class="row">
-    <div class="col-8">
-        <label for="itinerarylink">Itinerary Link</label>
-        <field name="itinerarylink" placeholder="https://drive.google.com/..." 
-               readonly="lt_itinerary_locked"/>
-    </div>
-    <div class="col-4" style="margin-top: 20px;">
-        <button name="action_open_itinerary_link" type="object" 
-                string="Go to Itinerary" class="btn-link" icon="fa-external-link"/>
-        <field name="lt_itinerary_locked" widget="boolean_toggle" string="Bloqueo de Link"/>
-        <button name="action_edit_itinerary_link" type="object" 
-                string="Edit Itinerary" class="btn-link" icon="fa-edit"/>
-    </div>
-</div>
 
                             <!-- Business Client -->
                             <field name="business_client_id"/>

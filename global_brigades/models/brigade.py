@@ -154,45 +154,8 @@ class GBBrigade(models.Model):
                 raise ValidationError(_("Virtual brigades cannot have logistics records."))
     
     def write(self, vals):
-        if "itinerary_link" in vals:
-            for rec in self:
-                old_link = rec.itinerary_link or False
-                new_link = vals.get("itinerary_link") or False
-                if old_link and old_link != new_link and not self.env.context.get("force_itinerary_edit"):
-                    raise ValidationError(_("Use 'Edit Itinerary' button to modify."))
         return super().write(vals)
-    
-    def action_open_itinerary_link(self):
-        """LT: Doble slash - funciona en Odoo 18."""
-        self.ensure_one()
-        if not self.itinerarylink:
-            raise UserError(_("No itinerary link set."))
-        
-        url = self.itinerarylink.strip()
-        if not (url.startswith('http://') or url.startswith('https://')):
-            url = '//' + url  # DOBLE SLASH FIJO
-        
-        return {
-            'type': 'ir.actions.act_url',
-            'url': url,
-            'target': 'new',
-        }
 
-    
-    
-    def action_edit_itinerary_link(self):
-        self.ensure_one()
-        ctx = dict(self.env.context or {})
-        ctx["force_itinerary_edit"] = True
-        return {
-            "type": "ir.actions.act_window",
-            "name": _("Edit Itinerary Link"),
-            "res_model": "gb.brigade",
-            "view_mode": "form",
-            "res_id": self.id,
-            "target": "current",
-            "context": ctx,
-        }
     
     @api.model
     def create(self, vals):
@@ -252,21 +215,6 @@ class GBBrigade(models.Model):
             "target": "new",
         }
 
-    def action_edit_itinerary_link(self):
-        """Recarga el formulario permitiendo editar el itinerary_link."""
-        self.ensure_one()
-        ctx = dict(self.env.context or {})
-        ctx["force_itinerary_edit"] = True
-        return {
-            "type": "ir.actions.act_window",
-            "name": _("Edit Itinerary Link"),
-            "res_model": "gb.brigade",
-            "view_mode": "form",
-            "res_id": self.id,
-            "target": "current",
-            "context": ctx,
-        }
-
     # ---------- ASIGNACIÓN DE SECUENCIA ----------
 
     @api.model
@@ -312,12 +260,7 @@ class GBBrigade(models.Model):
             "res_id": self.id,
             "target": "current",
         }
-    # LT - NUEVOS MÉTODOS
-    def action_toggle_itinerary_lock(self):
-        for rec in self:
-            rec.lt_itinerary_locked = not rec.lt_itinerary_locked
-        return True
-    # LT - FIN
+
 # ===========================================================
 # Program Lines (PROGRAMS tab)
 # ===========================================================
