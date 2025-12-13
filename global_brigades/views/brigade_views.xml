@@ -1,497 +1,634 @@
-
+<?xml version="1.0" encoding="utf-8"?>
 <odoo>
-<script/>
-<data>
-<!--  =========================================================
+    <data>
+
+    <!-- =========================================================
          TREE VIEW (lista de brigadas)
-         =========================================================  -->
-<record id="view_gb_brigade_tree" model="ir.ui.view">
-<field name="name">gb.brigade.tree</field>
-<field name="model">gb.brigade</field>
-<field name="arch" type="xml">
-<list string="Brigades" editable="top">
-<field name="external_brigade_code"/>
-<field name="brigade_code" readonly="1"/>
-<field name="name"/>
-<field name="state"/>
-<field name="arrival_date"/>
-<field name="departure_date"/>
-<field name="coordinator_id"/>
-<field name="program_associate_id"/>
-<field name="program_count" string="# Programs" readonly="1"/>
-<field name="activity_count" string="# Activities" readonly="1"/>
-<!--  Botón para abrir formulario  -->
-<button name="open_form_action" type="object" string="Open" class="btn-link"/>
-</list>
-</field>
-</record>
-<!--  =========================================================
+         ========================================================= -->
+    <record id="view_gb_brigade_tree" model="ir.ui.view">
+        <field name="name">gb.brigade.tree</field>
+        <field name="model">gb.brigade</field>
+        <field name="arch" type="xml">
+            <list string="Brigades" editable="top">
+                <field name="external_brigade_code"/>
+                <field name="brigade_code" readonly="1"/>
+                <field name="name"/>
+                <field name="state"/>
+                <field name="arrival_date"/>
+                <field name="departure_date"/>
+                <field name="coordinator_id"/>
+                <field name="program_associate_id"/>
+                <field name="program_count" string="# Programs" readonly="1"/>
+                <field name="activity_count" string="# Activities" readonly="1"/>
+
+                <!-- Botón para abrir formulario -->
+                <button name="open_form_action"
+                        type="object"
+                        string="Open"
+                        class="btn-link"/>
+            </list>
+        </field>
+    </record>
+
+
+    <!-- =========================================================
          KANBAN VIEW (tarjetas por brigada)
-         =========================================================  -->
-<record id="view_gb_brigade_kanban" model="ir.ui.view">
-<field name="name">gb.brigade.kanban</field>
-<field name="model">gb.brigade</field>
-<field name="arch" type="xml">
-<kanban string="Brigades" default_group_by="state" class="o_kanban_small_column">
-<templates>
-<t t-name="kanban-box">
-<div class="o_kanban_record">
-<div class="o_kanban_primary_left">
-<div class="o_kanban_image">
-<img t-att-src="kanban_image('gb.brigade', 'university_logo', record.id.value)" class="o_kanban_avatar" t-att-alt="record.name.value or ''"/>
-</div>
-</div>
-<div class="o_kanban_primary_right o_kanban_primary_text">
-<!--  Código + Nombre  -->
-<strong>
-<t t-esc="record.brigade_code.value"/>
--
-<t t-esc="record.name.value"/>
-</strong>
-<!--  Estado  -->
-<div class="o_kanban_tags" t-if="record.state.value">
-<span class="badge">
-<t t-esc="record.state.value"/>
-</span>
-</div>
-<!--  Fechas  -->
-<div class="text-muted">
-<t t-if="record.arrival_date.value">
-<i class="fa fa-plane-arrival"/>
-<t t-esc="record.arrival_date.value"/>
-</t>
-<t t-if="record.departure_date.value">
- → 
-<i class="fa fa-plane-departure"/>
-<t t-esc="record.departure_date.value"/>
-</t>
-</div>
-<!--  Responsables  -->
-<div t-if="record.coordinator_id.value">
-<span class="fa fa-user"/>
-Coord:
-<t t-esc="record.coordinator_id.value"/>
-</div>
-<div t-if="record.program_associate_id.value">
-<span class="fa fa-user-circle"/>
-PA:
-<t t-esc="record.program_associate_id.value"/>
-</div>
-<!--  KPIs  -->
-<div class="o_kanban_footer">
-<span class="o_stat_info">
-<span class="o_stat_value">
-<t t-esc="record.program_count.value or 0"/>
-</span>
-<span class="o_stat_text">Programs</span>
-</span>
-<span class="o_stat_info" style="margin-left: 12px;">
-<span class="o_stat_value">
-<t t-esc="record.activity_count.value or 0"/>
-</span>
-<span class="o_stat_text">Activities</span>
-</span>
-</div>
-</div>
-</div>
-</t>
-</templates>
-</kanban>
-</field>
-</record>
-<!--  =========================================================
+         ========================================================= -->
+    <record id="view_gb_brigade_kanban" model="ir.ui.view">
+        <field name="name">gb.brigade.kanban</field>
+        <field name="model">gb.brigade</field>
+        <field name="arch" type="xml">
+            <kanban string="Brigades" default_group_by="state" class="o_kanban_small_column">
+                <templates>
+                    <t t-name="kanban-box">
+                        <div class="o_kanban_record">
+                            <div class="o_kanban_primary_left">
+                                <div class="o_kanban_image">
+                                    <img t-att-src="kanban_image('gb.brigade', 'university_logo', record.id.value)"
+                                         class="o_kanban_avatar"
+                                         t-att-alt="record.name.value or ''"/>
+                                </div>
+                            </div>
+
+                            <div class="o_kanban_primary_right o_kanban_primary_text">
+                                <!-- Código + Nombre -->
+                                <strong>
+                                    <t t-esc="record.brigade_code.value"/> -
+                                    <t t-esc="record.name.value"/>
+                                </strong>
+
+                                <!-- Estado -->
+                                <div class="o_kanban_tags" t-if="record.state.value">
+                                    <span class="badge">
+                                        <t t-esc="record.state.value"/>
+                                    </span>
+                                </div>
+
+                                <!-- Fechas -->
+                                <div class="text-muted">
+                                    <t t-if="record.arrival_date.value">
+                                        <i class="fa fa-plane-arrival"/>
+                                        <t t-esc="record.arrival_date.value"/>
+                                    </t>
+                                    <t t-if="record.departure_date.value">
+                                        &#160;→&#160;
+                                        <i class="fa fa-plane-departure"/>
+                                        <t t-esc="record.departure_date.value"/>
+                                    </t>
+                                </div>
+
+                                <!-- Responsables -->
+                                <div t-if="record.coordinator_id.value">
+                                    <span class="fa fa-user"/> Coord:
+                                    <t t-esc="record.coordinator_id.value"/>
+                                </div>
+                                <div t-if="record.program_associate_id.value">
+                                    <span class="fa fa-user-circle"/> PA:
+                                    <t t-esc="record.program_associate_id.value"/>
+                                </div>
+
+                                <!-- KPIs -->
+                                <div class="o_kanban_footer">
+                                    <span class="o_stat_info">
+                                        <span class="o_stat_value">
+                                            <t t-esc="record.program_count.value or 0"/>
+                                        </span>
+                                        <span class="o_stat_text">Programs</span>
+                                    </span>
+
+                                    <span class="o_stat_info" style="margin-left: 12px;">
+                                        <span class="o_stat_value">
+                                            <t t-esc="record.activity_count.value or 0"/>
+                                        </span>
+                                        <span class="o_stat_text">Activities</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- =========================================================
          GRAPH VIEW (estadísticas de brigadas)
-         =========================================================  -->
-<record id="view_gb_brigade_graph" model="ir.ui.view">
-<field name="name">gb.brigade.graph</field>
-<field name="model">gb.brigade</field>
-<field name="arch" type="xml">
-<graph string="Brigade Stats" type="bar" stacked="True">
-<field name="arrival_date" type="row"/>
-<field name="state" type="col"/>
-<field name="id" type="measure"/>
-</graph>
-</field>
-</record>
-<!--  =========================================================
+         ========================================================= -->
+    <record id="view_gb_brigade_graph" model="ir.ui.view">
+        <field name="name">gb.brigade.graph</field>
+        <field name="model">gb.brigade</field>
+        <field name="arch" type="xml">
+            <graph string="Brigade Stats"
+                   type="bar"
+                   stacked="True">
+                <field name="arrival_date" type="row"/>
+                <field name="state" type="col"/>
+                <field name="id" type="measure"/>
+            </graph>
+        </field>
+    </record>
+
+    <!-- =========================================================
          FORM VIEW (detalle de brigada)
-         =========================================================  -->
-<record id="view_gb_brigade_form" model="ir.ui.view">
-<field name="name">gb.brigade.form</field>
-<field name="model">gb.brigade</field>
-<field name="arch" type="xml">
-<form string="Brigade">
-<sheet>
-<group>
-<group>
-<field name="external_brigade_code"/>
-<field name="brigade_code" readonly="1" invisible="1"/>
-<field name="name"/>
-<field name="state"/>
-<field name="arrival_date"/>
-<field name="departure_date"/>
-</group>
-<group>
-<field name="coordinator_id"/>
-<field name="program_associate_id"/>
-<field name="compound_manager_id"/>
-<field name="arrival_time_compound"/>
-<field name="departure_time_compound"/>
-</group>
-</group>
-<!--  Sin título "Ficha General"  -->
-<group>
-<group>
-<field name="brigade_type"/>
-<field name="brigade_program"/>
-<div class="row">
-<div class="col-8">
-<label for="itinerary_link">Itinerary Link</label>
-<field name="itinerary_link" placeholder="https://drive.google.com/..."/>
-</div>
-<div class="col-4" style="margin-top: 20px;">
-<button name="action_open_itinerary_link" type="object" string="Go to Itinerary" class="btn-link" icon="fa-external-link"/>
-<button name="action_edit_itinerary_link" type="object" string="Edit Itinerary" class="btn-link" icon="fa-edit"/>
-</div>
-</div>
-<!--  Business Client  -->
-<field name="business_client_id"/>
-<!--  Link al Business Profile  -->
-<field name="business_profile_link" widget="url" placeholder="https://drive.google.com/..."/>
-</group>
-<group>
-<field name="brigade_restriction"/>
-<field name="brigade_tier"/>
-</group>
-</group>
-<group>
-<field name="university_logo" widget="image" class="oe_avatar"/>
-<field name="extra_info"/>
-</group>
-<notebook>
-<!--  PROGRAMS  -->
-<page string="PROGRAMS">
-<field name="program_line_ids">
-<list editable="bottom">
-<field name="program_id" required="1"/>
-<field name="start_date"/>
-<field name="end_date"/>
-<field name="community_id"/>
-<field name="coordinator_id"/>
-<field name="notes"/>
-</list>
-<form string="Program Detail">
-<sheet>
-<group>
-<group>
-<field name="program_id" required="1"/>
-<field name="coordinator_id"/>
-<field name="community_id"/>
-</group>
-<group>
-<field name="start_date"/>
-<field name="end_date"/>
-<field name="notes"/>
-</group>
-</group>
-</sheet>
-</form>
-</field>
-</page>
-<!--  ROSTER  -->
-<page string="ROSTER">
-<field name="roster_ids">
-<!--  LISTA: columnas en el orden solicitado  -->
-<list editable="bottom">
-<field name="partner_id" string="Name" required="1"/>
-<field name="gender" string="Gender"/>
-<field name="birthdate" string="Date of Birth"/>
-<field name="email" string="E-mail"/>
-<field name="phone_display" string="Phone Number" readonly="1"/>
-<field name="spanish_speaker" string="Spanish Speaker"/>
-<field name="brigade_role" string="Brigade Role"/>
-<field name="passport_no" string="Passport N°"/>
-<field name="passport_expiry" string="Passport Expiration Date"/>
-<field name="citizenship" string="Citizenship"/>
-<field name="sa" string="S.A."/>
-<field name="emergency_contact_email" string="Emergency Contact E-mail" readonly="1"/>
-<field name="diet" string="Diet"/>
-<field name="medical_condition" string="Medical Condition"/>
-<field name="medications" string="Medications"/>
-<field name="allergy" string="Allergy"/>
-<field name="tshirt_size" string="T-Shirt Size"/>
-</list>
-<!--  FORM: detalle de Roster Member  -->
-<form string="Roster Member">
-<sheet>
-<group>
-<group string="Personal Info">
-<field name="partner_id" string="Name" required="1"/>
-<field name="gender" string="Gender"/>
-<field name="birthdate" string="Date of Birth"/>
-<field name="spanish_speaker" string="Spanish Speaker"/>
-<field name="email" string="E-mail"/>
-<field name="phone_display" string="Phone Number" readonly="1"/>
-<field name="tshirt_size" string="T-Shirt Size"/>
-<field name="brigade_role" string="Brigade Role"/>
-<field name="sa" string="S.A."/>
-</group>
-<group string="Passport and Health">
-<field name="passport_no" string="Passport N°"/>
-<field name="passport_expiry" string="Passport Expiration Date"/>
-<field name="citizenship" string="Citizenship"/>
-<field name="diet" string="Diet"/>
-<field name="medical_condition" string="Medical Condition"/>
-<field name="medications" string="Medications"/>
-<field name="allergy" string="Allergy"/>
-</group>
-</group>
-<group string="Emergency Contact">
-<group>
-<field name="emergency_contact_id" string="Emergency Contact"/>
-</group>
-<group>
-<field name="emergency_contact_email" string="Emergency Contact E-mail" readonly="1"/>
-</group>
-</group>
-</sheet>
-</form>
-</field>
-</page>
-<!--  =========================================================
+         ========================================================= -->
+    <record id="view_gb_brigade_form" model="ir.ui.view">
+        <field name="name">gb.brigade.form</field>
+        <field name="model">gb.brigade</field>
+        <field name="arch" type="xml">
+            <form string="Brigade">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="external_brigade_code"/>
+                            <field name="brigade_code" readonly="1" invisible="1"/>
+                            <field name="name"/>
+                            <field name="state"/>
+                            <field name="arrival_date"/>
+                            <field name="departure_date"/>
+                        </group>
+
+                        <group>
+                            <field name="coordinator_id"/>
+                            <field name="program_associate_id"/>
+                            <field name="compound_manager_id"/>
+                            <field name="arrival_time_compound"/>
+                            <field name="departure_time_compound"/>
+                        </group>
+                    </group>
+
+                    <!-- Sin título "Ficha General" -->
+                    <group>
+                        <group>
+                            <field name="brigade_type"/>
+                            <field name="brigade_program"/>
+
+                            <div class="row">
+                                <div class="col-8">
+                                    <label for="itinerary_link">Itinerary Link</label>
+                                    <field name="itinerary_link"
+                                           placeholder="https://drive.google.com/..."/>
+                                </div>
+
+                                <div class="col-4" style="margin-top: 20px;">
+                                    <button name="action_open_itinerary_link"
+                                            type="object"
+                                            string="Go to Itinerary"
+                                            class="btn-link"
+                                            icon="fa-external-link"/>
+                                    <button name="action_edit_itinerary_link"
+                                            type="object"
+                                            string="Edit Itinerary"
+                                            class="btn-link"
+                                            icon="fa-edit"/>
+                                </div>
+                            </div>
+
+                            <!-- Business Client -->
+                            <field name="business_client_id"/>
+
+                            <!-- Link al Business Profile -->
+                            <field name="business_profile_link"
+                                   widget="url"
+                                   placeholder="https://drive.google.com/..."/>
+                        </group>
+                        <group>
+                            <field name="brigade_restriction"/>
+                            <field name="brigade_tier"/>
+                        </group>
+                    </group>
+
+                    <group>
+                        <field name="university_logo" widget="image" class="oe_avatar"/>
+                        <field name="extra_info"/>
+                    </group>
+
+                    <notebook>
+
+                        <!-- PROGRAMS -->
+                        <page string="PROGRAMS">
+                            <field name="program_line_ids">
+                                <list editable="bottom">
+                                    <field name="program_id" required="1"/>
+                                    <field name="start_date"/>
+                                    <field name="end_date"/>
+                                    <field name="community_id"/>
+                                    <field name="coordinator_id"/>
+                                    <field name="notes"/>
+                                </list>
+                                <form string="Program Detail">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="program_id" required="1"/>
+                                                <field name="coordinator_id"/>
+                                                <field name="community_id"/>
+                                            </group>
+                                            <group>
+                                                <field name="start_date"/>
+                                                <field name="end_date"/>
+                                                <field name="notes"/>
+                                            </group>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+                        <!-- ROSTER -->
+                        <page string="ROSTER">
+                            <field name="roster_ids">
+                                <!-- LISTA: columnas en el orden solicitado -->
+                                <list editable="bottom">
+                                    <field name="partner_id" string="Name" required="1"/>
+                                    <field name="gender" string="Gender"/>
+                                    <field name="birthdate" string="Date of Birth"/>
+                                    <field name="email" string="E-mail"/>
+                                    <field name="phone_display" string="Phone Number" readonly="1"/>
+                                    <field name="spanish_speaker" string="Spanish Speaker"/>
+                                    <field name="brigade_role" string="Brigade Role"/>
+                                    <field name="passport_no" string="Passport N°"/>
+                                    <field name="passport_expiry" string="Passport Expiration Date"/>
+                                    <field name="citizenship" string="Citizenship"/>
+                                    <field name="sa" string="S.A."/>
+                                    <field name="emergency_contact_email" string="Emergency Contact E-mail" readonly="1"/>
+                                    <field name="diet" string="Diet"/>
+                                    <field name="medical_condition" string="Medical Condition"/>
+                                    <field name="medications" string="Medications"/>
+                                    <field name="allergy" string="Allergy"/>
+                                    <field name="tshirt_size" string="T-Shirt Size"/>
+                                </list>
+
+                                <!-- FORM: detalle de Roster Member -->
+                                <form string="Roster Member">
+                                    <sheet>
+                                        <group>
+                                            <group string="Personal Info">
+                                                <field name="partner_id" string="Name" required="1"/>
+                                                <field name="gender" string="Gender"/>
+                                                <field name="birthdate" string="Date of Birth"/>
+                                                <field name="spanish_speaker" string="Spanish Speaker"/>
+                                                <field name="email" string="E-mail"/>
+                                                <field name="phone_display" string="Phone Number" readonly="1"/>
+                                                <field name="tshirt_size" string="T-Shirt Size"/>
+                                                <field name="brigade_role" string="Brigade Role"/>
+                                                <field name="sa" string="S.A."/>
+                                            </group>
+
+                                            <group string="Passport &amp; Health">
+                                                <field name="passport_no" string="Passport N°"/>
+                                                <field name="passport_expiry" string="Passport Expiration Date"/>
+                                                <field name="citizenship" string="Citizenship"/>
+                                                <field name="diet" string="Diet"/>
+                                                <field name="medical_condition" string="Medical Condition"/>
+                                                <field name="medications" string="Medications"/>
+                                                <field name="allergy" string="Allergy"/>
+                                            </group>
+                                        </group>
+
+                                        <group string="Emergency Contact">
+                                            <group>
+                                                <field name="emergency_contact_id" string="Emergency Contact"/>
+                                            </group>
+                                            <group>
+                                                <field name="emergency_contact_email"
+                                                       string="Emergency Contact E-mail"
+                                                       readonly="1"/>
+                                            </group>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+ <!-- =========================================================
      Pestaña ARRIVALS
-   =========================================================  -->
+   ========================================================= -->
 <page string="ARRIVALS">
-<field name="arrival_ids">
-<list editable="bottom">
-<field name="title" required="1"/>
-<field name="flight_number"/>
-<field name="date_time_arrival"/>
-<field name="flight_through_sap"/>
-<!--  Hotel seleccionado desde HOTELS  -->
-<field name="arrival_hotel_id" string="Arrival Hotel / City / Time"/>
-<!--  Pasajeros: todos los del roster de la brigada  -->
-<field name="passenger_ids" widget="many2many_tags" domain="[('brigade_id', '=', parent.id)]"/>
-<field name="n_pax" readonly="1"/>
-<field name="special_transport"/>
-<field name="extra_charge"/>
-</list>
-<form string="Arrival Detail">
-<sheet>
-<group>
-<group>
-<field name="title" required="1"/>
-<field name="flight_number"/>
-<field name="date_time_arrival"/>
-<field name="flight_through_sap"/>
-</group>
-<group>
-<field name="arrival_hotel_id" string="Arrival Hotel / City / Time"/>
-<field name="arrival_hotel_city_time"/>
-<field name="passenger_ids" widget="many2many_tags" domain="[('brigade_id', '=', parent.id)]"/>
-<field name="n_pax" readonly="1"/>
-<field name="special_transport"/>
-<field name="extra_charge"/>
-</group>
-</group>
-</sheet>
-</form>
-</field>
+    <field name="arrival_ids">
+        <list editable="bottom">
+            <field name="title" required="1"/>
+            <field name="flight_number"/>
+            <field name="date_time_arrival"/>
+            <field name="flight_through_sap"/>
+
+            <!-- Hotel seleccionado desde HOTELS -->
+            <field name="arrival_hotel_id" string="Arrival Hotel / City / Time"/>
+
+            <!-- Pasajeros: todos los del roster de la brigada -->
+            <field name="passenger_ids"
+                   widget="many2many_tags"
+                   domain="[('brigade_id', '=', parent.id)]"/>
+
+            <field name="n_pax" readonly="1"/>
+            <field name="special_transport"/>
+            <field name="extra_charge"/>
+        </list>
+
+        <form string="Arrival Detail">
+            <sheet>
+                <group>
+                    <group>
+                        <field name="title" required="1"/>
+                        <field name="flight_number"/>
+                        <field name="date_time_arrival"/>
+                        <field name="flight_through_sap"/>
+                    </group>
+                    <group>
+                        <field name="arrival_hotel_id" string="Arrival Hotel / City / Time"/>
+                        <field name="arrival_hotel_city_time"/>
+                        <field name="passenger_ids"
+                               widget="many2many_tags"
+                               domain="[('brigade_id', '=', parent.id)]"/>
+                        <field name="n_pax" readonly="1"/>
+                        <field name="special_transport"/>
+                        <field name="extra_charge"/>
+                    </group>
+                </group>
+            </sheet>
+        </form>
+    </field>
 </page>
-<!--  =========================================================
+
+
+<!-- =========================================================
      Pestaña DEPARTURES
-   =========================================================  -->
+   ========================================================= -->
 <page string="DEPARTURES">
-<field name="departure_ids">
-<list editable="bottom">
-<field name="title" required="1"/>
-<field name="flight_number"/>
-<field name="date_time_departure"/>
-<field name="flight_through_sap"/>
-<field name="departure_hotel_id" string="Departure Hotel / City"/>
-<!--  Pasajeros: todos los del roster de la brigada  -->
-<field name="passenger_ids" widget="many2many_tags" domain="[('brigade_id', '=', parent.id)]"/>
-<field name="n_pax" readonly="1"/>
-<field name="special_transport"/>
-<field name="extra_charge"/>
-</list>
-<form string="Departure Detail">
-<sheet>
-<group>
-<group>
-<field name="title" required="1"/>
-<field name="flight_number"/>
-<field name="date_time_departure"/>
-<field name="flight_through_sap"/>
-</group>
-<group>
-<field name="departure_hotel_id" string="Departure Hotel / City"/>
-<field name="departure_hotel_city"/>
-<field name="passenger_ids" widget="many2many_tags" domain="[('brigade_id', '=', parent.id)]"/>
-<field name="n_pax" readonly="1"/>
-<field name="special_transport"/>
-<field name="extra_charge"/>
-</group>
-</group>
-</sheet>
-</form>
-</field>
+    <field name="departure_ids">
+        <list editable="bottom">
+            <field name="title" required="1"/>
+            <field name="flight_number"/>
+            <field name="date_time_departure"/>
+            <field name="flight_through_sap"/>
+
+            <field name="departure_hotel_id" string="Departure Hotel / City"/>
+
+            <!-- Pasajeros: todos los del roster de la brigada -->
+            <field name="passenger_ids"
+                   widget="many2many_tags"
+                   domain="[('brigade_id', '=', parent.id)]"/>
+
+            <field name="n_pax" readonly="1"/>
+            <field name="special_transport"/>
+            <field name="extra_charge"/>
+        </list>
+
+        <form string="Departure Detail">
+            <sheet>
+                <group>
+                    <group>
+                        <field name="title" required="1"/>
+                        <field name="flight_number"/>
+                        <field name="date_time_departure"/>
+                        <field name="flight_through_sap"/>
+                    </group>
+                    <group>
+                        <field name="departure_hotel_id" string="Departure Hotel / City"/>
+                        <field name="departure_hotel_city"/>
+                        <field name="passenger_ids"
+                               widget="many2many_tags"
+                               domain="[('brigade_id', '=', parent.id)]"/>
+                        <field name="n_pax" readonly="1"/>
+                        <field name="special_transport"/>
+                        <field name="extra_charge"/>
+                    </group>
+                </group>
+            </sheet>
+        </form>
+    </field>
 </page>
-<!--  STAFF  -->
-<page string="STAFF">
-<field name="staff_ids">
-<list editable="bottom">
-<field name="person_id" required="1"/>
-<field name="gender"/>
-<field name="start_datetime"/>
-<field name="end_datetime"/>
-<field name="diet"/>
-<field name="allergy"/>
-<field name="professional_registration"/>
-<field name="internal_note"/>
-</list>
-<form string="Staff Member">
-<sheet>
-<group>
-<group>
-<field name="person_id" required="1"/>
-<field name="gender" readonly="1"/>
-<field name="staff_role"/>
-<field name="start_datetime"/>
-<field name="end_datetime"/>
-</group>
-<group>
-<field name="diet" readonly="1"/>
-<field name="allergy" readonly="1"/>
-<field name="professional_registration" readonly="1"/>
-<field name="internal_note"/>
-</group>
-</group>
-</sheet>
-</form>
-</field>
-</page>
-<!--  ADD-ONS / EXTRAS (antes ITINERARIO)  -->
-<page string="ADD-ONS/EXTRAS">
-<field name="activity_ids">
-<list editable="bottom">
-<!--  Nombre de actividad editable  -->
-<field name="name" string="Nombre de Actividad"/>
-<field name="tag_ids" widget="many2many_tags" string="Tipo de actividad"/>
-<field name="start_datetime" string="Inicio"/>
-<field name="end_datetime" string="Fin"/>
-<field name="place" string="Lugar"/>
-<field name="responsible_id" string="Responsable"/>
-<!--  Nueva columna de notas  -->
-<field name="notes" string="Notas / Detalles"/>
-<field name="participant_ids" widget="many2many_tags" string="Participantes" domain="[('brigade_id','=',parent.id)]" options="{'no_create': True}"/>
-<field name="participant_count" readonly="1" string="N°"/>
-<button name="action_open_add_participants_wizard" type="object" string="Seleccionar" icon="fa-users" class="btn-link"/>
-<button name="action_add_all_participants" type="object" string="Todos" class="btn-link"/>
-</list>
-<form string="Actividad">
-<sheet>
-<group>
-<group>
-<field name="name" string="Nombre de Actividad"/>
-<field name="tag_ids" widget="many2many_tags" string="Tipo de actividad"/>
-</group>
-<group>
-<field name="start_datetime" string="Inicio"/>
-<field name="end_datetime" string="Fin"/>
-</group>
-</group>
-<group>
-<field name="place" string="Lugar"/>
-<field name="responsible_id" string="Responsable"/>
-</group>
-<group string="Participantes">
-<button name="action_add_all_participants" type="object" string="Seleccionar todos" class="btn-primary oe_highlight" attrs="{'invisible': [('brigade_id','=',False)]}"/>
-<field name="participant_ids" widget="many2many_checkboxes" domain="[('brigade_id','=',parent.id)]" options="{'no_create': True}"/>
-<button name="action_open_add_participants_wizard" type="object" string="Seleccionar (wizard)" class="btn-secondary"/>
-</group>
-<group>
-<field name="notes" string="Notas / Detalles"/>
-</group>
-</sheet>
-</form>
-</field>
-</page>
-<!--  HOTELES / ROOMING  -->
-<page string="Hoteles / Rooming">
-<field name="hotel_booking_ids">
-<list editable="bottom">
-<field name="check_in_date" required="1" string="Check-In"/>
-<field name="check_out_date" required="1" string="Check-Out"/>
-<field name="stay_nights" readonly="1" string="Nights"/>
-<field name="hotel_offer_id" required="1" string="Hotel Offer"/>
-<field name="partner_id" readonly="1" string="Hotel (Partner)"/>
-<field name="city" readonly="1" string="City"/>
-<!--  Contadores tipo A/T  -->
-<field name="roster_assigned_total_display" string="Roster (A/T)" readonly="1"/>
-<field name="staff_assigned_total_display" string="Staff (A/T)" readonly="1"/>
-<field name="overall_assigned_total_display" string="Total (A/T)" readonly="1"/>
-<field name="note" string="Notes"/>
-<button name="action_open_rooming_detail" type="object" string="Rooming" class="btn-link" icon="fa-bed"/>
-</list>
-</field>
-</page>
-</notebook>
-</sheet>
-</form>
-</field>
-</record>
-<!--  =========================================================
+
+
+
+                        <!-- STAFF -->
+                        <page string="STAFF">
+                            <field name="staff_ids">
+                                <list editable="bottom">
+                                    <field name="person_id" required="1"/>
+                                    <field name="gender"/>
+                                    <field name="start_datetime"/>
+                                    <field name="end_datetime"/>
+                                    <field name="diet"/>
+                                    <field name="allergy"/>
+                                    <field name="professional_registration"/>
+                                    <field name="internal_note"/>
+                                </list>
+                                <form string="Staff Member">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="person_id" required="1"/>
+                                                <field name="gender" readonly="1"/>
+                                                <field name="staff_role"/>
+                                                <field name="start_datetime"/>
+                                                <field name="end_datetime"/>
+                                            </group>
+                                            <group>
+                                                <field name="diet" readonly="1"/>
+                                                <field name="allergy" readonly="1"/>
+                                                <field name="professional_registration" readonly="1"/>
+                                                <field name="internal_note"/>
+                                            </group>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+
+                        <!-- ADD-ONS / EXTRAS (antes ITINERARIO) -->
+                        <page string="ADD-ONS/EXTRAS">
+                            <field name="activity_ids">
+                                <list editable="bottom">
+                                    <!-- Nombre de actividad editable -->
+                                    <field name="name" string="Nombre de Actividad"/>
+
+                                    <field name="tag_ids"
+                                           widget="many2many_tags"
+                                           string="Tipo de actividad"/>
+                                    <field name="start_datetime" string="Inicio"/>
+                                    <field name="end_datetime" string="Fin"/>
+                                    <field name="place" string="Lugar"/>
+                                    <field name="responsible_id" string="Responsable"/>
+
+                                    <!-- Nueva columna de notas -->
+                                    <field name="notes" string="Notas / Detalles"/>
+
+                                    <field name="participant_ids"
+                                           widget="many2many_tags"
+                                           string="Participantes"
+                                           domain="[('brigade_id','=',parent.id)]"
+                                           options="{'no_create': True}"/>
+                                    <field name="participant_count"
+                                           readonly="1"
+                                           string="N°"/>
+
+                                    <button name="action_open_add_participants_wizard"
+                                            type="object"
+                                            string="Seleccionar"
+                                            icon="fa-users"
+                                            class="btn-link"/>
+
+                                    <button name="action_add_all_participants"
+                                            type="object"
+                                            string="Todos"
+                                            class="btn-link"/>
+                                </list>
+
+                                <form string="Actividad">
+                                    <sheet>
+                                        <group>
+                                            <group>
+                                                <field name="name" string="Nombre de Actividad"/>
+                                                <field name="tag_ids"
+                                                       widget="many2many_tags"
+                                                       string="Tipo de actividad"/>
+                                            </group>
+                                            <group>
+                                                <field name="start_datetime" string="Inicio"/>
+                                                <field name="end_datetime" string="Fin"/>
+                                            </group>
+                                        </group>
+
+                                        <group>
+                                            <field name="place" string="Lugar"/>
+                                            <field name="responsible_id" string="Responsable"/>
+                                        </group>
+
+                                        <group string="Participantes">
+                                            <button name="action_add_all_participants"
+                                                    type="object"
+                                                    string="Seleccionar todos"
+                                                    class="btn-primary oe_highlight"
+                                                    attrs="{'invisible': [('brigade_id','=',False)]}"/>
+
+                                            <field name="participant_ids"
+                                                   widget="many2many_checkboxes"
+                                                   domain="[('brigade_id','=',parent.id)]"
+                                                   options="{'no_create': True}"/>
+
+                                            <button name="action_open_add_participants_wizard"
+                                                    type="object"
+                                                    string="Seleccionar (wizard)"
+                                                    class="btn-secondary"/>
+                                        </group>
+
+                                        <group>
+                                            <field name="notes" string="Notas / Detalles"/>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
+
+                        <!-- HOTELES / ROOMING -->
+                        <page string="Hoteles / Rooming">
+                            <field name="hotel_booking_ids">
+                                <list editable="bottom">
+                                    <field name="check_in_date" required="1" string="Check-In"/>
+                                    <field name="check_out_date" required="1" string="Check-Out"/>
+                                    <field name="stay_nights" readonly="1" string="Nights"/>
+                                    <field name="hotel_offer_id" required="1" string="Hotel Offer"/>
+                                    <field name="partner_id" readonly="1" string="Hotel (Partner)"/>
+                                    <field name="city" readonly="1" string="City"/>
+
+                                    <!-- Contadores tipo A/T -->
+                                    <field name="roster_assigned_total_display" string="Roster (A/T)" readonly="1"/>
+                                    <field name="staff_assigned_total_display" string="Staff (A/T)" readonly="1"/>
+                                    <field name="overall_assigned_total_display" string="Total (A/T)" readonly="1"/>
+
+                                    <field name="note" string="Notes"/>
+
+                                    <button name="action_open_rooming_detail"
+                                            type="object"
+                                            string="Rooming"
+                                            class="btn-link"
+                                            icon="fa-bed"/>
+                                </list>
+                            </field>
+                        </page>
+
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- =========================================================
          ACTION (abrir vista de brigadas)
-         =========================================================  -->
-<record id="action_gb_brigade" model="ir.actions.act_window">
-<field name="name">Brigades</field>
-<field name="res_model">gb.brigade</field>
-<field name="view_mode">list,form,kanban,graph</field>
-<field name="view_id" ref="view_gb_brigade_tree"/>
-<field name="help">Brigade planning and logistics</field>
-</record>
-<!--  =========================================================
+         ========================================================= -->
+    <record id="action_gb_brigade" model="ir.actions.act_window">
+        <field name="name">Brigades</field>
+        <field name="res_model">gb.brigade</field>
+        <field name="view_mode">list,form,kanban,graph</field>
+        <field name="view_id" ref="view_gb_brigade_tree"/>
+        <field name="help">Brigade planning and logistics</field>
+    </record>
+
+    <!-- =========================================================
          BRIGADES REPORT LIST VIEW
-         =========================================================  -->
-<record id="view_gb_brigade_report_list" model="ir.ui.view">
-<field name="name">gb.brigade.report.list</field>
-<field name="model">gb.brigade</field>
-<field name="arch" type="xml">
-<list string="Brigades Report">
-<field name="brigade_code"/>
-<field name="name"/>
-<field name="brigade_type"/>
-<field name="brigade_program"/>
-<field name="brigade_tier"/>
-<field name="state"/>
-<field name="arrival_date"/>
-<field name="departure_date"/>
-<field name="coordinator_id"/>
-<field name="program_associate_id"/>
-<field name="volunteer_count" string="# Volunteers" readonly="1"/>
-<field name="program_count" string="# Programs" readonly="1"/>
-<field name="activity_count" string="# Activities" readonly="1"/>
-<field name="transport_count" string="# Transports" readonly="1"/>
-</list>
-</field>
-</record>
-<!--  =========================================================
+         ========================================================= -->
+    <record id="view_gb_brigade_report_list" model="ir.ui.view">
+        <field name="name">gb.brigade.report.list</field>
+        <field name="model">gb.brigade</field>
+        <field name="arch" type="xml">
+            <list string="Brigades Report">
+                <field name="brigade_code"/>
+                <field name="name"/>
+                <field name="brigade_type"/>
+                <field name="brigade_program"/>
+                <field name="brigade_tier"/>
+                <field name="state"/>
+                <field name="arrival_date"/>
+                <field name="departure_date"/>
+                <field name="coordinator_id"/>
+                <field name="program_associate_id"/>
+                <field name="volunteer_count" string="# Volunteers" readonly="1"/>
+                <field name="program_count" string="# Programs" readonly="1"/>
+                <field name="activity_count" string="# Activities" readonly="1"/>
+                <field name="transport_count" string="# Transports" readonly="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- =========================================================
          ACTION (Brigades Report)
-         =========================================================  -->
-<record id="action_gb_brigade_report" model="ir.actions.act_window">
-<field name="name">Brigades Report</field>
-<field name="res_model">gb.brigade</field>
-<field name="view_mode">list,form,graph</field>
-<field name="view_id" ref="view_gb_brigade_report_list"/>
-<field name="help">Analytical report of brigades with logistics KPIs.</field>
-</record>
-<!--  =========================================================
+         ========================================================= -->
+    <record id="action_gb_brigade_report" model="ir.actions.act_window">
+        <field name="name">Brigades Report</field>
+        <field name="res_model">gb.brigade</field>
+        <field name="view_mode">list,form,graph</field>
+        <field name="view_id" ref="view_gb_brigade_report_list"/>
+        <field name="help">Analytical report of brigades with logistics KPIs.</field>
+    </record>
+
+    <!-- =========================================================
          MENÚS
-         =========================================================  -->
-<menuitem id="menu_gb_root" name="Global Brigades" sequence="10"/>
-<menuitem id="menu_gb_brigade" name="Brigades" parent="menu_gb_root" action="action_gb_brigade" sequence="20"/>
-<menuitem id="menu_gb_reports_root" name="Reports" parent="menu_gb_root" sequence="90"/>
-<menuitem id="menu_gb_brigade_report" name="Brigades Report" parent="menu_gb_reports_root" action="action_gb_brigade_report" sequence="10"/>
-</data>
+         ========================================================= -->
+    <menuitem
+        id="menu_gb_root"
+        name="Global Brigades"
+        sequence="10"/>
+
+    <menuitem
+        id="menu_gb_brigade"
+        name="Brigades"
+        parent="menu_gb_root"
+        action="action_gb_brigade"
+        sequence="20"/>
+
+    <menuitem
+        id="menu_gb_reports_root"
+        name="Reports"
+        parent="menu_gb_root"
+        sequence="90"/>
+
+    <menuitem
+        id="menu_gb_brigade_report"
+        name="Brigades Report"
+        parent="menu_gb_reports_root"
+        action="action_gb_brigade_report"
+        sequence="10"/>
+
+    </data>
 </odoo>

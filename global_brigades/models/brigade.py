@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 #
 # LT Brigade Module - Mejoras Odoo 18
-# Largotek SRL - Juan Luis GarvÃ­a - www.largotek.com
+# Largotek SRL - Juan Luis Garvía - www.largotek.com
 # License: LGPL-3.0 (https://www.gnu.org/licenses/lgpl-3.0.html)
 #
 
@@ -15,7 +15,7 @@ class GBBrigade(models.Model):
     _description = "Global Brigades - Chapter / Brigade"
     _order = "id desc"
     
-    # IdentificaciÃ³n bÃ¡sica
+    # Identificación básica
     external_brigade_code = fields.Char(
         string="Brigade Code",
         help="External reference / code from CRM or other system.",
@@ -201,10 +201,10 @@ class GBBrigade(models.Model):
             "target": "current",
         }
 
-    # ---------- CONTROL DE EDICIÃ“N DEL ITINERARY LINK ----------
+    # ---------- CONTROL DE EDICIÓN DEL ITINERARY LINK ----------
 
     def write(self, vals):
-        """Controla que el itinerary_link no se cambie sin usar el botÃ³n dedicado."""
+        """Controla que el itinerary_link no se cambie sin usar el botón dedicado."""
         if "itinerary_link" in vals:
             for rec in self:
                 old_link = rec.itinerary_link or False
@@ -214,7 +214,7 @@ class GBBrigade(models.Model):
                 if old_link == new_link:
                     continue
 
-                # Primera vez: antes vacÃ­o, ahora con valor -> permitido
+                # Primera vez: antes vacío, ahora con valor -> permitido
                 if not old_link and new_link:
                     continue
 
@@ -228,7 +228,7 @@ class GBBrigade(models.Model):
         return super().write(vals)
 
     def action_open_itinerary_link(self):
-        """Abre el itinerary_link en una nueva pestaÃ±a del navegador."""
+        """Abre el itinerary_link en una nueva pestaña del navegador."""
         self.ensure_one()
         if not self.itinerary_link:
             raise UserError(_("There is no itinerary link set for this brigade."))
@@ -253,11 +253,11 @@ class GBBrigade(models.Model):
             "context": ctx,
         }
 
-    # ---------- ASIGNACIÃ“N DE SECUENCIA ----------
+    # ---------- ASIGNACIÓN DE SECUENCIA ----------
 
     @api.model
     def create(self, vals):
-        # Si no viene cÃ³digo o viene con el placeholder "/", tomamos de la secuencia
+        # Si no viene código o viene con el placeholder "/", tomamos de la secuencia
         code = vals.get("brigade_code") or "/"
         if code == "/":
             next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
@@ -268,11 +268,11 @@ class GBBrigade(models.Model):
                 ))
             vals["brigade_code"] = next_code
         return super().create(vals)
-    # ---------- ASIGNACIÃ“N DE SECUENCIA ----------
+    # ---------- ASIGNACIÓN DE SECUENCIA ----------
 
     @api.model
     def create(self, vals):
-        # Si no viene cÃ³digo o viene con el placeholder "/", tomamos de la secuencia
+        # Si no viene código o viene con el placeholder "/", tomamos de la secuencia
         code = vals.get("brigade_code") or "/"
         if code == "/":
             self.env.ref("base.sequence_code", raise_if_not_found=False)
@@ -280,12 +280,12 @@ class GBBrigade(models.Model):
             if not next_code:
                 raise ValidationError(_(
                     "No se pudo obtener la secuencia 'gb.brigade.code'. "
-                    "AsegÃºrate de cargar 'sequence.xml' en el manifest."
+                    "Asegúrate de cargar 'sequence.xml' en el manifest."
                 ))
             vals["brigade_code"] = next_code
         return super().create(vals)
     # -------------------------------------------------------------
-    # BOTÃ“N: Abrir formulario desde la vista lista
+    # BOTÓN: Abrir formulario desde la vista lista
     # -------------------------------------------------------------
     def open_form_action(self):
         """Abre el formulario de la brigada desde la vista lista."""
@@ -337,7 +337,7 @@ class GBBrigadeProgram(models.Model):
         help="When this program ends for this brigade.",
     )
 
-    # NUEVO: selecciÃ³n de comunidad desde el nuevo modelo
+    # NUEVO: selección de comunidad desde el nuevo modelo
     community_id = fields.Many2one(
         "gb.community",
         string="Community",
@@ -844,7 +844,7 @@ class GBBrigadeStaff(models.Model):
     _order = 'start_datetime, person_id'
     _rec_name = 'name'
 
-    # Nombre â€œhumanoâ€ que usaremos en checkboxes, tags, etc.
+    # Nombre “humano” que usaremos en checkboxes, tags, etc.
     name = fields.Char(
         string='Name',
         compute='_compute_name',
@@ -865,7 +865,7 @@ class GBBrigadeStaff(models.Model):
         help='Person (contact) assigned as staff member in this brigade.',
     )
 
-    # Datos traÃ­dos desde el contacto
+    # Datos traídos desde el contacto
     gender = fields.Selection(
         related='person_id.gb_gender',
         string='Gender',
@@ -987,7 +987,7 @@ class GBBrigadeStaff(models.Model):
 
     @api.depends('person_id', 'person_id.name', 'provider_id', 'provider_id.name', 'staff_role')
     def _compute_name(self):
-        """Nombre amigable para staff: 'Juan PÃ©rez (LEAD COORDINATOR 1)'."""
+        """Nombre amigable para staff: 'Juan Pérez (LEAD COORDINATOR 1)'."""
         selection_dict = dict(self._fields['staff_role'].selection)
         for rec in self:
             base = rec.person_id.name or rec.provider_id.name or ""
@@ -1072,7 +1072,7 @@ class GBBrigadeActivity(models.Model):
     )
     
     participant_count = fields.Integer(
-        string="NÂ°",
+        string="N°",
         compute="_compute_participant_count",
         store=False,
         help="How many participants are assigned to this activity.",
@@ -1086,7 +1086,7 @@ class GBBrigadeActivity(models.Model):
             rec.participant_count = len(rec.participant_ids)
     
     def action_add_all_participants(self):
-        """BotÃ³n 'Todos': mete todo el roster de la brigada en la actividad."""
+        """Botón 'Todos': mete todo el roster de la brigada en la actividad."""
         for rec in self:
             if rec.brigade_id:
                 all_roster = rec.brigade_id.roster_ids
@@ -1094,7 +1094,7 @@ class GBBrigadeActivity(models.Model):
         return True
     
     def action_open_add_participants_wizard(self):
-        """BotÃ³n 'Seleccionar': abre el wizard para marcar participantes manualmente."""
+        """Botón 'Seleccionar': abre el wizard para marcar participantes manualmente."""
         self.ensure_one()
         return {
             "type": "ir.actions.act_window",
@@ -1178,7 +1178,7 @@ class GBBrigadeActivity(models.Model):
     )
 
     participant_count = fields.Integer(
-        string="NÂ°",
+        string="N°",
         compute="_compute_participant_count",
         store=False,
         help="How many participants are assigned to this activity.",
@@ -1195,7 +1195,7 @@ class GBBrigadeActivity(models.Model):
             rec.participant_count = len(rec.participant_ids)
 
     def action_add_all_participants(self):
-        """BotÃ³n 'Todos': mete todo el roster de la brigada en la actividad."""
+        """Botón 'Todos': mete todo el roster de la brigada en la actividad."""
         for rec in self:
             if rec.brigade_id:
                 all_roster = rec.brigade_id.roster_ids
@@ -1204,7 +1204,7 @@ class GBBrigadeActivity(models.Model):
 
     def action_open_add_participants_wizard(self):
         """
-        BotÃ³n 'Seleccionar': abre el wizard existente
+        Botón 'Seleccionar': abre el wizard existente
         para marcar participantes manualmente.
         """
         self.ensure_one()
