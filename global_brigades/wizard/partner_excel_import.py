@@ -2,9 +2,9 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError, UserError
 import base64
-import pandas as pd
+import openpyxl
+from openpyxl import load_workbook
 import io
-from datetime import datetime
 
 class PartnerExcelImport(models.TransientModel):
     _name = 'lt.partner.excel.import'
@@ -17,108 +17,109 @@ class PartnerExcelImport(models.TransientModel):
         ('draft', 'Borrador'),
         ('ready', 'Listo para Importar'),
         ('done', 'Importado'),
-    ], default='draft', readonly=True)
+    ], default='draft')
 
-    preview_lines = fields.Text(string='Vista Previa', readonly=True)
-    total_lines = fields.Integer(string='Total Líneas', readonly=True)
-    imported_count = fields.Integer(string='Importados', readonly=True)
-    error_count = fields.Integer(string='Errores', readonly=True)
+    preview_lines = fields.Text(string='Vista Previa')
+    total_lines = fields.Integer(string='Total Líneas')
+    imported_count = fields.Integer(string='Importados')
+    error_count = fields.Integer(string='Errores')
 
     @api.onchange('import_file')
     def _onchange_import_file(self):
+        self.preview_lines = self.total_lines = self.imported_count = self.error_count = 0
+        self.state = 'draft'
+        
         if self.import_file:
             try:
-                # Leer Excel con pandas
-                df = pd.read_excel(io.BytesIO(base64.b64decode(self.import_file)))
-                self.total_lines = len(df)
-                
-                # Columnas esperadas mínimas
-                required_cols = ['nombre', 'apellido', 'identificacion']
-                missing_cols = [col for col in required_cols if col.lower() not in [c.lower() for c in df.columns]]
-                
-                if missing_cols:
-                    raise ValidationError(_('Faltan columnas obligatorias: %s. Verifique que el Excel tenga: nombre, apellido, identificacion') % ', '.join(missing_cols))
-                
-                # Vista previa de primeras 5 líneas
-                preview = df.head(5).to_dict('records')
-                self.preview_lines = str(preview)[:1000]
+                wb = load_workbook(io.BytesIO(base64.b64decode(self.import_file)), read_only=True)
+                ws = wb.active
+                self.total_lines = ws.max_row - 1  # Sin header
+                self.preview_lines = f"✅ Detectadas {self.total_lines} líneas de datos"
                 self.state = 'ready'
-                
+                wb.close()
             except Exception as e:
                 raise ValidationError(_('Error leyendo Excel: %s') % str(e))
 
     def action_import_excel(self):
-        """Importa los datos del Excel"""
         if not self.import_file:
             raise UserError(_('Debe seleccionar un archivo Excel'))
 
-        # Leer Excel
-        df = pd.read_excel(io.BytesIO(base64.b64decode(self.import_file)))
+        wb = load_workbook(io.BytesIO(base64.b64decode(self.import_file)))
+        ws = wb.active
         
-        imported = 0
-        errors = 0
+        imported = errors = 0
         error_details = []
 
-        for index, row in df.iterrows():
+        # Mapa de columnas (A=1, B=2, etc.)
+        col_map = {
+            1: 'nombre',      # Columna A
+            2: 'apellido',    # Columna B
+            3: 'identificacion', # Columna C
+            4: 'email',       # Columna D
+            5: 'telefono',    # Columna E
+            6: 'celular',     # Columna F
+            7: 'direccion',   # Columna G
+            8: 'ciudad',      # Columna H
+            9: 'provincia',   # Columna I
+        }
+
+        for row_num in range(2, ws.max_row + 1):  # Empezar desde fila 2 (sin header)
             try:
-                # Limpiar y mapear datos
+                # Leer datos de la fila
+                row_data = {}
+                for col_num, field_name in col_map.items():
+                    cell_value = ws.cell(row=row_num, column=col_num).value
+                    row_data[field_name] = str(cell_value).strip() if cell_value else ''
+
+                nombre = row_data['nombre']
+                apellido = row_data['apellido']
+                
+                if not nombre or not apellido:
+                    errors += 1
+                    error_details.append(f"Fila {row_num}: Nombre o apellido vacío")
+                    continue
+
                 partner_data = {
-                    'name': f"{row.get('nombre', '').strip()} {row.get('apellido', '').strip()}".strip(),
+                    'name': f"{nombre} {apellido}".strip(),
                     'brigade_ids': [(4, self.brigade_id.id)],
                     'is_company': False,
                     'customer_rank': 1,
                 }
                 
-                # Campos opcionales con prefijo LT para evitar conflictos
-                if pd.notna(row.get('identificacion')):
-                    partner_data['LT_identificacion'] = str(row.get('identificacion')).strip()
-                if pd.notna(row.get('email')):
-                    partner_data['email'] = str(row.get('email')).strip()
-                if pd.notna(row.get('telefono')):
-                    partner_data['phone'] = str(row.get('telefono')).strip()
-                if pd.notna(row.get('celular')):
-                    partner_data['mobile'] = str(row.get('celular')).strip()
-                if pd.notna(row.get('direccion')):
-                    partner_data['street'] = str(row.get('direccion')).strip()
-                if pd.notna(row.get('ciudad')):
-                    partner_data['city'] = str(row.get('ciudad')).strip()
-                if pd.notna(row.get('provincia')):
-                    partner_data['state_id'] = self._get_state_id(str(row.get('provincia')).strip())
-                
-                # Crear partner
-                partner = self.env['res.partner'].create(partner_data)
+                # Campos opcionales
+                if row_data['identificacion']:
+                    partner_data['LT_identificacion'] = row_data['identificacion']
+                if row_data['email']:
+                    partner_data['email'] = row_data['email']
+                if row_data['telefono']:
+                    partner_data['phone'] = row_data['telefono']
+                if row_data['celular']:
+                    partner_data['mobile'] = row_data['celular']
+                if row_data['direccion']:
+                    partner_data['street'] = row_data['direccion']
+
+                self.env['res.partner'].create(partner_data)
                 imported += 1
                 
             except Exception as e:
                 errors += 1
-                error_details.append(f"Línea {index+1}: {str(e)}")
+                error_details.append(f"Fila {row_num}: {str(e)}")
 
-        # Actualizar wizard
         self.write({
             'state': 'done',
             'imported_count': imported,
             'error_count': errors,
+            'preview_lines': f"✅ {imported} creados, {errors} errores",
         })
+        wb.close()
 
-        # Mensaje resumen
-        message = f"Importación completada: {imported} participantes creados"
-        if errors:
-            message += f", {errors} errores"
-            if error_details:
-                message += f"\nErrores:\n" + "\n".join(error_details[:5])
-        
         return {
             'type': 'ir.actions.client',
             'tag': 'display_notification',
             'params': {
-                'title': _('Importación Excel'),
-                'message': message,
+                'title': _('Importación Exitosa'),
+                'message': f'{imported} participantes importados!\n{errors} errores encontrados.',
                 'type': 'success' if errors == 0 else 'warning',
                 'sticky': True,
             }
         }
-
-    def _get_state_id(self, state_name):
-        """Busca estado por nombre"""
-        state = self.env['res.country.state'].search([('name', 'ilike', state_name)], limit=1)
-        return state.id if state else False

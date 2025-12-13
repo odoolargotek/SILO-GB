@@ -9,8 +9,7 @@
     "license": "LGPL-3",
     "depends": [
         "base",
-        "contacts",
-        'spreadsheet',
+        "contacts",        
     ],
         "data": [
         "data/sequence.xml",
