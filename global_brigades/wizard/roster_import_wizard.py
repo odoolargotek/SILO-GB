@@ -360,3 +360,96 @@ class GBRosterImportWizard(models.TransientModel):
                 "next": {"type": "ir.actions.act_window_close"},
             },
         }
+    def _build_template_xlsx(self):
+        """Return xlsx bytes for the roster import template."""
+        self._require_openpyxl()
+        import openpyxl
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Roster"
+
+        headers = [
+            "email",
+            "name",
+            "phone",
+            "mobile",
+            "gender",
+            "birthdate",
+            "spanish_speaker",
+            "passport_no",
+            "passport_expiry",
+            "citizenship",
+            "tshirt_size",
+            "brigade_role",
+            "sa",
+            "diet",
+            "medical_condition",
+            "medications",
+            "allergy",
+            "emergency_contact_email",
+            "emergency_contact_name",
+            "emergency_contact_phone",
+            "emergency_contact_mobile",
+        ]
+
+        ws.append(headers)
+
+        # Example row (optional, helps users)
+        ws.append([
+            "john.doe@email.com",
+            "John Doe",
+            "+591 70000000",
+            "+591 70000001",
+            "male",
+            "1990-01-31",
+            "yes",
+            "P1234567",
+            "2030-12-31",
+            "Bolivia",
+            "m",
+            "Volunteer",
+            "no",
+            "None",
+            "None",
+            "None",
+            "None",
+            "jane.doe@email.com",
+            "Jane Doe",
+            "+591 70000002",
+            "+591 70000003",
+        ])
+
+        # Make header bold + set a reasonable width
+        from openpyxl.styles import Font
+        bold = Font(bold=True)
+        for col_idx, _h in enumerate(headers, start=1):
+            cell = ws.cell(row=1, column=col_idx)
+            cell.font = bold
+            ws.column_dimensions[openpyxl.utils.get_column_letter(col_idx)].width = 22
+
+        bio = BytesIO()
+        wb.save(bio)
+        return bio.getvalue()
+
+    def action_download_template(self):
+        """Download the Excel template from the wizard."""
+        self.ensure_one()
+
+        xlsx_bytes = self._build_template_xlsx()
+        b64 = base64.b64encode(xlsx_bytes)
+
+        attachment = self.env["ir.attachment"].sudo().create({
+            "name": "gb_roster_import_template.xlsx",
+            "type": "binary",
+            "datas": b64,
+            "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "res_model": self._name,
+            "res_id": self.id,
+        })
+
+        return {
+            "type": "ir.actions.act_url",
+            "url": "/web/content/%s?download=true" % attachment.id,
+            "target": "self",
+        }
