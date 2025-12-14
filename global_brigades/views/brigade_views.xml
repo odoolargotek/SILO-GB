@@ -219,81 +219,71 @@
                             </field>
                         </page>
 
-                       <!-- ROSTER -->
-<page string="ROSTER">
+                        <!-- ROSTER -->
+                        <page string="ROSTER">
+                            <field name="roster_ids">
+                                <!-- LISTA: columnas en el orden solicitado -->
+                                <list editable="bottom">
+                                    <field name="partner_id" string="Name" required="1"/>
+                                    <field name="gender" string="Gender"/>
+                                    <field name="birthdate" string="Date of Birth"/>
+                                    <field name="email" string="E-mail"/>
+                                    <field name="phone_display" string="Phone Number" readonly="1"/>
+                                    <field name="spanish_speaker" string="Spanish Speaker"/>
+                                    <field name="brigade_role" string="Brigade Role"/>
+                                    <field name="passport_no" string="Passport N°"/>
+                                    <field name="passport_expiry" string="Passport Expiration Date"/>
+                                    <field name="citizenship" string="Citizenship"/>
+                                    <field name="sa" string="S.A."/>
+                                    <field name="emergency_contact_email" string="Emergency Contact E-mail" readonly="1"/>
+                                    <field name="diet" string="Diet"/>
+                                    <field name="medical_condition" string="Medical Condition"/>
+                                    <field name="medications" string="Medications"/>
+                                    <field name="allergy" string="Allergy"/>
+                                    <field name="tshirt_size" string="T-Shirt Size"/>
+                                </list>
 
-    <!-- Botón en modelo gb.brigade (correcto) -->
-    <group>
-        <button name="action_open_roster_import_wizard"
-                type="object"
-                string="Import Roster (Excel)"
-                class="btn-primary"
-                icon="fa-upload"/>
-    </group>
+                                <!-- FORM: detalle de Roster Member -->
+                                <form string="Roster Member">
+                                    <sheet>
+                                        <group>
+                                            <group string="Personal Info">
+                                                <field name="partner_id" string="Name" required="1"/>
+                                                <field name="gender" string="Gender"/>
+                                                <field name="birthdate" string="Date of Birth"/>
+                                                <field name="spanish_speaker" string="Spanish Speaker"/>
+                                                <field name="email" string="E-mail"/>
+                                                <field name="phone_display" string="Phone Number" readonly="1"/>
+                                                <field name="tshirt_size" string="T-Shirt Size"/>
+                                                <field name="brigade_role" string="Brigade Role"/>
+                                                <field name="sa" string="S.A."/>
+                                            </group>
 
-    <field name="roster_ids">
-        <!-- LISTA -->
-        <list editable="bottom">
-            <field name="partner_id" string="Name" required="1"/>
-            <field name="gender" string="Gender"/>
-            <field name="birthdate" string="Date of Birth"/>
-            <field name="email" string="E-mail"/>
-            <field name="phone_display" string="Phone Number" readonly="1"/>
-            <field name="spanish_speaker" string="Spanish Speaker"/>
-            <field name="brigade_role" string="Brigade Role"/>
-            <field name="passport_no" string="Passport N°"/>
-            <field name="passport_expiry" string="Passport Expiration Date"/>
-            <field name="citizenship" string="Citizenship"/>
-            <field name="sa" string="S.A."/>
-            <field name="emergency_contact_email" string="Emergency Contact E-mail" readonly="1"/>
-            <field name="diet" string="Diet"/>
-            <field name="medical_condition" string="Medical Condition"/>
-            <field name="medications" string="Medications"/>
-            <field name="allergy" string="Allergy"/>
-            <field name="tshirt_size" string="T-Shirt Size"/>
-        </list>
+                                            <group string="Passport &amp; Health">
+                                                <field name="passport_no" string="Passport N°"/>
+                                                <field name="passport_expiry" string="Passport Expiration Date"/>
+                                                <field name="citizenship" string="Citizenship"/>
+                                                <field name="diet" string="Diet"/>
+                                                <field name="medical_condition" string="Medical Condition"/>
+                                                <field name="medications" string="Medications"/>
+                                                <field name="allergy" string="Allergy"/>
+                                            </group>
+                                        </group>
 
-        <!-- FORM -->
-        <form string="Roster Member">
-            <sheet>
-                <group>
-                    <group string="Personal Info">
-                        <field name="partner_id" string="Name" required="1"/>
-                        <field name="gender" string="Gender"/>
-                        <field name="birthdate" string="Date of Birth"/>
-                        <field name="spanish_speaker" string="Spanish Speaker"/>
-                        <field name="email" string="E-mail"/>
-                        <field name="phone_display" string="Phone Number" readonly="1"/>
-                        <field name="tshirt_size" string="T-Shirt Size"/>
-                        <field name="brigade_role" string="Brigade Role"/>
-                        <field name="sa" string="S.A."/>
-                    </group>
-
-                    <group string="Passport &amp; Health">
-                        <field name="passport_no" string="Passport N°"/>
-                        <field name="passport_expiry" string="Passport Expiration Date"/>
-                        <field name="citizenship" string="Citizenship"/>
-                        <field name="diet" string="Diet"/>
-                        <field name="medical_condition" string="Medical Condition"/>
-                        <field name="medications" string="Medications"/>
-                        <field name="allergy" string="Allergy"/>
-                    </group>
-                </group>
-
-                <group string="Emergency Contact">
-                    <group>
-                        <field name="emergency_contact_id" string="Emergency Contact"/>
-                    </group>
-                    <group>
-                        <field name="emergency_contact_email"
-                               string="Emergency Contact E-mail"
-                               readonly="1"/>
-                    </group>
-                </group>
-            </sheet>
-        </form>
-    </field>
-</page>
+                                        <group string="Emergency Contact">
+                                            <group>
+                                                <field name="emergency_contact_id" string="Emergency Contact"/>
+                                            </group>
+                                            <group>
+                                                <field name="emergency_contact_email"
+                                                       string="Emergency Contact E-mail"
+                                                       readonly="1"/>
+                                            </group>
+                                        </group>
+                                    </sheet>
+                                </form>
+                            </field>
+                        </page>
 
  <!-- =========================================================
      Pestaña ARRIVALS
