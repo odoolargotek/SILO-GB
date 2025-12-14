@@ -11,7 +11,7 @@
         "base",
         "contacts",
     ],
-        "data": [
+    "data": [
         "data/sequence.xml",
         "security/security.xml",
         "security/ir.model.access.csv",
@@ -23,12 +23,11 @@
         "views/brigade_hotel_booking_views.xml",
         "views/passenger_list_wizard_views.xml",
         "views/brigade_transport_views.xml",
-        'views/community_views.xml',
-        'views/brigade_report_views.xml',
+        "views/community_views.xml",
+        "views/brigade_report_views.xml",
         "views/brigade_extended_report_views.xml",
         "data/gb_activity_tag_data.xml",
     ],
-
     "application": True,
     "installable": True,
 }
