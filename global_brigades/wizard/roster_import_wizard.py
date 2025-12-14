@@ -487,3 +487,13 @@ class GBRosterImportWizard(models.TransientModel):
 
         return {
             "type": "ir.actions.client",
+            "tag": "display_notification",
+            "params": {
+                "title": _("Import successful"),
+                "message": message,
+                "type": "success",
+                "sticky": False,
+                "next": {"type": "ir.actions.act_window_close"},
+            },
+        }
+
