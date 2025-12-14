@@ -16,8 +16,11 @@
                         <field name="upload_file" filename="filename"/>
                         <field name="filename" invisible="1"/>
                         <div class="text-muted">
-                            Required column: <b>email</b>.
-                            Optional: name, phone, mobile, brigade_role, sa
+                            Required: <b>email</b>.<br/>
+                            Optional (ROSTER): name, phone, mobile, gender, birthdate, spanish_speaker,
+                            passport_no, passport_expiry, citizenship, tshirt_size, brigade_role, sa,
+                            diet, medical_condition, medications, allergy,
+                            emergency_contact_email, emergency_contact_name, emergency_contact_phone, emergency_contact_mobile
                         </div>
                     </group>
 
@@ -38,7 +41,7 @@
         </field>
     </record>
 
-    <!-- Action (sin context con active_id para evitar validación en Odoo 18) -->
+    <!-- Action (no active_id in XML; context is set in the gb.brigade object method) -->
     <record id="action_gb_roster_import_wizard" model="ir.actions.act_window">
         <field name="name">Import Roster</field>
         <field name="res_model">gb.roster.import.wizard</field>

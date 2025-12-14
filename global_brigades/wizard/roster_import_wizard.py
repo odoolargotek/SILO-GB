@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import base64
 from io import BytesIO
+from datetime import datetime, date
 
 from odoo import api, fields, models, _
 from odoo.exceptions import UserError
@@ -26,7 +27,7 @@ class GBRosterImportWizard(models.TransientModel):
     update_existing_partners = fields.Boolean(
         string="Update contact data if email exists",
         default=False,
-        help="If checked, updates partner name/phone/mobile from the Excel row.",
+        help="If checked, updates partner fields from the Excel row (name/phone/mobile and GB profile fields).",
     )
 
     def _require_openpyxl(self):
@@ -43,6 +44,64 @@ class GBRosterImportWizard(models.TransientModel):
         email = (email or "").strip()
         return email.lower()
 
+    def _parse_bool(self, v):
+        if v is None:
+            return False
+        if isinstance(v, bool):
+            return v
+        sval = str(v).strip().lower()
+        return sval in ("1", "true", "yes", "y", "si", "sí", "x")
+
+    def _parse_date(self, v):
+        if not v:
+            return False
+        if isinstance(v, date) and not isinstance(v, datetime):
+            return v
+        if isinstance(v, datetime):
+            return v.date()
+        sval = str(v).strip()
+        # Try common formats
+        for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"):
+            try:
+                return datetime.strptime(sval, fmt).date()
+            except Exception:
+                continue
+        raise UserError(_("Invalid date value: %s (use YYYY-MM-DD or DD/MM/YYYY)") % sval)
+
+    def _map_gender(self, v):
+        if not v:
+            return False
+        sval = str(v).strip().lower()
+        mapping = {
+            "male": "male",
+            "m": "male",
+            "hombre": "male",
+            "masculino": "male",
+            "female": "female",
+            "f": "female",
+            "mujer": "female",
+            "femenino": "female",
+            "other": "other",
+            "otro": "other",
+            "otra": "other",
+        }
+        return mapping.get(sval, sval)
+
+    def _map_tshirt(self, v):
+        if not v:
+            return False
+        sval = str(v).strip().lower()
+        mapping = {
+            "xs": "xs",
+            "s": "s",
+            "m": "m",
+            "l": "l",
+            "xl": "xl",
+            "xxl": "xxl",
+            "2xl": "xxl",
+        }
+        return mapping.get(sval, sval)
+
     def action_import(self):
         self.ensure_one()
         self._require_openpyxl()
@@ -50,7 +109,6 @@ class GBRosterImportWizard(models.TransientModel):
         if not self.upload_file:
             raise UserError(_("Please upload an Excel file."))
 
-        # Lazy import after dependency check
         import openpyxl
 
         content = base64.b64decode(self.upload_file)
@@ -69,101 +127,185 @@ class GBRosterImportWizard(models.TransientModel):
         if not any(header_row):
             raise UserError(_("The Excel file seems empty (no header row found)."))
 
-        # Map columns by normalized header names
         def norm(h):
             return (h or "").strip().lower()
 
         col_map = {norm(h): idx for idx, h in enumerate(header_row)}
 
-        # Required: email
+        # Required
         if "email" not in col_map:
             raise UserError(_(
                 "Missing required column: 'email'.\n\n"
-                "Your header must include at least:\n"
+                "Minimum header:\n"
                 "  email\n\n"
-                "Optional columns:\n"
-                "  name, phone, mobile, brigade_role, sa\n"
+                "Recommended full header (ROSTER):\n"
+                "  email, name, phone, mobile, gender, birthdate, spanish_speaker,\n"
+                "  passport_no, passport_expiry, citizenship, tshirt_size,\n"
+                "  brigade_role, sa, diet, medical_condition, medications, allergy,\n"
+                "  emergency_contact_email, emergency_contact_name, emergency_contact_phone\n"
             ))
 
-        # Optional columns
+        # Optional (contact basics)
         name_col = col_map.get("name")
         phone_col = col_map.get("phone")
         mobile_col = col_map.get("mobile")
+
+        # Roster-only
         brigade_role_col = col_map.get("brigade_role")
         sa_col = col_map.get("sa")
+
+        # GB profile fields (stored on res.partner)
+        gender_col = col_map.get("gender")
+        birthdate_col = col_map.get("birthdate")
+        spanish_speaker_col = col_map.get("spanish_speaker")
+        passport_no_col = col_map.get("passport_no")
+        passport_expiry_col = col_map.get("passport_expiry")
+        citizenship_col = col_map.get("citizenship")
+        tshirt_size_col = col_map.get("tshirt_size")
+        diet_col = col_map.get("diet")
+        medical_condition_col = col_map.get("medical_condition")
+        medications_col = col_map.get("medications")
+        allergy_col = col_map.get("allergy")
+
+        # Emergency contact (res.partner)
+        emergency_contact_email_col = col_map.get("emergency_contact_email")
+        emergency_contact_name_col = col_map.get("emergency_contact_name")
+        emergency_contact_phone_col = col_map.get("emergency_contact_phone")
+        emergency_contact_mobile_col = col_map.get("emergency_contact_mobile")
 
         Partner = self.env["res.partner"].sudo()
         Roster = self.env["gb.brigade.roster"].sudo()
 
         created_partners = 0
         updated_partners = 0
+        created_emergency_contacts = 0
         created_roster = 0
         skipped_existing = 0
 
         errors = []
 
-        # Process rows starting from row 2
+        def get_cell(row, idx):
+            if idx is None:
+                return None
+            if idx >= len(row):
+                return None
+            return row[idx].value
+
         for row_idx in range(2, ws.max_row + 1):
             row = ws[row_idx]
-            email_raw = row[col_map["email"]].value if col_map["email"] < len(row) else None
-            email = self._normalize_email(email_raw)
+
+            email = self._normalize_email(get_cell(row, col_map["email"]))
 
             # Skip blank lines
             if not email:
-                # If entire row is blank -> skip silently
                 if all((c.value is None or str(c.value).strip() == "") for c in row):
                     continue
                 errors.append(_("Row %s: missing email") % row_idx)
                 continue
 
-            # Read optional fields
-            name = (str(row[name_col].value).strip() if name_col is not None and row[name_col].value is not None else "").strip()
-            phone = (str(row[phone_col].value).strip() if phone_col is not None and row[phone_col].value is not None else "").strip()
-            mobile = (str(row[mobile_col].value).strip() if mobile_col is not None and row[mobile_col].value is not None else "").strip()
+            # Basic values
+            name = (str(get_cell(row, name_col)).strip() if get_cell(row, name_col) is not None else "").strip()
+            phone = (str(get_cell(row, phone_col)).strip() if get_cell(row, phone_col) is not None else "").strip()
+            mobile = (str(get_cell(row, mobile_col)).strip() if get_cell(row, mobile_col) is not None else "").strip()
 
-            brigade_role = (str(row[brigade_role_col].value).strip() if brigade_role_col is not None and row[brigade_role_col].value is not None else "").strip()
-            sa = False
-            if sa_col is not None and row[sa_col].value is not None:
-                v = row[sa_col].value
-                if isinstance(v, bool):
-                    sa = v
-                else:
-                    sval = str(v).strip().lower()
-                    sa = sval in ("1", "true", "yes", "y", "si", "sí")
+            # Roster values
+            brigade_role = (str(get_cell(row, brigade_role_col)).strip() if get_cell(row, brigade_role_col) is not None else "").strip()
+            sa = self._parse_bool(get_cell(row, sa_col))
 
-            # Find partner by email
+            # GB profile values
+            gender = self._map_gender(get_cell(row, gender_col))
+            birthdate = self._parse_date(get_cell(row, birthdate_col)) if birthdate_col is not None else False
+            spanish_speaker = self._parse_bool(get_cell(row, spanish_speaker_col)) if spanish_speaker_col is not None else False
+            passport_no = (str(get_cell(row, passport_no_col)).strip() if get_cell(row, passport_no_col) is not None else "").strip()
+            passport_expiry = self._parse_date(get_cell(row, passport_expiry_col)) if passport_expiry_col is not None else False
+            citizenship = (str(get_cell(row, citizenship_col)).strip() if get_cell(row, citizenship_col) is not None else "").strip()
+            tshirt_size = self._map_tshirt(get_cell(row, tshirt_size_col))
+            diet = (str(get_cell(row, diet_col)).strip() if get_cell(row, diet_col) is not None else "").strip()
+            medical_condition = (str(get_cell(row, medical_condition_col)).strip() if get_cell(row, medical_condition_col) is not None else "").strip()
+            medications = (str(get_cell(row, medications_col)).strip() if get_cell(row, medications_col) is not None else "").strip()
+            allergy = (str(get_cell(row, allergy_col)).strip() if get_cell(row, allergy_col) is not None else "").strip()
+
+            # Emergency contact values
+            ec_email = self._normalize_email(get_cell(row, emergency_contact_email_col)) if emergency_contact_email_col is not None else ""
+            ec_name = (str(get_cell(row, emergency_contact_name_col)).strip() if get_cell(row, emergency_contact_name_col) is not None else "").strip()
+            ec_phone = (str(get_cell(row, emergency_contact_phone_col)).strip() if get_cell(row, emergency_contact_phone_col) is not None else "").strip()
+            ec_mobile = (str(get_cell(row, emergency_contact_mobile_col)).strip() if get_cell(row, emergency_contact_mobile_col) is not None else "").strip()
+
+            # Find/create main partner
             partner = Partner.search([("email", "=", email)], limit=1)
-
             if not partner:
                 if not self.create_missing_partners:
                     errors.append(_("Row %s: email '%s' not found in contacts and 'Create contact' is disabled")
                                   % (row_idx, email))
                     continue
 
-                partner_vals = {
-                    "name": name or email,
-                    "email": email,
-                }
+                vals = {"name": name or email, "email": email}
                 if phone:
-                    partner_vals["phone"] = phone
+                    vals["phone"] = phone
                 if mobile:
-                    partner_vals["mobile"] = mobile
-
-                partner = Partner.create(partner_vals)
+                    vals["mobile"] = mobile
+                partner = Partner.create(vals)
                 created_partners += 1
+
+            # Create/find emergency contact if provided
+            emergency_contact = False
+            if ec_email:
+                emergency_contact = Partner.search([("email", "=", ec_email)], limit=1)
+                if not emergency_contact:
+                    emergency_contact_vals = {"name": ec_name or ec_email, "email": ec_email}
+                    if ec_phone:
+                        emergency_contact_vals["phone"] = ec_phone
+                    if ec_mobile:
+                        emergency_contact_vals["mobile"] = ec_mobile
+                    emergency_contact = Partner.create(emergency_contact_vals)
+                    created_emergency_contacts += 1
+
+            # Update partner data if enabled
+            if self.update_existing_partners:
+                upd = {}
+
+                # Basics (only set if provided)
+                if name and (partner.name or "").strip() != name:
+                    upd["name"] = name
+                if phone and (partner.phone or "").strip() != phone:
+                    upd["phone"] = phone
+                if mobile and (partner.mobile or "").strip() != mobile:
+                    upd["mobile"] = mobile
+
+                # GB profile fields (only set if provided)
+                if gender:
+                    upd["gb_gender"] = gender
+                if birthdate:
+                    upd["gb_birthdate"] = birthdate
+                if spanish_speaker_col is not None:
+                    upd["gb_spanish_speaker"] = spanish_speaker
+                if passport_no:
+                    upd["gb_passport_no"] = passport_no
+                if passport_expiry:
+                    upd["gb_passport_expiry"] = passport_expiry
+                if citizenship:
+                    upd["gb_citizenship"] = citizenship
+                if tshirt_size:
+                    upd["gb_tshirt_size"] = tshirt_size
+                if diet:
+                    upd["gb_diet"] = diet
+                if medical_condition:
+                    upd["gb_medical_condition"] = medical_condition
+                if medications:
+                    upd["gb_medications"] = medications
+                if allergy:
+                    upd["gb_allergy"] = allergy
+                if emergency_contact:
+                    upd["gb_emergency_contact_id"] = emergency_contact.id
+
+                if upd:
+                    partner.write(upd)
+                    updated_partners += 1
             else:
-                if self.update_existing_partners:
-                    upd = {}
-                    if name and (partner.name or "").strip() != name:
-                        upd["name"] = name
-                    # Only set if provided (don’t wipe existing)
-                    if phone and (partner.phone or "").strip() != phone:
-                        upd["phone"] = phone
-                    if mobile and (partner.mobile or "").strip() != mobile:
-                        upd["mobile"] = mobile
-                    if upd:
-                        partner.write(upd)
-                        updated_partners += 1
+                # Even if we don't update "everything", we can still set emergency contact
+                # only when the partner doesn't have one and Excel provides it.
+                if emergency_contact and not partner.gb_emergency_contact_id:
+                    partner.write({"gb_emergency_contact_id": emergency_contact.id})
 
             # Avoid duplicate roster line for same brigade+partner
             existing = Roster.search([
@@ -178,32 +320,31 @@ class GBRosterImportWizard(models.TransientModel):
             roster_vals = {
                 "brigade_id": self.brigade_id.id,
                 "partner_id": partner.id,
+                "sa": sa,
             }
-            # Optional roster-only fields
             if brigade_role:
                 roster_vals["brigade_role"] = brigade_role
-            roster_vals["sa"] = sa
 
             Roster.create(roster_vals)
             created_roster += 1
 
         if errors:
-            # Show only first 15 errors to avoid huge popups
             msg = _("Import finished with errors:\n\n- %s") % ("\n- ".join(errors[:15]))
             if len(errors) > 15:
                 msg += _("\n\n(+%s more)") % (len(errors) - 15)
             raise UserError(msg)
 
-        # Success notification
         message = _(
             "Roster import completed.\n"
             "- New contacts: %(cp)s\n"
             "- Updated contacts: %(up)s\n"
+            "- New emergency contacts: %(ec)s\n"
             "- Roster lines created: %(cr)s\n"
             "- Already existed (skipped): %(sk)s"
         ) % {
             "cp": created_partners,
             "up": updated_partners,
+            "ec": created_emergency_contacts,
             "cr": created_roster,
             "sk": skipped_existing,
         }
