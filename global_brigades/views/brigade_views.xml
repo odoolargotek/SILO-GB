@@ -162,10 +162,15 @@
                             <field name="brigade_type"/>
                             <field name="brigade_program"/>
 <!-- LT ITINERARY CON SWITCH -->
-    <field name="lt_itinerary_link" placeholder="drive.google.com/... o www.google.com"
-           readonly="lt_itinerary_locked"/>
-    <field name="lt_itinerary_locked" widget="boolean_toggle" string="🔒 Bloquear Link"/>
-    <field name="lt_itinerary_url" widget="url"/>
+<group string="Itinerary" col="3">
+    <!-- Fila 1: 3 campos en una sola línea -->
+    <field name="lt_itinerary_link_enabled" string="Itinerary Link?"/>
+    <field name="lt_itinerary_link" placeholder="www.l.com"/>
+    <field name="lt_itinerary_locked" string="🔒 Bloquear Link"/>
+
+    <!-- Fila 2: URL completa debajo -->
+    <field name="lt_itinerary_url" string="Itinerary URL" colspan="3"/>
+</group>
                             
 
                             <!-- Business Client -->
