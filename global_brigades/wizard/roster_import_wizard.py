@@ -4,7 +4,7 @@ import base64
 import io
 from datetime import datetime, date
 
-from odoo import api, fields, models, _
+from odoo import fields, models, _
 from odoo.exceptions import UserError
 
 
@@ -64,6 +64,7 @@ class GBRosterImportWizard(models.TransientModel):
     def action_import(self):
         self.ensure_one()
 
+        # Dependencia externa
         try:
             import openpyxl
         except Exception:
@@ -72,8 +73,15 @@ class GBRosterImportWizard(models.TransientModel):
                 "pip install openpyxl"
             ))
 
+        if not self.upload_file:
+            raise UserError(_("Please upload an Excel file (.xlsx)."))
+
         file_bytes = base64.b64decode(self.upload_file)
-        wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
+        try:
+            wb = openpyxl.load_workbook(io.BytesIO(file_bytes), data_only=True)
+        except Exception as e:
+            raise UserError(_("Could not read the Excel file. Error: %s") % str(e))
+
         ws = wb.active
         rows = list(ws.iter_rows(values_only=True))
         if not rows:
@@ -141,7 +149,11 @@ class GBRosterImportWizard(models.TransientModel):
                 return "xxl" if s in ("xxl", "2xl") else s
             return None
 
-        created_contacts = updated_contacts = created_roster = updated_roster = skipped = 0
+        created_contacts = 0
+        updated_contacts = 0
+        created_roster = 0
+        updated_roster = 0
+        skipped = 0
         errors = []
 
         for r_index, row in enumerate(rows[1:], start=2):
@@ -236,9 +248,13 @@ class GBRosterImportWizard(models.TransientModel):
                     if not emergency_partner and e_name:
                         emergency_partner = Partner.search([("name", "=", e_name)], limit=1)
                     if not emergency_partner:
-                        emergency_partner = Partner.create({"name": e_name or e_email, "email": e_email or False})
+                        emergency_partner = Partner.create({
+                            "name": e_name or e_email,
+                            "email": e_email or False
+                        })
 
-                    if partner.gb_emergency_contact_id != emergency_partner:
+                    # OJO: este campo debe existir en partner.py (gb_emergency_contact_id)
+                    if getattr(partner, "gb_emergency_contact_id", False) != emergency_partner:
                         partner.write({"gb_emergency_contact_id": emergency_partner.id})
 
                 roster_line = Roster.search(
@@ -265,7 +281,10 @@ class GBRosterImportWizard(models.TransientModel):
                     else:
                         skipped += 1
                 else:
-                    vals_roster.update({"brigade_id": self.brigade_id.id, "partner_id": partner.id})
+                    vals_roster.update({
+                        "brigade_id": self.brigade_id.id,
+                        "partner_id": partner.id
+                    })
                     Roster.create(vals_roster)
                     created_roster += 1
 
@@ -279,13 +298,26 @@ class GBRosterImportWizard(models.TransientModel):
             "- Roster lines created: %(rc)s\n"
             "- Roster lines updated: %(ru)s\n"
             "- Skipped: %(sk)s\n"
-        ) % {"cc": created_contacts, "cu": updated_contacts, "rc": created_roster, "ru": updated_roster, "sk": skipped}
+        ) % {
+            "cc": created_contacts,
+            "cu": updated_contacts,
+            "rc": created_roster,
+            "ru": updated_roster,
+            "sk": skipped,
+        }
 
         if errors:
             msg += _("\nErrors:\n- ") + "\n- ".join(errors[:50])
+            if len(errors) > 50:
+                msg += _("\n... (%s more)") % (len(errors) - 50)
 
         return {
             "type": "ir.actions.client",
             "tag": "display_notification",
             "params": {
                 "title": _("Roster Import"),
+                "message": msg,
+                "type": "success" if not errors else "warning",
+                "sticky": True if errors else False,
+            },
+        }
