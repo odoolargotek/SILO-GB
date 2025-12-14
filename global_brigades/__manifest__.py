@@ -27,6 +27,8 @@
         "views/brigade_report_views.xml",
         "views/brigade_extended_report_views.xml",
         "data/gb_activity_tag_data.xml",
+        "views/roster_import_wizard_views.xml",
+
     ],
     "application": True,
     "installable": True,

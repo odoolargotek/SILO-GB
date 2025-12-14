@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- Wizard Form -->
+    <record id="view_gb_roster_import_wizard_form" model="ir.ui.view">
+        <field name="name">gb.roster.import.wizard.form</field>
+        <field name="model">gb.roster.import.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Import Roster (Excel)">
+                <sheet>
+                    <group>
+                        <field name="brigade_id" readonly="1"/>
+                    </group>
+
+                    <group string="Excel file">
+                        <field name="upload_file" filename="filename"/>
+                        <field name="filename" invisible="1"/>
+                        <div class="text-muted">
+                            Required column: <b>email</b>.
+                            Optional: name, phone, mobile, brigade_role, sa
+                        </div>
+                    </group>
+
+                    <group string="Options">
+                        <field name="create_missing_partners"/>
+                        <field name="update_existing_partners"/>
+                    </group>
+                </sheet>
+
+                <footer>
+                    <button name="action_import"
+                            string="Import"
+                            type="object"
+                            class="btn-primary oe_highlight"/>
+                    <button string="Cancel" special="cancel" class="btn-secondary"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <!-- Action -->
+    <record id="action_gb_roster_import_wizard" model="ir.actions.act_window">
+        <field name="name">Import Roster</field>
+        <field name="res_model">gb.roster.import.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="context">{'default_brigade_id': active_id}</field>
+    </record>
+
+    <!-- Inherit Brigade Form: add button near roster -->
+    <record id="view_gb_brigade_form_roster_import_button" model="ir.ui.view">
+        <field name="name">gb.brigade.form.roster.import.button</field>
+        <field name="model">gb.brigade</field>
+        <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
+        <field name="arch" type="xml">
+            <!-- Insert button just before roster_ids field wherever it appears -->
+            <xpath expr="//field[@name='roster_ids']" position="before">
+                <button type="action"
+                        name="%(global_brigades.action_gb_roster_import_wizard)d"
+                        string="Import Roster (Excel)"
+                        class="btn-secondary"
+                        icon="fa-upload"
+                        context="{'default_brigade_id': active_id}"/>
+                <separator/>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>
