@@ -107,7 +107,7 @@ class GBRosterImportWizard(models.TransientModel):
         return mapping.get(sval, sval)
 
     def _safe_set(self, vals, field_name, value):
-        """Set vals[field_name] only if the field exists and value is not False/empty."""
+        """Set vals[field_name] only if the field exists."""
         if field_name in self.env["res.partner"]._fields:
             vals[field_name] = value
 
@@ -149,6 +149,7 @@ class GBRosterImportWizard(models.TransientModel):
         ]
         ws.append(headers)
 
+        # Example row
         ws.append([
             "john.doe@email.com",
             "John Doe",
@@ -168,7 +169,7 @@ class GBRosterImportWizard(models.TransientModel):
             "None",
             "None",
             "jane.doe@email.com",
-            "Jane Doe",
+            "",  # name can be empty -> will use email as name
             "+591 70000002",
             "+591 70000003",
         ])
@@ -320,6 +321,7 @@ class GBRosterImportWizard(models.TransientModel):
             # Find/create main partner by email
             partner = Partner.search([("email", "=", email)], limit=1)
             created_now = False
+
             if not partner:
                 if not self.create_missing_partners:
                     errors.append(_("Row %s: email '%s' not found and 'Create contact' is disabled") % (row_idx, email))
@@ -331,7 +333,7 @@ class GBRosterImportWizard(models.TransientModel):
                 if mobile:
                     vals["mobile"] = mobile
 
-                # IMPORTANT: for NEW partners, ALWAYS load GB profile fields from Excel
+                # For NEW partners: always load GB profile fields from Excel
                 self._safe_set(vals, "gb_gender", gender or False)
                 self._safe_set(vals, "gb_birthdate", birthdate or False)
                 if spanish_speaker_col is not None:
@@ -349,16 +351,20 @@ class GBRosterImportWizard(models.TransientModel):
                 created_partners += 1
                 created_now = True
 
-            # Create/find emergency contact
+            # Create/find emergency contact (email is key; if name missing -> use email as name)
             emergency_contact = False
             if ec_email:
                 emergency_contact = Partner.search([("email", "=", ec_email)], limit=1)
                 if not emergency_contact:
-                    emergency_contact_vals = {"name": ec_name or ec_email, "email": ec_email}
+                    emergency_contact_vals = {
+                        "email": ec_email,
+                        "name": ec_name or ec_email,  # ✅ key rule: name defaults to email
+                    }
                     if ec_phone:
                         emergency_contact_vals["phone"] = ec_phone
                     if ec_mobile:
                         emergency_contact_vals["mobile"] = ec_mobile
+
                     emergency_contact = Partner.create(emergency_contact_vals)
                     created_emergency_contacts += 1
 
@@ -366,7 +372,8 @@ class GBRosterImportWizard(models.TransientModel):
             if not created_now:
                 if self.update_existing_partners:
                     upd = {}
-                    # Basics (only if provided)
+
+                    # Basics
                     if name and (partner.name or "").strip() != name:
                         upd["name"] = name
                     if phone and (partner.phone or "").strip() != phone:
@@ -404,8 +411,9 @@ class GBRosterImportWizard(models.TransientModel):
                         partner.write(upd)
                         updated_partners += 1
                 else:
-                    # Fill only missing partner GB fields (no overwrite)
+                    # Fill only missing fields (no overwrite)
                     upd = {}
+
                     if "gb_gender" in partner._fields and not partner.gb_gender and gender:
                         upd["gb_gender"] = gender
                     if "gb_birthdate" in partner._fields and not partner.gb_birthdate and birthdate:
@@ -479,12 +487,3 @@ class GBRosterImportWizard(models.TransientModel):
 
         return {
             "type": "ir.actions.client",
-            "tag": "display_notification",
-            "params": {
-                "title": _("Import successful"),
-                "message": message,
-                "type": "success",
-                "sticky": False,
-                "next": {"type": "ir.actions.act_window_close"},
-            },
-        }
