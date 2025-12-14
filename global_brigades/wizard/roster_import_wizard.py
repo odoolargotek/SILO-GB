@@ -160,7 +160,7 @@ class GBRosterImportWizard(models.TransientModel):
             "yes",
             "P1234567",
             "2030-12-31",
-            "Bolivia",
+            "USA",
             "m",
             "Volunteer",
             "no",
