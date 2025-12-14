@@ -17,7 +17,9 @@ class GBRosterImportWizard(models.TransientModel):
         required=True,
         ondelete="cascade",
     )
-    upload_file = fields.Binary(string="Excel File (.xlsx)", required=True)
+
+    # IMPORTANT: NOT required here, so "Download Template" works without uploading a file.
+    upload_file = fields.Binary(string="Excel File (.xlsx)", required=False)
     filename = fields.Char(string="Filename")
 
     create_missing_partners = fields.Boolean(
@@ -27,9 +29,12 @@ class GBRosterImportWizard(models.TransientModel):
     update_existing_partners = fields.Boolean(
         string="Update contact data if email exists",
         default=False,
-        help="If checked, updates partner fields from the Excel row (name/phone/mobile and GB profile fields).",
+        help="If checked, updates partner fields from the Excel row (basic data and GB profile fields).",
     )
 
+    # -------------------------
+    # Helpers
+    # -------------------------
     def _require_openpyxl(self):
         try:
             import openpyxl  # noqa: F401
@@ -60,7 +65,6 @@ class GBRosterImportWizard(models.TransientModel):
         if isinstance(v, datetime):
             return v.date()
         sval = str(v).strip()
-        # Try common formats
         for fmt in ("%Y-%m-%d", "%d/%m/%Y", "%m/%d/%Y", "%d-%m-%Y"):
             try:
                 return datetime.strptime(sval, fmt).date()
@@ -102,12 +106,111 @@ class GBRosterImportWizard(models.TransientModel):
         }
         return mapping.get(sval, sval)
 
+    # -------------------------
+    # Template download
+    # -------------------------
+    def _build_template_xlsx(self):
+        """Return xlsx bytes for the roster import template."""
+        self._require_openpyxl()
+        import openpyxl
+        from openpyxl.styles import Font
+        from openpyxl.utils import get_column_letter
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Roster"
+
+        headers = [
+            "email",
+            "name",
+            "phone",
+            "mobile",
+            "gender",
+            "birthdate",
+            "spanish_speaker",
+            "passport_no",
+            "passport_expiry",
+            "citizenship",
+            "tshirt_size",
+            "brigade_role",
+            "sa",
+            "diet",
+            "medical_condition",
+            "medications",
+            "allergy",
+            "emergency_contact_email",
+            "emergency_contact_name",
+            "emergency_contact_phone",
+            "emergency_contact_mobile",
+        ]
+        ws.append(headers)
+
+        # Example row (helps users)
+        ws.append([
+            "john.doe@email.com",
+            "John Doe",
+            "+591 70000000",
+            "+591 70000001",
+            "male",
+            "1990-01-31",
+            "yes",
+            "P1234567",
+            "2030-12-31",
+            "Bolivia",
+            "m",
+            "Volunteer",
+            "no",
+            "None",
+            "None",
+            "None",
+            "None",
+            "jane.doe@email.com",
+            "Jane Doe",
+            "+591 70000002",
+            "+591 70000003",
+        ])
+
+        bold = Font(bold=True)
+        for col_idx, _h in enumerate(headers, start=1):
+            cell = ws.cell(row=1, column=col_idx)
+            cell.font = bold
+            ws.column_dimensions[get_column_letter(col_idx)].width = 22
+
+        bio = BytesIO()
+        wb.save(bio)
+        return bio.getvalue()
+
+    def action_download_template(self):
+        """Download the Excel template from the wizard."""
+        self.ensure_one()
+
+        xlsx_bytes = self._build_template_xlsx()
+        b64 = base64.b64encode(xlsx_bytes)
+
+        attachment = self.env["ir.attachment"].sudo().create({
+            "name": "gb_roster_import_template.xlsx",
+            "type": "binary",
+            "datas": b64,
+            "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            "res_model": self._name,
+            "res_id": self.id,
+        })
+
+        return {
+            "type": "ir.actions.act_url",
+            "url": "/web/content/%s?download=true" % attachment.id,
+            "target": "self",
+        }
+
+    # -------------------------
+    # Import
+    # -------------------------
     def action_import(self):
         self.ensure_one()
         self._require_openpyxl()
 
         if not self.upload_file:
-            raise UserError(_("Please upload an Excel file."))
+            raise UserError(_("Please upload an Excel file before importing."))
 
         import openpyxl
 
@@ -132,17 +235,17 @@ class GBRosterImportWizard(models.TransientModel):
 
         col_map = {norm(h): idx for idx, h in enumerate(header_row)}
 
-        # Required
+        # Required: email
         if "email" not in col_map:
             raise UserError(_(
                 "Missing required column: 'email'.\n\n"
                 "Minimum header:\n"
                 "  email\n\n"
-                "Recommended full header (ROSTER):\n"
+                "Recommended full header:\n"
                 "  email, name, phone, mobile, gender, birthdate, spanish_speaker,\n"
                 "  passport_no, passport_expiry, citizenship, tshirt_size,\n"
                 "  brigade_role, sa, diet, medical_condition, medications, allergy,\n"
-                "  emergency_contact_email, emergency_contact_name, emergency_contact_phone\n"
+                "  emergency_contact_email, emergency_contact_name, emergency_contact_phone, emergency_contact_mobile\n"
             ))
 
         # Optional (contact basics)
@@ -212,7 +315,7 @@ class GBRosterImportWizard(models.TransientModel):
             brigade_role = (str(get_cell(row, brigade_role_col)).strip() if get_cell(row, brigade_role_col) is not None else "").strip()
             sa = self._parse_bool(get_cell(row, sa_col))
 
-            # GB profile values
+            # GB profile values (partner)
             gender = self._map_gender(get_cell(row, gender_col))
             birthdate = self._parse_date(get_cell(row, birthdate_col)) if birthdate_col is not None else False
             spanish_speaker = self._parse_bool(get_cell(row, spanish_speaker_col)) if spanish_speaker_col is not None else False
@@ -231,7 +334,7 @@ class GBRosterImportWizard(models.TransientModel):
             ec_phone = (str(get_cell(row, emergency_contact_phone_col)).strip() if get_cell(row, emergency_contact_phone_col) is not None else "").strip()
             ec_mobile = (str(get_cell(row, emergency_contact_mobile_col)).strip() if get_cell(row, emergency_contact_mobile_col) is not None else "").strip()
 
-            # Find/create main partner
+            # Find/create main partner by email
             partner = Partner.search([("email", "=", email)], limit=1)
             if not partner:
                 if not self.create_missing_partners:
@@ -302,8 +405,7 @@ class GBRosterImportWizard(models.TransientModel):
                     partner.write(upd)
                     updated_partners += 1
             else:
-                # Even if we don't update "everything", we can still set emergency contact
-                # only when the partner doesn't have one and Excel provides it.
+                # Light-touch: set emergency contact only if empty and provided
                 if emergency_contact and not partner.gb_emergency_contact_id:
                     partner.write({"gb_emergency_contact_id": emergency_contact.id})
 
@@ -359,97 +461,4 @@ class GBRosterImportWizard(models.TransientModel):
                 "sticky": False,
                 "next": {"type": "ir.actions.act_window_close"},
             },
-        }
-    def _build_template_xlsx(self):
-        """Return xlsx bytes for the roster import template."""
-        self._require_openpyxl()
-        import openpyxl
-
-        wb = openpyxl.Workbook()
-        ws = wb.active
-        ws.title = "Roster"
-
-        headers = [
-            "email",
-            "name",
-            "phone",
-            "mobile",
-            "gender",
-            "birthdate",
-            "spanish_speaker",
-            "passport_no",
-            "passport_expiry",
-            "citizenship",
-            "tshirt_size",
-            "brigade_role",
-            "sa",
-            "diet",
-            "medical_condition",
-            "medications",
-            "allergy",
-            "emergency_contact_email",
-            "emergency_contact_name",
-            "emergency_contact_phone",
-            "emergency_contact_mobile",
-        ]
-
-        ws.append(headers)
-
-        # Example row (optional, helps users)
-        ws.append([
-            "john.doe@email.com",
-            "John Doe",
-            "+591 70000000",
-            "+591 70000001",
-            "male",
-            "1990-01-31",
-            "yes",
-            "P1234567",
-            "2030-12-31",
-            "Bolivia",
-            "m",
-            "Volunteer",
-            "no",
-            "None",
-            "None",
-            "None",
-            "None",
-            "jane.doe@email.com",
-            "Jane Doe",
-            "+591 70000002",
-            "+591 70000003",
-        ])
-
-        # Make header bold + set a reasonable width
-        from openpyxl.styles import Font
-        bold = Font(bold=True)
-        for col_idx, _h in enumerate(headers, start=1):
-            cell = ws.cell(row=1, column=col_idx)
-            cell.font = bold
-            ws.column_dimensions[openpyxl.utils.get_column_letter(col_idx)].width = 22
-
-        bio = BytesIO()
-        wb.save(bio)
-        return bio.getvalue()
-
-    def action_download_template(self):
-        """Download the Excel template from the wizard."""
-        self.ensure_one()
-
-        xlsx_bytes = self._build_template_xlsx()
-        b64 = base64.b64encode(xlsx_bytes)
-
-        attachment = self.env["ir.attachment"].sudo().create({
-            "name": "gb_roster_import_template.xlsx",
-            "type": "binary",
-            "datas": b64,
-            "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            "res_model": self._name,
-            "res_id": self.id,
-        })
-
-        return {
-            "type": "ir.actions.act_url",
-            "url": "/web/content/%s?download=true" % attachment.id,
-            "target": "self",
         }
