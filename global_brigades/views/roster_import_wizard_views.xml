@@ -6,14 +6,15 @@
         <field name="name">gb.roster.import.wizard.form</field>
         <field name="model">gb.roster.import.wizard</field>
         <field name="arch" type="xml">
-            <form string="Import Roster (Excel)">
+            <form string="Import Roster">
                 <sheet>
                     <group>
                         <field name="brigade_id" readonly="1"/>
                     </group>
 
                     <group string="Excel file">
-                        <field name="upload_file" filename="filename" required="1"/>
+                        <!-- IMPORTANT: do NOT set required="1" here, otherwise Download Template is blocked -->
+                        <field name="upload_file" filename="filename"/>
                         <field name="filename" invisible="1"/>
                         <div class="text-muted">
                             Required: <b>email</b>.<br/>
