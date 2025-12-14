@@ -106,11 +106,15 @@ class GBRosterImportWizard(models.TransientModel):
         }
         return mapping.get(sval, sval)
 
+    def _safe_set(self, vals, field_name, value):
+        """Set vals[field_name] only if the field exists and value is not False/empty."""
+        if field_name in self.env["res.partner"]._fields:
+            vals[field_name] = value
+
     # -------------------------
     # Template download
     # -------------------------
     def _build_template_xlsx(self):
-        """Return xlsx bytes for the roster import template."""
         self._require_openpyxl()
         import openpyxl
         from openpyxl.styles import Font
@@ -145,7 +149,6 @@ class GBRosterImportWizard(models.TransientModel):
         ]
         ws.append(headers)
 
-        # Example row (helps users)
         ws.append([
             "john.doe@email.com",
             "John Doe",
@@ -172,8 +175,7 @@ class GBRosterImportWizard(models.TransientModel):
 
         bold = Font(bold=True)
         for col_idx, _h in enumerate(headers, start=1):
-            cell = ws.cell(row=1, column=col_idx)
-            cell.font = bold
+            ws.cell(row=1, column=col_idx).font = bold
             ws.column_dimensions[get_column_letter(col_idx)].width = 22
 
         bio = BytesIO()
@@ -181,7 +183,6 @@ class GBRosterImportWizard(models.TransientModel):
         return bio.getvalue()
 
     def action_download_template(self):
-        """Download the Excel template from the wizard."""
         self.ensure_one()
 
         xlsx_bytes = self._build_template_xlsx()
@@ -222,7 +223,6 @@ class GBRosterImportWizard(models.TransientModel):
 
         ws = wb.active
 
-        # Read header
         header_row = []
         for cell in ws[1]:
             header_row.append((str(cell.value).strip() if cell.value is not None else "").strip())
@@ -235,29 +235,17 @@ class GBRosterImportWizard(models.TransientModel):
 
         col_map = {norm(h): idx for idx, h in enumerate(header_row)}
 
-        # Required: email
         if "email" not in col_map:
-            raise UserError(_(
-                "Missing required column: 'email'.\n\n"
-                "Minimum header:\n"
-                "  email\n\n"
-                "Recommended full header:\n"
-                "  email, name, phone, mobile, gender, birthdate, spanish_speaker,\n"
-                "  passport_no, passport_expiry, citizenship, tshirt_size,\n"
-                "  brigade_role, sa, diet, medical_condition, medications, allergy,\n"
-                "  emergency_contact_email, emergency_contact_name, emergency_contact_phone, emergency_contact_mobile\n"
-            ))
+            raise UserError(_("Missing required column: 'email'."))
 
-        # Optional (contact basics)
+        # Optional columns
         name_col = col_map.get("name")
         phone_col = col_map.get("phone")
         mobile_col = col_map.get("mobile")
 
-        # Roster-only
         brigade_role_col = col_map.get("brigade_role")
         sa_col = col_map.get("sa")
 
-        # GB profile fields (stored on res.partner)
         gender_col = col_map.get("gender")
         birthdate_col = col_map.get("birthdate")
         spanish_speaker_col = col_map.get("spanish_speaker")
@@ -270,7 +258,6 @@ class GBRosterImportWizard(models.TransientModel):
         medications_col = col_map.get("medications")
         allergy_col = col_map.get("allergy")
 
-        # Emergency contact (res.partner)
         emergency_contact_email_col = col_map.get("emergency_contact_email")
         emergency_contact_name_col = col_map.get("emergency_contact_name")
         emergency_contact_phone_col = col_map.get("emergency_contact_phone")
@@ -288,9 +275,7 @@ class GBRosterImportWizard(models.TransientModel):
         errors = []
 
         def get_cell(row, idx):
-            if idx is None:
-                return None
-            if idx >= len(row):
+            if idx is None or idx >= len(row):
                 return None
             return row[idx].value
 
@@ -298,8 +283,6 @@ class GBRosterImportWizard(models.TransientModel):
             row = ws[row_idx]
 
             email = self._normalize_email(get_cell(row, col_map["email"]))
-
-            # Skip blank lines
             if not email:
                 if all((c.value is None or str(c.value).strip() == "") for c in row):
                     continue
@@ -311,11 +294,11 @@ class GBRosterImportWizard(models.TransientModel):
             phone = (str(get_cell(row, phone_col)).strip() if get_cell(row, phone_col) is not None else "").strip()
             mobile = (str(get_cell(row, mobile_col)).strip() if get_cell(row, mobile_col) is not None else "").strip()
 
-            # Roster values
+            # Roster-only
             brigade_role = (str(get_cell(row, brigade_role_col)).strip() if get_cell(row, brigade_role_col) is not None else "").strip()
             sa = self._parse_bool(get_cell(row, sa_col))
 
-            # GB profile values (partner)
+            # Partner GB profile values
             gender = self._map_gender(get_cell(row, gender_col))
             birthdate = self._parse_date(get_cell(row, birthdate_col)) if birthdate_col is not None else False
             spanish_speaker = self._parse_bool(get_cell(row, spanish_speaker_col)) if spanish_speaker_col is not None else False
@@ -336,10 +319,10 @@ class GBRosterImportWizard(models.TransientModel):
 
             # Find/create main partner by email
             partner = Partner.search([("email", "=", email)], limit=1)
+            created_now = False
             if not partner:
                 if not self.create_missing_partners:
-                    errors.append(_("Row %s: email '%s' not found in contacts and 'Create contact' is disabled")
-                                  % (row_idx, email))
+                    errors.append(_("Row %s: email '%s' not found and 'Create contact' is disabled") % (row_idx, email))
                     continue
 
                 vals = {"name": name or email, "email": email}
@@ -347,10 +330,26 @@ class GBRosterImportWizard(models.TransientModel):
                     vals["phone"] = phone
                 if mobile:
                     vals["mobile"] = mobile
+
+                # IMPORTANT: for NEW partners, ALWAYS load GB profile fields from Excel
+                self._safe_set(vals, "gb_gender", gender or False)
+                self._safe_set(vals, "gb_birthdate", birthdate or False)
+                if spanish_speaker_col is not None:
+                    self._safe_set(vals, "gb_spanish_speaker", spanish_speaker)
+                self._safe_set(vals, "gb_passport_no", passport_no or False)
+                self._safe_set(vals, "gb_passport_expiry", passport_expiry or False)
+                self._safe_set(vals, "gb_citizenship", citizenship or False)
+                self._safe_set(vals, "gb_tshirt_size", tshirt_size or False)
+                self._safe_set(vals, "gb_diet", diet or False)
+                self._safe_set(vals, "gb_medical_condition", medical_condition or False)
+                self._safe_set(vals, "gb_medications", medications or False)
+                self._safe_set(vals, "gb_allergy", allergy or False)
+
                 partner = Partner.create(vals)
                 created_partners += 1
+                created_now = True
 
-            # Create/find emergency contact if provided
+            # Create/find emergency contact
             emergency_contact = False
             if ec_email:
                 emergency_contact = Partner.search([("email", "=", ec_email)], limit=1)
@@ -363,53 +362,80 @@ class GBRosterImportWizard(models.TransientModel):
                     emergency_contact = Partner.create(emergency_contact_vals)
                     created_emergency_contacts += 1
 
-            # Update partner data if enabled
-            if self.update_existing_partners:
-                upd = {}
+            # Update existing partner (or fill blanks) based on checkbox
+            if not created_now:
+                if self.update_existing_partners:
+                    upd = {}
+                    # Basics (only if provided)
+                    if name and (partner.name or "").strip() != name:
+                        upd["name"] = name
+                    if phone and (partner.phone or "").strip() != phone:
+                        upd["phone"] = phone
+                    if mobile and (partner.mobile or "").strip() != mobile:
+                        upd["mobile"] = mobile
 
-                # Basics (only set if provided)
-                if name and (partner.name or "").strip() != name:
-                    upd["name"] = name
-                if phone and (partner.phone or "").strip() != phone:
-                    upd["phone"] = phone
-                if mobile and (partner.mobile or "").strip() != mobile:
-                    upd["mobile"] = mobile
+                    # GB profile overwrite with Excel (if provided)
+                    if gender:
+                        self._safe_set(upd, "gb_gender", gender)
+                    if birthdate:
+                        self._safe_set(upd, "gb_birthdate", birthdate)
+                    if spanish_speaker_col is not None:
+                        self._safe_set(upd, "gb_spanish_speaker", spanish_speaker)
+                    if passport_no:
+                        self._safe_set(upd, "gb_passport_no", passport_no)
+                    if passport_expiry:
+                        self._safe_set(upd, "gb_passport_expiry", passport_expiry)
+                    if citizenship:
+                        self._safe_set(upd, "gb_citizenship", citizenship)
+                    if tshirt_size:
+                        self._safe_set(upd, "gb_tshirt_size", tshirt_size)
+                    if diet:
+                        self._safe_set(upd, "gb_diet", diet)
+                    if medical_condition:
+                        self._safe_set(upd, "gb_medical_condition", medical_condition)
+                    if medications:
+                        self._safe_set(upd, "gb_medications", medications)
+                    if allergy:
+                        self._safe_set(upd, "gb_allergy", allergy)
+                    if emergency_contact:
+                        self._safe_set(upd, "gb_emergency_contact_id", emergency_contact.id)
 
-                # GB profile fields (only set if provided)
-                if gender:
-                    upd["gb_gender"] = gender
-                if birthdate:
-                    upd["gb_birthdate"] = birthdate
-                if spanish_speaker_col is not None:
-                    upd["gb_spanish_speaker"] = spanish_speaker
-                if passport_no:
-                    upd["gb_passport_no"] = passport_no
-                if passport_expiry:
-                    upd["gb_passport_expiry"] = passport_expiry
-                if citizenship:
-                    upd["gb_citizenship"] = citizenship
-                if tshirt_size:
-                    upd["gb_tshirt_size"] = tshirt_size
-                if diet:
-                    upd["gb_diet"] = diet
-                if medical_condition:
-                    upd["gb_medical_condition"] = medical_condition
-                if medications:
-                    upd["gb_medications"] = medications
-                if allergy:
-                    upd["gb_allergy"] = allergy
-                if emergency_contact:
-                    upd["gb_emergency_contact_id"] = emergency_contact.id
+                    if upd:
+                        partner.write(upd)
+                        updated_partners += 1
+                else:
+                    # Fill only missing partner GB fields (no overwrite)
+                    upd = {}
+                    if "gb_gender" in partner._fields and not partner.gb_gender and gender:
+                        upd["gb_gender"] = gender
+                    if "gb_birthdate" in partner._fields and not partner.gb_birthdate and birthdate:
+                        upd["gb_birthdate"] = birthdate
+                    if "gb_spanish_speaker" in partner._fields and spanish_speaker_col is not None and partner.gb_spanish_speaker is False:
+                        upd["gb_spanish_speaker"] = spanish_speaker
+                    if "gb_passport_no" in partner._fields and not partner.gb_passport_no and passport_no:
+                        upd["gb_passport_no"] = passport_no
+                    if "gb_passport_expiry" in partner._fields and not partner.gb_passport_expiry and passport_expiry:
+                        upd["gb_passport_expiry"] = passport_expiry
+                    if "gb_citizenship" in partner._fields and not partner.gb_citizenship and citizenship:
+                        upd["gb_citizenship"] = citizenship
+                    if "gb_tshirt_size" in partner._fields and not partner.gb_tshirt_size and tshirt_size:
+                        upd["gb_tshirt_size"] = tshirt_size
+                    if "gb_diet" in partner._fields and not partner.gb_diet and diet:
+                        upd["gb_diet"] = diet
+                    if "gb_medical_condition" in partner._fields and not partner.gb_medical_condition and medical_condition:
+                        upd["gb_medical_condition"] = medical_condition
+                    if "gb_medications" in partner._fields and not partner.gb_medications and medications:
+                        upd["gb_medications"] = medications
+                    if "gb_allergy" in partner._fields and not partner.gb_allergy and allergy:
+                        upd["gb_allergy"] = allergy
+                    if emergency_contact and "gb_emergency_contact_id" in partner._fields and not partner.gb_emergency_contact_id:
+                        upd["gb_emergency_contact_id"] = emergency_contact.id
 
-                if upd:
-                    partner.write(upd)
-                    updated_partners += 1
-            else:
-                # Light-touch: set emergency contact only if empty and provided
-                if emergency_contact and not partner.gb_emergency_contact_id:
-                    partner.write({"gb_emergency_contact_id": emergency_contact.id})
+                    if upd:
+                        partner.write(upd)
+                        updated_partners += 1
 
-            # Avoid duplicate roster line for same brigade+partner
+            # Avoid duplicate roster line
             existing = Roster.search([
                 ("brigade_id", "=", self.brigade_id.id),
                 ("partner_id", "=", partner.id),
