@@ -38,13 +38,12 @@
         </field>
     </record>
 
-    <!-- Action -->
+    <!-- Action (sin context con active_id para evitar validación en Odoo 18) -->
     <record id="action_gb_roster_import_wizard" model="ir.actions.act_window">
         <field name="name">Import Roster</field>
         <field name="res_model">gb.roster.import.wizard</field>
         <field name="view_mode">form</field>
         <field name="target">new</field>
-        <field name="context">{'default_brigade_id': active_id}</field>
     </record>
 
     <!-- Inherit Brigade Form: add button near roster -->
@@ -53,14 +52,12 @@
         <field name="model">gb.brigade</field>
         <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
         <field name="arch" type="xml">
-            <!-- Insert button just before roster_ids field wherever it appears -->
             <xpath expr="//field[@name='roster_ids']" position="before">
-                <button type="action"
-                        name="%(global_brigades.action_gb_roster_import_wizard)d"
+                <button type="object"
+                        name="action_open_roster_import_wizard"
                         string="Import Roster (Excel)"
                         class="btn-secondary"
-                        icon="fa-upload"
-                        context="{'default_brigade_id': active_id}"/>
+                        icon="fa-upload"/>
                 <separator/>
             </xpath>
         </field>
