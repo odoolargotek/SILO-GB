@@ -274,47 +274,64 @@ class GBBrigade(models.Model):
             else:
                 rec.lt_itinerary_url = False
 
-    # =========================
-    # WRITE / CREATE / ACTIONS
-    # =========================
-    def write(self, vals):
-        # Bloquea edición del link cuando el switch está activo
-        if "lt_itinerary_link" in vals:
-            for rec in self:
-                if rec.lt_itinerary_locked:
-                    raise ValidationError(
-                        _("Itinerary Link está BLOQUEADO. Desactiva el switch primero.")
-                    )
-        return super().write(vals)
 
-    @api.model
-    def create(self, vals):
-        # Asignación de secuencia para brigade_code
-        code = vals.get("brigade_code") or "/"
-        if code == "/":
-            next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
-            if not next_code:
+# =========================
+# WRITE / CREATE / ACTIONS
+# =========================
+
+def write(self, vals):
+    if "lt_itinerary_link" in vals:
+        for rec in self:
+            if rec.lt_itinerary_locked:
                 raise ValidationError(
-                    _(
-                        "No se pudo obtener la secuencia 'gb.brigade.code'. "
-                        "Asegúrate de cargar 'sequence.xml' en el manifest."
-                    )
+                    _("Itinerary Link está BLOQUEADO. Desactiva el switch primero.")
                 )
-            vals["brigade_code"] = next_code
-        return super().create(vals)
+    return super().write(vals)
 
-    def open_form_action(self):
-        """Abre el formulario de la brigada desde la vista lista."""
-        self.ensure_one()
-        return {
-            "type": "ir.actions.act_window",
-            "name": "Brigade",
-            "res_model": "gb.brigade",
-            "view_mode": "form",
-            "res_id": self.id,
-            "target": "current",
-        }
 
+@api.model
+def create(self, vals):
+    code = vals.get("brigade_code") or "/"
+    if code == "/":
+        next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
+        if not next_code:
+            raise ValidationError(
+                _(
+                    "No se pudo obtener la secuencia 'gb.brigade.code'. "
+                    "Verifica que 'sequence.xml' esté cargado en el manifest."
+                )
+            )
+        vals["brigade_code"] = next_code
+    return super().create(vals)
+
+
+def open_form_action(self):
+    """Abre el formulario de la brigada desde la vista lista."""
+    self.ensure_one()
+    return {
+        "type": "ir.actions.act_window",
+        "name": _("Brigade"),
+        "res_model": "gb.brigade",
+        "view_mode": "form",
+        "res_id": self.id,
+        "target": "current",
+    }
+
+
+def action_open_roster_import_wizard(self):
+    """
+    Abre el wizard de importación de Roster desde Excel.
+    (Odoo 18 safe: NO usa active_id en XML)
+    """
+    self.ensure_one()
+    action = self.env.ref(
+        "global_brigades.action_gb_roster_import_wizard"
+    ).read()[0]
+    action["context"] = dict(
+        self.env.context,
+        default_brigade_id=self.id,
+    )
+    return action
 # ===========================================================
 # Program Lines (PROGRAMS tab)
 # ===========================================================
