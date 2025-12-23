@@ -3,9 +3,15 @@
     "name": "Global Brigades",
     "version": "18.0.1.0.0",
     "summary": "Customizations for Global Brigades",
+    "description": """
+Logistics and volunteer management for Global Brigades:
+- Planning and tracking brigades and trips
+- Managing volunteers, hotels and transport
+- Community visit coordination and reports
+""",
     "category": "Tools",
-    "author": "Your Company",
-    "website": "",
+    "author": "Largotek SRL",
+    "website": "https://largotek.com",
     "license": "LGPL-3",
     "depends": [
         "base",
@@ -28,8 +34,8 @@
         "views/brigade_extended_report_views.xml",
         "data/gb_activity_tag_data.xml",
         "views/roster_import_wizard_views.xml",
-
     ],
+    "images": ["static/description/icon.png"],
     "application": True,
     "installable": True,
 }
