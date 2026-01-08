@@ -501,6 +501,230 @@ class GBBrigade(models.Model):
             "target": "self",
         }
 
+    def action_export_transport_list(self):
+        """
+        Generate and download Transport Assignments Excel for this brigade.
+        Shows passenger assignments by vehicle.
+        """
+        self.ensure_one()
+
+        # Get all transport records for this brigade
+        transport_recs = self.env["gb.brigade.transport"].search(
+            [("brigade_id", "=", self.id)],
+            order="date_time, id"
+        )
+
+        if not transport_recs:
+            raise UserError(_("No transport records found for this brigade. "
+                            "Please create transport records first."))
+
+        # Build Excel
+        wb = Workbook()
+        ws = wb.active
+        ws.title = "Transport Assignments"
+
+        # === STYLES ===
+        header_font = Font(bold=True, color="FFFFFF", size=11)
+        header_fill = PatternFill(start_color="4472C4", end_color="4472C4", fill_type="solid")
+        header_alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        border_thin = Border(
+            left=Side(style="thin"),
+            right=Side(style="thin"),
+            top=Side(style="thin"),
+            bottom=Side(style="thin")
+        )
+
+        # === TITLE ===
+        ws.merge_cells("A1:K1")
+        title_cell = ws["A1"]
+        title_cell.value = f"TRANSPORT ASSIGNMENTS - {self.name}"
+        title_cell.font = Font(bold=True, size=14)
+        title_cell.alignment = Alignment(horizontal="center", vertical="center")
+
+        # === HEADERS (Row 3) ===
+        headers = [
+            "Date/Time",
+            "Transport Title",
+            "Origin",
+            "Destination",
+            "Vehicle",
+            "Provider",
+            "Capacity",
+            "Passenger Name",
+            "Type",
+            "Role",
+            "Notes"
+        ]
+        for col_num, header_text in enumerate(headers, start=1):
+            cell = ws.cell(row=3, column=col_num)
+            cell.value = header_text
+            cell.font = header_font
+            cell.fill = header_fill
+            cell.alignment = header_alignment
+            cell.border = border_thin
+
+        # === DATA ROWS ===
+        row_idx = 4
+        for transport in transport_recs:
+            date_time = transport.date_time.strftime("%Y-%m-%d %H:%M") if transport.date_time else ""
+            title = transport.title or ""
+            origin = transport.origin or ""
+            destination = transport.destination or ""
+            transport_notes = transport.notes or ""
+
+            if not transport.vehicle_line_ids:
+                # No vehicle lines defined - show header vehicle if exists
+                vehicle_name = transport.vehicle_id.name if transport.vehicle_id else ""
+                provider_name = transport.provider_id.name if transport.provider_id else ""
+                capacity = transport.vehicle_id.capacity if transport.vehicle_id else 0
+
+                # Get all passengers (roster + staff)
+                all_passengers = []
+                for roster in transport.passenger_ids:
+                    all_passengers.append({
+                        'name': roster.partner_id.name if roster.partner_id else '',
+                        'type': 'Roster',
+                        'role': roster.brigade_role or ''
+                    })
+                for staff in transport.staff_passenger_ids:
+                    all_passengers.append({
+                        'name': staff.person_id.name if staff.person_id else '',
+                        'type': 'Staff',
+                        'role': dict(staff._fields['staff_role'].selection).get(staff.staff_role, staff.staff_role or '')
+                    })
+
+                if not all_passengers:
+                    # No passengers at all
+                    for col_num in range(1, len(headers) + 1):
+                        cell = ws.cell(row=row_idx, column=col_num)
+                        cell.border = border_thin
+                        cell.alignment = Alignment(vertical="center")
+
+                    ws.cell(row=row_idx, column=1).value = date_time
+                    ws.cell(row=row_idx, column=2).value = title
+                    ws.cell(row=row_idx, column=3).value = origin
+                    ws.cell(row=row_idx, column=4).value = destination
+                    ws.cell(row=row_idx, column=5).value = vehicle_name
+                    ws.cell(row=row_idx, column=6).value = provider_name
+                    ws.cell(row=row_idx, column=7).value = capacity
+                    ws.cell(row=row_idx, column=11).value = transport_notes
+                    row_idx += 1
+                else:
+                    # One row per passenger
+                    for pax in all_passengers:
+                        for col_num in range(1, len(headers) + 1):
+                            cell = ws.cell(row=row_idx, column=col_num)
+                            cell.border = border_thin
+                            cell.alignment = Alignment(vertical="center")
+
+                        ws.cell(row=row_idx, column=1).value = date_time
+                        ws.cell(row=row_idx, column=2).value = title
+                        ws.cell(row=row_idx, column=3).value = origin
+                        ws.cell(row=row_idx, column=4).value = destination
+                        ws.cell(row=row_idx, column=5).value = vehicle_name
+                        ws.cell(row=row_idx, column=6).value = provider_name
+                        ws.cell(row=row_idx, column=7).value = capacity
+                        ws.cell(row=row_idx, column=8).value = pax['name']
+                        ws.cell(row=row_idx, column=9).value = pax['type']
+                        ws.cell(row=row_idx, column=10).value = pax['role']
+                        ws.cell(row=row_idx, column=11).value = transport_notes
+                        row_idx += 1
+                continue
+
+            # Process vehicle lines
+            for line in transport.vehicle_line_ids:
+                vehicle_name = line.vehicle_id.name if line.vehicle_id else ""
+                provider_name = line.provider_id.name if line.provider_id else ""
+                capacity = line.capacity or 0
+
+                # Get passengers for this vehicle
+                vehicle_passengers = []
+                for roster in line.roster_passenger_ids:
+                    vehicle_passengers.append({
+                        'name': roster.partner_id.name if roster.partner_id else '',
+                        'type': 'Roster',
+                        'role': roster.brigade_role or ''
+                    })
+                for staff in line.staff_passenger_ids:
+                    vehicle_passengers.append({
+                        'name': staff.person_id.name if staff.person_id else '',
+                        'type': 'Staff',
+                        'role': dict(staff._fields['staff_role'].selection).get(staff.staff_role, staff.staff_role or '')
+                    })
+
+                if not vehicle_passengers:
+                    # Empty vehicle
+                    for col_num in range(1, len(headers) + 1):
+                        cell = ws.cell(row=row_idx, column=col_num)
+                        cell.border = border_thin
+                        cell.alignment = Alignment(vertical="center")
+
+                    ws.cell(row=row_idx, column=1).value = date_time
+                    ws.cell(row=row_idx, column=2).value = title
+                    ws.cell(row=row_idx, column=3).value = origin
+                    ws.cell(row=row_idx, column=4).value = destination
+                    ws.cell(row=row_idx, column=5).value = vehicle_name
+                    ws.cell(row=row_idx, column=6).value = provider_name
+                    ws.cell(row=row_idx, column=7).value = capacity
+                    ws.cell(row=row_idx, column=11).value = transport_notes
+                    row_idx += 1
+                else:
+                    # One row per passenger
+                    for pax in vehicle_passengers:
+                        for col_num in range(1, len(headers) + 1):
+                            cell = ws.cell(row=row_idx, column=col_num)
+                            cell.border = border_thin
+                            cell.alignment = Alignment(vertical="center")
+
+                        ws.cell(row=row_idx, column=1).value = date_time
+                        ws.cell(row=row_idx, column=2).value = title
+                        ws.cell(row=row_idx, column=3).value = origin
+                        ws.cell(row=row_idx, column=4).value = destination
+                        ws.cell(row=row_idx, column=5).value = vehicle_name
+                        ws.cell(row=row_idx, column=6).value = provider_name
+                        ws.cell(row=row_idx, column=7).value = capacity
+                        ws.cell(row=row_idx, column=8).value = pax['name']
+                        ws.cell(row=row_idx, column=9).value = pax['type']
+                        ws.cell(row=row_idx, column=10).value = pax['role']
+                        ws.cell(row=row_idx, column=11).value = transport_notes
+                        row_idx += 1
+
+        # === COLUMN WIDTHS ===
+        ws.column_dimensions["A"].width = 16  # Date/Time
+        ws.column_dimensions["B"].width = 25  # Transport Title
+        ws.column_dimensions["C"].width = 20  # Origin
+        ws.column_dimensions["D"].width = 20  # Destination
+        ws.column_dimensions["E"].width = 20  # Vehicle
+        ws.column_dimensions["F"].width = 20  # Provider
+        ws.column_dimensions["G"].width = 10  # Capacity
+        ws.column_dimensions["H"].width = 25  # Passenger Name
+        ws.column_dimensions["I"].width = 10  # Type
+        ws.column_dimensions["J"].width = 20  # Role
+        ws.column_dimensions["K"].width = 30  # Notes
+
+        # === SAVE TO MEMORY ===
+        output = io.BytesIO()
+        wb.save(output)
+        output.seek(0)
+        excel_data = base64.b64encode(output.read())
+
+        # === CREATE ATTACHMENT AND RETURN DOWNLOAD ACTION ===
+        filename = f"Transport_List_{self.name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
+        attachment = self.env["ir.attachment"].create({
+            "name": filename,
+            "type": "binary",
+            "datas": excel_data,
+            "res_model": self._name,
+            "res_id": self.id,
+            "mimetype": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        })
+
+        return {
+            "type": "ir.actions.act_url",
+            "url": f"/web/content/{attachment.id}?download=true",
+            "target": "self",
+        }
+
 # ===========================================================
 # Program Lines (PROGRAMS tab)
 # ===========================================================
