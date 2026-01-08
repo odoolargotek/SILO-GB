@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Inherit Brigade Form View to add Transport List button -->
+        <record id="view_gb_brigade_form_transport_button" model="ir.ui.view">
+            <field name="name">gb.brigade.form.transport.button</field>
+            <field name="model">gb.brigade</field>
+            <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
+            <field name="arch" type="xml">
+                <!-- Add Transport button after Rooming button in header -->
+                <xpath expr="//header/button[@name='action_export_rooming_list']" position="after">
+                    <button name="action_export_transport_list"
+                            string="Transport List (Excel)"
+                            type="object"
+                            class="btn-secondary"
+                            icon="fa-bus"
+                            help="Export transport passenger assignments to Excel"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>
