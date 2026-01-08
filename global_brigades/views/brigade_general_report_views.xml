@@ -38,9 +38,10 @@
                         <field name="report_date"/>
                     </group>
                     <group>
-                        <button name="generate_excel_report" string="Generate Report" type="object" class="btn-primary" attrs="{'invisible': [('excel_file', '!=', False)]}"/>
+                        <field name="excel_file" invisible="1"/>
+                        <button name="generate_excel_report" string="Generate Report" type="object" class="btn-primary" invisible="excel_file"/>
                     </group>
-                    <group attrs="{'invisible': [('excel_file', '==', False)]}">
+                    <group invisible="not excel_file">
                         <field name="excel_file" widget="binary" filename="excel_filename" readonly="1"/>
                         <field name="excel_filename" readonly="1"/>
                     </group>
