@@ -11,4 +11,3 @@ from . import transport_booking
 from . import community
 from . import brigade_report_stats
 from . import brigade_general_report
-from . import brigade_general_report_wizard
