@@ -2,19 +2,22 @@
 <odoo>
     <data>
 
-        <!-- Inherit Brigade Form View to add Rooming List button -->
+        <!-- Inherit Brigade Form View to add header with buttons -->
         <record id="view_gb_brigade_form_rooming_button" model="ir.ui.view">
             <field name="name">gb.brigade.form.rooming.button</field>
             <field name="model">gb.brigade</field>
             <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//form/header" position="inside">
-                    <button name="action_export_rooming_list"
-                            string="Rooming List (Excel)"
-                            type="object"
-                            class="btn-secondary"
-                            icon="fa-bed"
-                            help="Export rooming assignments to Excel"/>
+                <!-- Add header before sheet -->
+                <xpath expr="//form/sheet" position="before">
+                    <header>
+                        <button name="action_export_rooming_list"
+                                string="Rooming List (Excel)"
+                                type="object"
+                                class="btn-secondary"
+                                icon="fa-bed"
+                                help="Export rooming assignments to Excel"/>
+                    </header>
                 </xpath>
             </field>
         </record>
