@@ -83,11 +83,8 @@
             <field name="model_id" ref="global_brigades.model_gb_brigade"/>
             <field name="binding_model_id" ref="global_brigades.model_gb_brigade"/>
             <field name="state">code</field>
-            <field name="code">
-action = env['ir.actions.act_window'].for_xml_id('global_brigades', 'action_gb_brigade_general_report_wizard')
-action['context'] = dict(action.get('context', {}), default_brigade_id=record.id)
-return action
-            </field>
+            <field name="code">action = env['ir.actions.act_window'].for_xml_id('global_brigades', 'action_gb_brigade_general_report_wizard')
+action['context'] = dict(action.get('context', {}), default_brigade_id=record.id)</field>
         </record>
 
     </data>
