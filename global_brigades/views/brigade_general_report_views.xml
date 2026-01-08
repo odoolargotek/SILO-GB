@@ -66,7 +66,7 @@
         <record id="action_gb_brigade_general_report" model="ir.actions.act_window">
             <field name="name">Brigade General Reports</field>
             <field name="res_model">gb.brigade.general.report</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <!-- ==================== MENU ENTRIES ==================== -->
