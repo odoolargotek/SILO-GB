@@ -73,9 +73,9 @@
         <menuitem
             id="menu_gb_brigade_general_report"
             name="Brigade General Report"
-            parent="global_brigades.menu_gb_reports"
+            parent="global_brigades.menu_gb_reports_root"
             action="action_gb_brigade_general_report"
-            sequence="10"/>
+            sequence="20"/>
 
         <!-- Quick action from Brigade form -->
         <record id="action_gb_generate_report" model="ir.actions.server">
