@@ -36,6 +36,7 @@ Logistics and volunteer management for Global Brigades:
         "views/roster_import_wizard_views.xml",
         "views/brigade_general_report_views.xml",
         "views/brigade_rooming_report_views.xml",
+        "views/brigade_transport_report_views.xml",
     ],
     "images": ["static/description/icon.png"],
     "application": True,
