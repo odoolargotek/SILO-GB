@@ -49,16 +49,16 @@
             </field>
         </record>
 
-        <!-- ==================== REPORT RECORD MODEL TREE ==================== -->
+        <!-- ==================== REPORT RECORD MODEL LIST ==================== -->
         <record id="view_gb_brigade_general_report_tree" model="ir.ui.view">
             <field name="name">gb.brigade.general.report.tree</field>
             <field name="model">gb.brigade.general.report</field>
             <field name="arch" type="xml">
-                <tree string="Brigade General Reports">
+                <list string="Brigade General Reports">
                     <field name="brigade_id"/>
                     <field name="report_date"/>
                     <field name="excel_filename"/>
-                </tree>
+                </list>
             </field>
         </record>
 
