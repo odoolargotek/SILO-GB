@@ -343,6 +343,7 @@ class GBBrigade(models.Model):
     def action_export_rooming_list(self):
         """
         Generate and download Rooming List Excel for this brigade.
+        FIXED VERSION: Properly handles empty rooming data
         """
         self.ensure_one()
 
@@ -355,6 +356,16 @@ class GBBrigade(models.Model):
         if not rooming_recs:
             raise UserError(_("No rooming assignments found for this brigade. "
                             "Please create rooming records in the 'Hoteles / Rooming' tab first."))
+
+        # Count total occupants across all rooming records
+        total_occupants = 0
+        for rooming in rooming_recs:
+            for line in rooming.line_ids:
+                total_occupants += len(line.occupant_ids)
+        
+        if total_occupants == 0:
+            raise UserError(_("No occupants assigned to any rooming records. "
+                            "Please assign people to rooms first."))
 
         # Build Excel
         wb = Workbook()
@@ -408,7 +419,7 @@ class GBBrigade(models.Model):
             rooming_notes = rooming.note or ""
 
             if not rooming.line_ids:
-                # No room lines defined, show at least the hotel/date
+                # No room lines defined, show hotel/date without room details
                 for col_num in range(1, len(headers) + 1):
                     cell = ws.cell(row=row_idx, column=col_num)
                     cell.border = border_thin
@@ -417,7 +428,7 @@ class GBBrigade(models.Model):
                 ws.cell(row=row_idx, column=1).value = night_date
                 ws.cell(row=row_idx, column=2).value = hotel_name
                 ws.cell(row=row_idx, column=3).value = city
-                ws.cell(row=row_idx, column=9).value = rooming_notes
+                ws.cell(row=row_idx, column=9).value = f"[NO ROOMS ASSIGNED] {rooming_notes}".strip()
                 row_idx += 1
                 continue
 
@@ -430,7 +441,7 @@ class GBBrigade(models.Model):
                 line_notes = line.internal_notes or ""
 
                 if not line.occupant_ids:
-                    # Empty room line
+                    # Empty room line - show as reserved but empty
                     for col_num in range(1, len(headers) + 1):
                         cell = ws.cell(row=row_idx, column=col_num)
                         cell.border = border_thin
@@ -442,6 +453,7 @@ class GBBrigade(models.Model):
                     ws.cell(row=row_idx, column=4).value = room_number
                     ws.cell(row=row_idx, column=5).value = room_type_val
                     ws.cell(row=row_idx, column=6).value = bed_setup
+                    ws.cell(row=row_idx, column=7).value = "[EMPTY/RESERVED]"
                     ws.cell(row=row_idx, column=9).value = f"{rooming_notes} {line_notes}".strip()
                     row_idx += 1
                     continue
