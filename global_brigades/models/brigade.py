@@ -343,18 +343,22 @@ class GBBrigade(models.Model):
     def action_export_rooming_list(self):
         """
         Generate and download Rooming List Excel for this brigade.
+        Reads from gb.brigade.hotel.booking (check-in/check-out ranges)
+        and shows detailed passenger assignments (one row per person per stay).
         """
         self.ensure_one()
 
-        # Get all rooming assignments for this brigade
-        rooming_recs = self.env["gb.brigade.rooming"].search(
+        # Get all hotel bookings for this brigade
+        booking_recs = self.env["gb.brigade.hotel.booking"].search(
             [("brigade_id", "=", self.id)],
-            order="date_night, hotel_offer_id"
+            order="check_in_date, check_out_date, id"
         )
 
-        if not rooming_recs:
-            raise UserError(_("No rooming assignments found for this brigade. "
-                            "Please create rooming records in the 'Hoteles / Rooming' tab first."))
+        if not booking_recs:
+            raise UserError(_(
+                "No hotel bookings/rooming assignments found for this brigade. "
+                "Please create hotel bookings in the 'Hotels / Rooming' tab first."
+            ))
 
         # Build Excel
         wb = Workbook()
@@ -371,9 +375,10 @@ class GBBrigade(models.Model):
             top=Side(style="thin"),
             bottom=Side(style="thin")
         )
+        center_alignment = Alignment(horizontal="center", vertical="center")
 
         # === TITLE ===
-        ws.merge_cells("A1:I1")
+        ws.merge_cells("A1:J1")
         title_cell = ws["A1"]
         title_cell.value = f"ROOMING LIST - {self.name}"
         title_cell.font = Font(bold=True, size=14)
@@ -381,15 +386,16 @@ class GBBrigade(models.Model):
 
         # === HEADERS (Row 3) ===
         headers = [
-            "Night/Date",
+            "Check-In",
+            "Check-Out",
+            "Nights",
             "Hotel",
             "City",
-            "Room Number",
+            "Room #",
             "Room Type",
-            "Bed Setup",
-            "Occupant Name",
-            "Role",
-            "Notes"
+            "Beds",
+            "Passenger Name",
+            "Type",
         ]
         for col_num, header_text in enumerate(headers, start=1):
             cell = ws.cell(row=3, column=col_num)
@@ -401,82 +407,108 @@ class GBBrigade(models.Model):
 
         # === DATA ROWS ===
         row_idx = 4
-        for rooming in rooming_recs:
-            hotel_name = rooming.partner_id.name if rooming.partner_id else ""
-            city = rooming.city or ""
-            night_date = rooming.date_night.strftime("%Y-%m-%d") if rooming.date_night else ""
-            rooming_notes = rooming.note or ""
+        for booking in booking_recs:
+            check_in_str = booking.check_in_date.strftime("%Y-%m-%d") if booking.check_in_date else ""
+            check_out_str = booking.check_out_date.strftime("%Y-%m-%d") if booking.check_out_date else ""
+            nights = booking.stay_nights or 0
+            hotel_name = booking.partner_id.name if booking.partner_id else ""
+            city = booking.city or ""
 
-            if not rooming.line_ids:
-                # No room lines defined, show at least the hotel/date
+            # Collect all passengers for this booking (Roster + Staff)
+            all_passengers = []
+
+            # From assignment_ids (Roster)
+            for line in booking.assignment_ids:
+                for occupant in line.occupant_ids:
+                    room_number = line.room_number or ""
+                    room_type_val = dict(line.hotel_room_id._fields["room_type"].selection).get(
+                        line.room_type, line.room_type or ""
+                    ) if line.room_type else ""
+                    bed_setup = line.bed_setup or ""
+                    occupant_name = occupant.partner_id.name if occupant.partner_id else ""
+                    ptype = "Roster"
+
+                    all_passengers.append({
+                        "check_in": check_in_str,
+                        "check_out": check_out_str,
+                        "nights": nights,
+                        "hotel": hotel_name,
+                        "city": city,
+                        "room_number": room_number,
+                        "room_type": room_type_val,
+                        "bed_setup": bed_setup,
+                        "name": occupant_name,
+                        "type": ptype,
+                    })
+
+            # From staff_assignment_ids (Staff)
+            for sline in booking.staff_assignment_ids:
+                for staff_occupant in sline.occupant_staff_ids:
+                    room_number = sline.room_number or ""
+                    room_type_val = dict(sline.hotel_room_id._fields["room_type"].selection).get(
+                        sline.room_type, sline.room_type or ""
+                    ) if sline.room_type else ""
+                    bed_setup = sline.bed_setup or ""
+                    staff_name = staff_occupant.person_id.name if staff_occupant.person_id else ""
+                    ptype = "Staff"
+
+                    all_passengers.append({
+                        "check_in": check_in_str,
+                        "check_out": check_out_str,
+                        "nights": nights,
+                        "hotel": hotel_name,
+                        "city": city,
+                        "room_number": room_number,
+                        "room_type": room_type_val,
+                        "bed_setup": bed_setup,
+                        "name": staff_name,
+                        "type": ptype,
+                    })
+
+            # If no passengers assigned, still show the booking header
+            if not all_passengers:
                 for col_num in range(1, len(headers) + 1):
                     cell = ws.cell(row=row_idx, column=col_num)
                     cell.border = border_thin
-                    cell.alignment = Alignment(vertical="center")
+                    cell.alignment = center_alignment
 
-                ws.cell(row=row_idx, column=1).value = night_date
-                ws.cell(row=row_idx, column=2).value = hotel_name
-                ws.cell(row=row_idx, column=3).value = city
-                ws.cell(row=row_idx, column=9).value = rooming_notes
+                ws.cell(row=row_idx, column=1).value = check_in_str
+                ws.cell(row=row_idx, column=2).value = check_out_str
+                ws.cell(row=row_idx, column=3).value = nights
+                ws.cell(row=row_idx, column=4).value = hotel_name
+                ws.cell(row=row_idx, column=5).value = city
                 row_idx += 1
-                continue
-
-            for line in rooming.line_ids:
-                room_number = line.room_number or ""
-                room_type_val = dict(line.hotel_room_id._fields["room_type"].selection).get(
-                    line.room_type, line.room_type or ""
-                ) if line.room_type else ""
-                bed_setup = line.bed_setup or ""
-                line_notes = line.internal_notes or ""
-
-                if not line.occupant_ids:
-                    # Empty room line
+            else:
+                # One row per passenger
+                for pax in all_passengers:
                     for col_num in range(1, len(headers) + 1):
                         cell = ws.cell(row=row_idx, column=col_num)
                         cell.border = border_thin
-                        cell.alignment = Alignment(vertical="center")
+                        cell.alignment = center_alignment if col_num <= 8 else Alignment(vertical="center")
 
-                    ws.cell(row=row_idx, column=1).value = night_date
-                    ws.cell(row=row_idx, column=2).value = hotel_name
-                    ws.cell(row=row_idx, column=3).value = city
-                    ws.cell(row=row_idx, column=4).value = room_number
-                    ws.cell(row=row_idx, column=5).value = room_type_val
-                    ws.cell(row=row_idx, column=6).value = bed_setup
-                    ws.cell(row=row_idx, column=9).value = f"{rooming_notes} {line_notes}".strip()
-                    row_idx += 1
-                    continue
-
-                # One row per occupant
-                for occupant in line.occupant_ids:
-                    occupant_name = occupant.partner_id.name if occupant.partner_id else ""
-                    role = occupant.brigade_role or ""
-
-                    for col_num in range(1, len(headers) + 1):
-                        cell = ws.cell(row=row_idx, column=col_num)
-                        cell.border = border_thin
-                        cell.alignment = Alignment(vertical="center")
-
-                    ws.cell(row=row_idx, column=1).value = night_date
-                    ws.cell(row=row_idx, column=2).value = hotel_name
-                    ws.cell(row=row_idx, column=3).value = city
-                    ws.cell(row=row_idx, column=4).value = room_number
-                    ws.cell(row=row_idx, column=5).value = room_type_val
-                    ws.cell(row=row_idx, column=6).value = bed_setup
-                    ws.cell(row=row_idx, column=7).value = occupant_name
-                    ws.cell(row=row_idx, column=8).value = role
-                    ws.cell(row=row_idx, column=9).value = f"{rooming_notes} {line_notes}".strip()
+                    ws.cell(row=row_idx, column=1).value = pax["check_in"]
+                    ws.cell(row=row_idx, column=2).value = pax["check_out"]
+                    ws.cell(row=row_idx, column=3).value = pax["nights"]
+                    ws.cell(row=row_idx, column=4).value = pax["hotel"]
+                    ws.cell(row=row_idx, column=5).value = pax["city"]
+                    ws.cell(row=row_idx, column=6).value = pax["room_number"]
+                    ws.cell(row=row_idx, column=7).value = pax["room_type"]
+                    ws.cell(row=row_idx, column=8).value = pax["bed_setup"]
+                    ws.cell(row=row_idx, column=9).value = pax["name"]
+                    ws.cell(row=row_idx, column=10).value = pax["type"]
                     row_idx += 1
 
         # === COLUMN WIDTHS ===
-        ws.column_dimensions["A"].width = 12  # Night/Date
-        ws.column_dimensions["B"].width = 25  # Hotel
-        ws.column_dimensions["C"].width = 15  # City
-        ws.column_dimensions["D"].width = 12  # Room Number
-        ws.column_dimensions["E"].width = 12  # Room Type
-        ws.column_dimensions["F"].width = 15  # Bed Setup
-        ws.column_dimensions["G"].width = 25  # Occupant Name
-        ws.column_dimensions["H"].width = 12  # Role
-        ws.column_dimensions["I"].width = 30  # Notes
+        ws.column_dimensions["A"].width = 12  # Check-In
+        ws.column_dimensions["B"].width = 12  # Check-Out
+        ws.column_dimensions["C"].width = 8   # Nights
+        ws.column_dimensions["D"].width = 25  # Hotel
+        ws.column_dimensions["E"].width = 15  # City
+        ws.column_dimensions["F"].width = 10  # Room #
+        ws.column_dimensions["G"].width = 12  # Room Type
+        ws.column_dimensions["H"].width = 15  # Beds
+        ws.column_dimensions["I"].width = 25  # Passenger Name
+        ws.column_dimensions["J"].width = 10  # Type
 
         # === SAVE TO MEMORY ===
         output = io.BytesIO()
