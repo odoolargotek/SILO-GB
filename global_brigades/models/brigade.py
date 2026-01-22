@@ -164,54 +164,19 @@ class GBBrigade(models.Model):
     )
 
     # =========================
-    # KPI TARGETS (A/T)
+    # KPI COUNTS (simplified)
     # =========================
-    target_roster = fields.Integer(
-        string="Target Roster",
-        default=0,
-        help="Expected number of roster/volunteers for this brigade.",
-    )
-    target_staff = fields.Integer(
-        string="Target Staff",
-        default=0,
-        help="Expected number of staff members for this brigade.",
-    )
-    target_total = fields.Integer(
-        string="Target Total",
-        compute="_compute_target_total",
-        store=True,
-        help="Total expected participants (Roster + Staff).",
-    )
-    target_transport_seats = fields.Integer(
-        string="Target Transport Seats",
-        default=0,
-        help="Expected total transport seats for this brigade.",
-    )
-
-    # KPI Display fields (A/T format)
-    roster_at_display = fields.Char(
-        string="Roster (A/T)",
-        compute="_compute_at_displays",
+    staff_count = fields.Integer(
+        string="Staff Count",
+        compute="_compute_kpi_counts",
         store=False,
-        help="Roster Actual/Target display.",
+        help="Total number of staff members assigned.",
     )
-    staff_at_display = fields.Char(
-        string="Staff (A/T)",
-        compute="_compute_at_displays",
+    total_participants = fields.Integer(
+        string="Total Participants",
+        compute="_compute_kpi_counts",
         store=False,
-        help="Staff Actual/Target display.",
-    )
-    total_at_display = fields.Char(
-        string="Total (A/T)",
-        compute="_compute_at_displays",
-        store=False,
-        help="Total Actual/Target display.",
-    )
-    seats_at_display = fields.Char(
-        string="Seats (A/T)",
-        compute="_compute_at_displays",
-        store=False,
-        help="Transport Seats Actual/Target display.",
+        help="Total participants (Roster + Staff).",
     )
 
     university_logo = fields.Image(string="University Logo")
@@ -302,36 +267,13 @@ class GBBrigade(models.Model):
             rec.activity_count = len(rec.activity_ids)
             rec.transport_count = len(rec.transport_ids)
 
-    @api.depends("target_roster", "target_staff")
-    def _compute_target_total(self):
+    @api.depends("volunteer_count", "staff_ids")
+    def _compute_kpi_counts(self):
+        """Compute simplified KPI counts for brigade."""
         for rec in self:
-            rec.target_total = rec.target_roster + rec.target_staff
-
-    @api.depends(
-        "volunteer_count", "target_roster",
-        "staff_ids", "target_staff",
-        "target_total",
-        "transport_ids", "target_transport_seats"
-    )
-    def _compute_at_displays(self):
-        """Compute A/T display fields for brigade-level KPIs."""
-        for rec in self:
-            actual_roster = rec.volunteer_count
-            actual_staff = len(rec.staff_ids)
-            actual_total = actual_roster + actual_staff
-            
-            # Calculate actual transport seats from transport_ids
-            actual_seats = 0
-            for transport in rec.transport_ids:
-                if transport.vehicle_line_ids:
-                    actual_seats += sum(line.capacity or 0 for line in transport.vehicle_line_ids)
-                elif transport.vehicle_id:
-                    actual_seats += transport.vehicle_id.capacity or 0
-            
-            rec.roster_at_display = f"{actual_roster} / {rec.target_roster}"
-            rec.staff_at_display = f"{actual_staff} / {rec.target_staff}"
-            rec.total_at_display = f"{actual_total} / {rec.target_total}"
-            rec.seats_at_display = f"{actual_seats} / {rec.target_transport_seats}"
+            staff_total = len(rec.staff_ids)
+            rec.staff_count = staff_total
+            rec.total_participants = rec.volunteer_count + staff_total
 
     @api.constrains(
         "brigade_type",
