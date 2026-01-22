@@ -164,7 +164,7 @@
 <!-- LT ITINERARY CON SWITCH -->
     <field name="lt_itinerary_link" placeholder="drive.google.com/... o www.google.com"
            readonly="lt_itinerary_locked"/>
-    <field name="lt_itinerary_locked" widget="boolean_toggle" string="🔒 Bloquear Link"/>
+    <field name="lt_itinerary_locked" string="🔒 Bloquear Link"/>
     <field name="lt_itinerary_url" widget="url"/>
                             
 
@@ -435,7 +435,7 @@
 
                         <!-- ADD-ONS / EXTRAS (antes ITINERARIO) -->
                         <page string="ADD-ONS/EXTRAS">
-                            <field name="activity_ids">
+                            <field name="brigade_activity_ids">
                                 <list editable="bottom">
                                     <!-- Nombre de actividad editable -->
                                     <field name="name" string="Nombre de Actividad"/>
@@ -547,6 +547,10 @@
 
                     </notebook>
                 </sheet>
+                <!-- =========================================================
+                     ODOO 18 CHATTER: Using native <chatter/> tag
+                     ========================================================= -->
+                <chatter/>
             </form>
         </field>
     </record>
