@@ -860,9 +860,16 @@ class GBBrigadeRoster(models.Model):
     _order = "sequence, id"
 
     sequence = fields.Integer(
-        string="N",
+        string="Sequence",
         default=10,
-        help="Line number for identification (1, 2, 3...)",
+        help="Order for sorting",
+    )
+
+    line_number = fields.Integer(
+        string="N",
+        compute="_compute_line_number",
+        store=False,
+        help="Line number (1, 2, 3...)",
     )
 
     brigade_id = fields.Many2one(
@@ -987,6 +994,22 @@ class GBBrigadeRoster(models.Model):
                 rec.phone_display = f"{mobile} / {phone}"
             else:
                 rec.phone_display = mobile or phone or ""
+
+    @api.depends("brigade_id", "brigade_id.roster_ids")
+    def _compute_line_number(self):
+        """Compute line number based on position in sorted roster list."""
+        for rec in self:
+            if rec.brigade_id:
+                # Get all roster records for this brigade, ordered by sequence
+                roster_list = rec.brigade_id.roster_ids.sorted(key=lambda r: (r.sequence, r.id))
+                # Find position in list (1-indexed)
+                try:
+                    rec.line_number = roster_list.ids.index(rec.id) + 1
+                except ValueError:
+                    rec.line_number = 0
+            else:
+                rec.line_number = 0
+
 # ===========================================================
 # Arrivals (Warning only, no blocking)
 # ===========================================================
@@ -1266,9 +1289,16 @@ class GBBrigadeStaff(models.Model):
     _rec_name = 'name'
 
     sequence = fields.Integer(
-        string="N",
+        string="Sequence",
         default=10,
-        help="Line number for identification (1, 2, 3...)",
+        help="Order for sorting",
+    )
+
+    line_number = fields.Integer(
+        string="N",
+        compute="_compute_line_number",
+        store=False,
+        help="Line number (1, 2, 3...)",
     )
 
     # Nombre "humano" que usaremos en checkboxes, tags, etc.
@@ -1423,6 +1453,21 @@ class GBBrigadeStaff(models.Model):
                 rec.name = f"{base} ({role_label})"
             else:
                 rec.name = base or role_label or _("Staff #%s") % rec.id
+
+    @api.depends("brigade_id", "brigade_id.staff_ids")
+    def _compute_line_number(self):
+        """Compute line number based on position in sorted staff list."""
+        for rec in self:
+            if rec.brigade_id:
+                # Get all staff records for this brigade, ordered by sequence
+                staff_list = rec.brigade_id.staff_ids.sorted(key=lambda s: (s.sequence, s.start_datetime or datetime.min, s.id))
+                # Find position in list (1-indexed)
+                try:
+                    rec.line_number = staff_list.ids.index(rec.id) + 1
+                except ValueError:
+                    rec.line_number = 0
+            else:
+                rec.line_number = 0
 
     def name_get(self):
         res = []
