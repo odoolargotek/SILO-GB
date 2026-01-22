@@ -425,6 +425,7 @@
                                     <field name="sequence" widget="handle" string=""/>
                                     <field name="line_number" string="N" readonly="1"/>
                                     <field name="person_id" required="1"/>
+                                    <field name="brigade_role_default" string="Brigade Role"/>
                                     <field name="gender"/>
                                     <field name="start_datetime"/>
                                     <field name="end_datetime"/>
@@ -439,6 +440,7 @@
                                             <group>
                                                 <field name="line_number" string="N" readonly="1"/>
                                                 <field name="person_id" required="1"/>
+                                                <field name="brigade_role_default" string="Brigade Role"/>
                                                 <field name="gender" readonly="1"/>
                                                 <field name="staff_role"/>
                                                 <field name="start_datetime"/>
