@@ -20,6 +20,7 @@ except ImportError:
 
 class GBBrigade(models.Model):
     _name = "gb.brigade"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _description = "Global Brigades - Chapter / Brigade"
     _order = "id desc"
 
@@ -38,9 +39,19 @@ class GBBrigade(models.Model):
         default="/",
     )
 
-    name = fields.Char(string="CHAPTER NAME", required=True)
-    arrival_date = fields.Date(string="Arrival Date")
-    departure_date = fields.Date(string="Departure Date")
+    name = fields.Char(
+        string="CHAPTER NAME",
+        required=True,
+        tracking=True,
+    )
+    arrival_date = fields.Date(
+        string="Arrival Date",
+        tracking=True,
+    )
+    departure_date = fields.Date(
+        string="Departure Date",
+        tracking=True,
+    )
 
     # =========================
     # ESTADO OPERATIVO
@@ -57,6 +68,7 @@ class GBBrigade(models.Model):
         string="Status",
         default="draft",
         required=True,
+        tracking=True,
         help="Operational state of the Brigade",
     )
 
@@ -190,10 +202,14 @@ class GBBrigade(models.Model):
         string="Departure time from Compound"
     )
     coordinator_id = fields.Many2one(
-        "res.partner", string="LEAD COORDINATOR"
+        "res.partner",
+        string="LEAD COORDINATOR",
+        tracking=True,
     )
     program_associate_id = fields.Many2one(
-        "res.partner", string="PROGRAM ADVISOR"
+        "res.partner",
+        string="PROGRAM ADVISOR",
+        tracking=True,
     )
 
     chapter_leader_ids = fields.Many2many(
@@ -327,24 +343,26 @@ class GBBrigade(models.Model):
             rec._renumber_staff()
         return result
 
-    @api.model
-    def create(self, vals):
-        code = vals.get("brigade_code") or "/"
-        if code == "/":
-            next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
-            if not next_code:
-                raise ValidationError(
-                    _(
-                        "No se pudo obtener la secuencia 'gb.brigade.code'. "
-                        "Verifica que 'sequence.xml' esté cargado en el manifest."
+    @api.model_create_batch
+    def create(self, vals_list):
+        for vals in vals_list:
+            code = vals.get("brigade_code") or "/"
+            if code == "/":
+                next_code = self.env["ir.sequence"].next_by_code("gb.brigade.code")
+                if not next_code:
+                    raise ValidationError(
+                        _(
+                            "No se pudo obtener la secuencia 'gb.brigade.code'. "
+                            "Verifica que 'sequence.xml' esté cargado en el manifest."
+                        )
                     )
-                )
-            vals["brigade_code"] = next_code
-        record = super().create(vals)
+                vals["brigade_code"] = next_code
+        records = super().create(vals_list)
         # Renumerar roster y staff después de crear
-        record._renumber_roster()
-        record._renumber_staff()
-        return record
+        for record in records:
+            record._renumber_roster()
+            record._renumber_staff()
+        return records
 
     def _renumber_roster(self):
         """Renumber all roster entries based on sequence."""
