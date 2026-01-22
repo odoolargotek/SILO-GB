@@ -21,6 +21,7 @@ except ImportError:
 class GBBrigade(models.Model):
     _name = "gb.brigade"
     _description = "Global Brigades - Chapter / Brigade"
+    _inherit = ['mail.thread', 'mail.activity.mixin']
     _order = "id desc"
 
     # =========================
@@ -29,6 +30,7 @@ class GBBrigade(models.Model):
     external_brigade_code = fields.Char(
         string="Brigade Code",
         help="External reference / code from CRM or other system.",
+        tracking=True,
     )
 
     brigade_code = fields.Char(
@@ -36,11 +38,22 @@ class GBBrigade(models.Model):
         readonly=True,
         copy=False,
         default="/",
+        tracking=True,
     )
 
-    name = fields.Char(string="CHAPTER NAME", required=True)
-    arrival_date = fields.Date(string="Arrival Date")
-    departure_date = fields.Date(string="Departure Date")
+    name = fields.Char(
+        string="CHAPTER NAME",
+        required=True,
+        tracking=True,
+    )
+    arrival_date = fields.Date(
+        string="Arrival Date",
+        tracking=True,
+    )
+    departure_date = fields.Date(
+        string="Departure Date",
+        tracking=True,
+    )
 
     # =========================
     # ESTADO OPERATIVO
@@ -58,6 +71,7 @@ class GBBrigade(models.Model):
         default="draft",
         required=True,
         help="Operational state of the Brigade",
+        tracking=True,
     )
 
     brigade_type = fields.Selection(
@@ -69,6 +83,7 @@ class GBBrigade(models.Model):
         default="onsite",
         required=True,
         help="If set to Virtual, logistics sections should not be used.",
+        tracking=True,
     )
 
     brigade_restriction = fields.Selection(
@@ -94,6 +109,7 @@ class GBBrigade(models.Model):
         ],
         string="Official Program",
         help="Main official program.",
+        tracking=True,
     )
 
     # =========================
@@ -123,6 +139,7 @@ class GBBrigade(models.Model):
         "res.partner",
         string="Business Client",
         help="Client when program is Business.",
+        tracking=True,
     )
 
     business_profile_link = fields.Char(
@@ -145,6 +162,7 @@ class GBBrigade(models.Model):
         ],
         string="Brigade Tier",
         help="Tier: Sustainable(14-25), Empowered(26-39), Scaled(40+).",
+        tracking=True,
     )
 
     # =========================
@@ -181,7 +199,9 @@ class GBBrigade(models.Model):
 
     university_logo = fields.Image(string="University Logo")
     compound_manager_id = fields.Many2one(
-        "res.partner", string="COMPOUND SUPERVISOR"
+        "res.partner",
+        string="COMPOUND SUPERVISOR",
+        tracking=True,
     )
     arrival_time_compound = fields.Datetime(
         string="Arrival time to Compound"
@@ -190,10 +210,14 @@ class GBBrigade(models.Model):
         string="Departure time from Compound"
     )
     coordinator_id = fields.Many2one(
-        "res.partner", string="LEAD COORDINATOR"
+        "res.partner",
+        string="LEAD COORDINATOR",
+        tracking=True,
     )
     program_associate_id = fields.Many2one(
-        "res.partner", string="PROGRAM ADVISOR"
+        "res.partner",
+        string="PROGRAM ADVISOR",
+        tracking=True,
     )
 
     chapter_leader_ids = fields.Many2many(
