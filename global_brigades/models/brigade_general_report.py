@@ -294,24 +294,28 @@ class GBBrigadeGeneralReport(models.Model):
         ws = wb.create_sheet('Transport')
         
         headers = [
-            'Transport Name', 'Type', 'Provider', 'Start Date', 'End Date',
-            'Origin', 'Destination', '# Passengers', 'Cost', 'Notes'
+            'Transport Title', 'Date/Time', 'Provider', 'Vehicle',
+            'Origin', 'Destination', '# Vehicles', '# Passengers', 'Notes'
         ]
         
         self._write_sheet_headers(ws, headers)
         
         row = 2
         for transport in brigade.transport_ids:
-            ws[f'A{row}'] = transport.name or ''
-            ws[f'B{row}'] = dict(transport._fields['transport_type'].selection).get(transport.transport_type, '') if transport.transport_type else ''
+            # Obtener nombres de pasajeros (roster + staff)
+            roster_names = transport.passenger_ids.mapped('partner_id.name')
+            staff_names = transport.staff_passenger_ids.mapped('person_id.name')
+            all_passengers = roster_names + staff_names
+            
+            ws[f'A{row}'] = transport.title or ''
+            ws[f'B{row}'] = transport.date_time.strftime('%Y-%m-%d %H:%M') if transport.date_time else ''
             ws[f'C{row}'] = transport.provider_id.name if transport.provider_id else ''
-            ws[f'D{row}'] = transport.start_datetime.strftime('%Y-%m-%d %H:%M') if transport.start_datetime else ''
-            ws[f'E{row}'] = transport.end_datetime.strftime('%Y-%m-%d %H:%M') if transport.end_datetime else ''
-            ws[f'F{row}'] = transport.origin or ''
-            ws[f'G{row}'] = transport.destination or ''
-            ws[f'H{row}'] = transport.passenger_count
-            ws[f'I{row}'] = transport.cost or 0.0
-            ws[f'J{row}'] = transport.notes or ''
+            ws[f'D{row}'] = transport.vehicle_id.name if transport.vehicle_id else ''
+            ws[f'E{row}'] = transport.origin or ''
+            ws[f'F{row}'] = transport.destination or ''
+            ws[f'G{row}'] = transport.vehicle_count
+            ws[f'H{row}'] = transport.n_pax
+            ws[f'I{row}'] = transport.notes or ''
             row += 1
         
         self._auto_adjust_columns(ws)
