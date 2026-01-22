@@ -179,6 +179,21 @@
                         <group>
                             <field name="brigade_restriction"/>
                             <field name="brigade_tier"/>
+                            
+                            <!-- KPI INDICATORS SECTION (A/T) -->
+                            <separator string="Brigade KPIs (Actual/Target)" colspan="2"/>
+                            <group colspan="2" col="4">
+                                <field name="roster_at_display" readonly="1" string="Roster (A/T)"/>
+                                <field name="staff_at_display" readonly="1" string="Staff (A/T)"/>
+                                <field name="total_at_display" readonly="1" string="Total (A/T)"/>
+                                <field name="seats_at_display" readonly="1" string="Seats (A/T)"/>
+                            </group>
+                            <group colspan="2" col="4" string="Edit Targets">
+                                <field name="target_roster"/>
+                                <field name="target_staff"/>
+                                <field name="target_total" readonly="1"/>
+                                <field name="target_transport_seats"/>
+                            </group>
                         </group>
                     </group>
 
