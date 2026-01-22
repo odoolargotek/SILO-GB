@@ -88,6 +88,7 @@ class GBBrigade(models.Model):
 
     brigade_restriction = fields.Selection(
         [
+            ("no_restrictions", "No Restrictions"),
             ("darien_golfo", "Darien & Golfo de Mosquito"),
             ("este_darien", "Este y Darien"),
             ("solo_darien", "Solo Darien"),
