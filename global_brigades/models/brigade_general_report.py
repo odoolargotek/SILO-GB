@@ -265,14 +265,26 @@ class GBBrigadeGeneralReport(models.Model):
         
         row = 2
         for booking in brigade.hotel_booking_ids:
-            ws[f'A{row}'] = booking.hotel_id.name if booking.hotel_id else ''
-            ws[f'B{row}'] = booking.checkin_date.strftime('%Y-%m-%d') if booking.checkin_date else ''
-            ws[f'C{row}'] = booking.checkout_date.strftime('%Y-%m-%d') if booking.checkout_date else ''
+            # Calcular número de habitaciones y distribución
+            total_rooms = len(booking.assignment_ids) + len(booking.staff_assignment_ids)
+            
+            # Crear una representación de la distribución de habitaciones
+            room_distribution = []
+            for line in booking.assignment_ids:
+                room_info = f"{line.room_number or 'N/A'} ({line.pax_count} pax)"
+                room_distribution.append(room_info)
+            for sline in booking.staff_assignment_ids:
+                room_info = f"{sline.room_number or 'N/A'} ({sline.pax_count} staff)"
+                room_distribution.append(room_info)
+            
+            ws[f'A{row}'] = booking.partner_id.name if booking.partner_id else ''
+            ws[f'B{row}'] = booking.check_in_date.strftime('%Y-%m-%d') if booking.check_in_date else ''
+            ws[f'C{row}'] = booking.check_out_date.strftime('%Y-%m-%d') if booking.check_out_date else ''
             ws[f'D{row}'] = int(booking.stay_nights)
-            ws[f'E{row}'] = booking.total_rooms
-            ws[f'F{row}'] = booking.room_distribution or ''
-            ws[f'G{row}'] = booking.total_guests
-            ws[f'H{row}'] = booking.notes or ''
+            ws[f'E{row}'] = total_rooms
+            ws[f'F{row}'] = ', '.join(room_distribution) if room_distribution else ''
+            ws[f'G{row}'] = booking.total_headcount
+            ws[f'H{row}'] = booking.note or ''
             row += 1
         
         self._auto_adjust_columns(ws)
