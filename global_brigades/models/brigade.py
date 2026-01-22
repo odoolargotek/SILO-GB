@@ -320,7 +320,12 @@ class GBBrigade(models.Model):
                     raise ValidationError(
                         _("Itinerary Link está BLOQUEADO. Desactiva el switch primero.")
                     )
-        return super().write(vals)
+        result = super().write(vals)
+        # Renumerar roster y staff después de guardar
+        for rec in self:
+            rec._renumber_roster()
+            rec._renumber_staff()
+        return result
 
     @api.model
     def create(self, vals):
@@ -335,7 +340,27 @@ class GBBrigade(models.Model):
                     )
                 )
             vals["brigade_code"] = next_code
-        return super().create(vals)
+        record = super().create(vals)
+        # Renumerar roster y staff después de crear
+        record._renumber_roster()
+        record._renumber_staff()
+        return record
+
+    def _renumber_roster(self):
+        """Renumber all roster entries based on sequence."""
+        self.ensure_one()
+        roster_sorted = self.roster_ids.sorted(key=lambda r: (r.sequence, r.id))
+        for idx, roster in enumerate(roster_sorted, start=1):
+            if roster.line_number != idx:
+                roster.write({'line_number': idx})
+
+    def _renumber_staff(self):
+        """Renumber all staff entries based on sequence."""
+        self.ensure_one()
+        staff_sorted = self.staff_ids.sorted(key=lambda s: (s.sequence, s.start_datetime or datetime.min, s.id))
+        for idx, staff in enumerate(staff_sorted, start=1):
+            if staff.line_number != idx:
+                staff.write({'line_number': idx})
 
     def open_form_action(self):
         """Abre el formulario de la brigada desde la vista lista."""
@@ -867,9 +892,8 @@ class GBBrigadeRoster(models.Model):
 
     line_number = fields.Integer(
         string="N",
-        compute="_compute_line_number",
-        store=False,
-        help="Line number (1, 2, 3...)",
+        default=0,
+        help="Line number (1, 2, 3...), automatically calculated",
     )
 
     brigade_id = fields.Many2one(
@@ -995,20 +1019,31 @@ class GBBrigadeRoster(models.Model):
             else:
                 rec.phone_display = mobile or phone or ""
 
-    @api.depends("brigade_id", "brigade_id.roster_ids")
-    def _compute_line_number(self):
-        """Compute line number based on position in sorted roster list."""
-        for rec in self:
-            if rec.brigade_id:
-                # Get all roster records for this brigade, ordered by sequence
-                roster_list = rec.brigade_id.roster_ids.sorted(key=lambda r: (r.sequence, r.id))
-                # Find position in list (1-indexed)
-                try:
-                    rec.line_number = roster_list.ids.index(rec.id) + 1
-                except ValueError:
-                    rec.line_number = 0
-            else:
-                rec.line_number = 0
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        # Renumerar después de crear
+        brigades = records.mapped('brigade_id')
+        for brigade in brigades:
+            brigade._renumber_roster()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        # Renumerar después de escribir
+        if 'sequence' in vals:
+            brigades = self.mapped('brigade_id')
+            for brigade in brigades:
+                brigade._renumber_roster()
+        return result
+
+    def unlink(self):
+        brigades = self.mapped('brigade_id')
+        result = super().unlink()
+        # Renumerar después de borrar
+        for brigade in brigades:
+            brigade._renumber_roster()
+        return result
 
 # ===========================================================
 # Arrivals (Warning only, no blocking)
@@ -1296,9 +1331,8 @@ class GBBrigadeStaff(models.Model):
 
     line_number = fields.Integer(
         string="N",
-        compute="_compute_line_number",
-        store=False,
-        help="Line number (1, 2, 3...)",
+        default=0,
+        help="Line number (1, 2, 3...), automatically calculated",
     )
 
     # Nombre "humano" que usaremos en checkboxes, tags, etc.
@@ -1454,20 +1488,31 @@ class GBBrigadeStaff(models.Model):
             else:
                 rec.name = base or role_label or _("Staff #%s") % rec.id
 
-    @api.depends("brigade_id", "brigade_id.staff_ids")
-    def _compute_line_number(self):
-        """Compute line number based on position in sorted staff list."""
-        for rec in self:
-            if rec.brigade_id:
-                # Get all staff records for this brigade, ordered by sequence
-                staff_list = rec.brigade_id.staff_ids.sorted(key=lambda s: (s.sequence, s.start_datetime or datetime.min, s.id))
-                # Find position in list (1-indexed)
-                try:
-                    rec.line_number = staff_list.ids.index(rec.id) + 1
-                except ValueError:
-                    rec.line_number = 0
-            else:
-                rec.line_number = 0
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        # Renumerar después de crear
+        brigades = records.mapped('brigade_id')
+        for brigade in brigades:
+            brigade._renumber_staff()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        # Renumerar después de escribir
+        if 'sequence' in vals:
+            brigades = self.mapped('brigade_id')
+            for brigade in brigades:
+                brigade._renumber_staff()
+        return result
+
+    def unlink(self):
+        brigades = self.mapped('brigade_id')
+        result = super().unlink()
+        # Renumerar después de borrar
+        for brigade in brigades:
+            brigade._renumber_staff()
+        return result
 
     def name_get(self):
         res = []
