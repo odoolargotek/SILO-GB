@@ -16,6 +16,7 @@ Logistics and volunteer management for Global Brigades:
     "depends": [
         "base",
         "contacts",
+        "mail",
     ],
     "data": [
         "data/sequence.xml",
