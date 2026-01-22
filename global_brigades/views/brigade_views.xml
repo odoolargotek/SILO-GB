@@ -228,8 +228,9 @@
                         <!-- ROSTER -->
                         <page string="ROSTER">
                             <field name="roster_ids">
-                                <!-- LISTA: columnas en el orden solicitado -->
+                                <!-- LISTA: N al principio -->
                                 <list editable="bottom">
+                                    <field name="sequence" widget="handle" string="N"/>
                                     <field name="partner_id" string="Name" required="1"/>
                                     <field name="gender" string="Gender"/>
                                     <field name="birthdate" string="Date of Birth"/>
@@ -254,6 +255,7 @@
                                     <sheet>
                                         <group>
                                             <group string="Personal Info">
+                                                <field name="sequence" string="N"/>
                                                 <field name="partner_id" string="Name" required="1"/>
                                                 <field name="gender" string="Gender"/>
                                                 <field name="birthdate" string="Date of Birth"/>
@@ -395,6 +397,7 @@
                         <page string="STAFF">
                             <field name="staff_ids">
                                 <list editable="bottom">
+                                    <field name="sequence" widget="handle" string="N"/>
                                     <field name="person_id" required="1"/>
                                     <field name="gender"/>
                                     <field name="start_datetime"/>
@@ -408,6 +411,7 @@
                                     <sheet>
                                         <group>
                                             <group>
+                                                <field name="sequence" string="N"/>
                                                 <field name="person_id" required="1"/>
                                                 <field name="gender" readonly="1"/>
                                                 <field name="staff_role"/>
