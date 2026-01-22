@@ -1088,7 +1088,7 @@ class GBBrigadeArrival(models.Model):
         ondelete="cascade",
     )
 
-    title = fields.Char(string="Title / Ref", required=True)
+    title = fields.Char(string="Airline", required=True)
     flight_number = fields.Char(string="Flight #")
     date_time_arrival = fields.Datetime(string="Arrival DateTime")
     flight_through_sap = fields.Char(string="Through SAP / Stopover")
@@ -1222,7 +1222,7 @@ class GBBrigadeDeparture(models.Model):
         ondelete="cascade",
     )
 
-    title = fields.Char(string="Title / Ref", required=True)
+    title = fields.Char(string="Airline", required=True)
     flight_number = fields.Char(string="Flight #")
     date_time_departure = fields.Datetime(string="Departure DateTime")
     flight_through_sap = fields.Char(string="Through SAP / Stopover")
