@@ -1030,6 +1030,12 @@ class GBBrigadeRoster(models.Model):
         readonly=True,
     )
 
+    # NUEVO: Campo de notas al final
+    notes = fields.Text(
+        string="Notes",
+        help="Additional notes or observations about this roster participant.",
+    )
+
     @api.depends("partner_id.mobile", "partner_id.phone")
     def _compute_phone_display(self):
         for rec in self:
