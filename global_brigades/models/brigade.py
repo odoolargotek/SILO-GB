@@ -25,6 +25,16 @@ class GBBrigade(models.Model):
     _order = "id desc"
 
     # =========================
+    # CAMPO ACTIVE (para archivar)
+    # =========================
+    active = fields.Boolean(
+        string="Active",
+        default=True,
+        help="If unchecked, this brigade will be archived and hidden from main views.",
+        tracking=True,
+    )
+
+    # =========================
     # IDENTIFICACIÓN BÁSICA
     # =========================
     external_brigade_code = fields.Char(
