@@ -1410,6 +1410,15 @@ class GBBrigadeStaff(models.Model):
         help='Professional registration / eligibility information pulled from the contact.',
     )
 
+    # NUEVO: Brigade Role desde el contacto
+    brigade_role_default = fields.Selection(
+        related='person_id.gb_brigade_role',
+        string='Brigade Role',
+        readonly=True,
+        store=False,
+        help='Default brigade role from contact profile.',
+    )
+
     staff_role = fields.Selection(
         [
             ('driver', 'DRIVER'),
