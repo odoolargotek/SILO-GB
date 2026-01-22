@@ -857,7 +857,13 @@ class GBBrigadeRoster(models.Model):
     _name = "gb.brigade.roster"
     _description = "Global Brigades - Roster"
     _rec_name = "partner_id"
-    _order = "id"
+    _order = "sequence, id"
+
+    sequence = fields.Integer(
+        string="N",
+        default=10,
+        help="Line number for identification (1, 2, 3...)",
+    )
 
     brigade_id = fields.Many2one(
         "gb.brigade",
@@ -1256,8 +1262,14 @@ class GBBrigadeDeparture(models.Model):
 class GBBrigadeStaff(models.Model):
     _name = 'gb.brigade.staff'
     _description = 'Brigade Staff Assignment'
-    _order = 'start_datetime, person_id'
+    _order = 'sequence, start_datetime, person_id'
     _rec_name = 'name'
+
+    sequence = fields.Integer(
+        string="N",
+        default=10,
+        help="Line number for identification (1, 2, 3...)",
+    )
 
     # Nombre "humano" que usaremos en checkboxes, tags, etc.
     name = fields.Char(
