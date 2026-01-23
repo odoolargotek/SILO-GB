@@ -14,8 +14,12 @@ class ResPartner(models.Model):
     gb_birthdate = fields.Date(string='Birthdate')
     gb_spanish_speaker = fields.Boolean(string='Spanish Speaker')
     gb_tshirt_size = fields.Selection([
-        ('xs', 'XS'), ('s', 'S'), ('m', 'M'),
-        ('l', 'L'), ('xl', 'XL'), ('xxl', 'XXL'),
+        ('xs', 'X-Small'),
+        ('s', 'Small'),
+        ('m', 'Medium'),
+        ('l', 'Large'),
+        ('xl', 'X-Large'),
+        ('xxl', 'XX-Large'),
     ], string='T-Shirt Size')
 
     gb_passport_no = fields.Char(string='Passport No.')
