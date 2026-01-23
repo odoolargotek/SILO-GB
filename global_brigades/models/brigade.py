@@ -1402,12 +1402,13 @@ class GBBrigadeStaff(models.Model):
         readonly=True,
     )
 
+    # CORREGIDO: Ahora lee directamente del campo gb_professional_registration
     professional_registration = fields.Char(
         string='Professional Registration',
-        compute='_compute_professional_registration',
-        store=False,
+        related='person_id.gb_professional_registration',
         readonly=True,
-        help='Professional registration / eligibility information pulled from the contact.',
+        store=False,
+        help='Professional registration number from contact profile.',
     )
 
     # NUEVO: Brigade Role desde el contacto
@@ -1501,16 +1502,6 @@ class GBBrigadeStaff(models.Model):
         string='Provider',
         help='Optional provider record, kept for backwards compatibility.',
     )
-
-    @api.depends('person_id.gb_eligibility_ids', 'person_id.gb_eligibility_ids.name')
-    def _compute_professional_registration(self):
-        """Compute professional registration / eligibility from partner records."""
-        for rec in self:
-            elig_records = rec.person_id.gb_eligibility_ids
-            if elig_records:
-                rec.professional_registration = ", ".join(elig_records.mapped('name'))
-            else:
-                rec.professional_registration = False
 
     @api.depends('person_id', 'person_id.name', 'provider_id', 'provider_id.name', 'staff_role')
     def _compute_name(self):
