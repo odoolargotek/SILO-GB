@@ -247,8 +247,16 @@ class GBBrigadeHotelBookingLine(models.Model):
         "line_id",
         "roster_id",
         string="Occupants",
-        domain="[('brigade_id','=',parent.brigade_id)]",
+        domain="[('id', 'in', available_roster_ids)]",
         help="People from this Brigade's Roster that will sleep in this room for this stay.",
+    )
+
+    # Campo computado para filtrar roster ya asignados
+    available_roster_ids = fields.Many2many(
+        "gb.brigade.roster",
+        compute="_compute_available_roster_ids",
+        store=False,
+        help="Roster members not yet assigned to other rooms in this booking.",
     )
 
     pax_count = fields.Integer(
@@ -262,6 +270,37 @@ class GBBrigadeHotelBookingLine(models.Model):
     def _compute_pax_count(self):
         for rec in self:
             rec.pax_count = len(rec.occupant_ids)
+
+    @api.depends(
+        "booking_id",
+        "booking_id.brigade_id",
+        "booking_id.brigade_id.roster_ids",
+        "booking_id.assignment_ids",
+        "booking_id.assignment_ids.occupant_ids",
+        "occupant_ids",
+    )
+    def _compute_available_roster_ids(self):
+        """
+        Filtra el roster disponible:
+        - Todos los del roster de la brigada
+        - MENOS los ya asignados en OTRAS líneas de este booking
+        - MÁS los ocupantes actuales (para poder editarlos)
+        """
+        for rec in self:
+            if not rec.booking_id or not rec.booking_id.brigade_id:
+                rec.available_roster_ids = self.env["gb.brigade.roster"]
+                continue
+
+            # Todo el roster de la brigada
+            all_roster = rec.booking_id.brigade_id.roster_ids
+
+            # Ya asignados en OTRAS líneas
+            other_lines = rec.booking_id.assignment_ids.filtered(lambda line: line.id != rec.id)
+            already_assigned = other_lines.mapped("occupant_ids")
+
+            # Disponibles = Todos - Ya asignados + Ocupantes actuales
+            available = (all_roster - already_assigned) | rec.occupant_ids
+            rec.available_roster_ids = available
 
 
 class GBBrigadeHotelBookingStaffLine(models.Model):
@@ -309,8 +348,16 @@ class GBBrigadeHotelBookingStaffLine(models.Model):
         "line_id",
         "staff_id",
         string="Occupants",
-        domain="[('brigade_id','=',parent.brigade_id)]",
+        domain="[('id', 'in', available_staff_ids)]",
         help="Temporary staff that will sleep in this room for this stay.",
+    )
+
+    # Campo computado para filtrar staff ya asignados
+    available_staff_ids = fields.Many2many(
+        "gb.brigade.staff",
+        compute="_compute_available_staff_ids",
+        store=False,
+        help="Staff members not yet assigned to other rooms in this booking.",
     )
 
     pax_count = fields.Integer(
@@ -323,3 +370,34 @@ class GBBrigadeHotelBookingStaffLine(models.Model):
     def _compute_pax_count(self):
         for rec in self:
             rec.pax_count = len(rec.occupant_staff_ids)
+
+    @api.depends(
+        "booking_id",
+        "booking_id.brigade_id",
+        "booking_id.brigade_id.staff_ids",
+        "booking_id.staff_assignment_ids",
+        "booking_id.staff_assignment_ids.occupant_staff_ids",
+        "occupant_staff_ids",
+    )
+    def _compute_available_staff_ids(self):
+        """
+        Filtra el staff disponible:
+        - Todos los del staff de la brigada
+        - MENOS los ya asignados en OTRAS líneas de este booking
+        - MÁS los ocupantes actuales (para poder editarlos)
+        """
+        for rec in self:
+            if not rec.booking_id or not rec.booking_id.brigade_id:
+                rec.available_staff_ids = self.env["gb.brigade.staff"]
+                continue
+
+            # Todo el staff de la brigada
+            all_staff = rec.booking_id.brigade_id.staff_ids
+
+            # Ya asignados en OTRAS líneas
+            other_lines = rec.booking_id.staff_assignment_ids.filtered(lambda line: line.id != rec.id)
+            already_assigned = other_lines.mapped("occupant_staff_ids")
+
+            # Disponibles = Todos - Ya asignados + Ocupantes actuales
+            available = (all_staff - already_assigned) | rec.occupant_staff_ids
+            rec.available_staff_ids = available
