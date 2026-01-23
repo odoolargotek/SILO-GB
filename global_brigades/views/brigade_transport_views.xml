@@ -120,11 +120,17 @@
                                                 <field name="vehicle_id"/>
                                                 <field name="provider_id" readonly="1"/>
                                                 <field name="capacity" readonly="1"/>
+                                                <!-- Campo invisible para triggear el compute -->
+                                                <field name="available_roster_ids" invisible="1"/>
                                                 <field name="roster_passenger_ids"
                                                        widget="many2many_tags"
+                                                       domain="[('id', 'in', available_roster_ids)]"
                                                        options="{'no_create': True}"/>
+                                                <!-- Campo invisible para triggear el compute -->
+                                                <field name="available_staff_ids" invisible="1"/>
                                                 <field name="staff_passenger_ids"
                                                        widget="many2many_tags"
+                                                       domain="[('id', 'in', available_staff_ids)]"
                                                        options="{'no_create': True}"/>
                                                 <field name="total_pax" readonly="1"/>
                                                 <field name="remaining_seats" readonly="1"/>
@@ -242,11 +248,17 @@
                                     <field name="vehicle_id"/>
                                     <field name="provider_id" readonly="1"/>
                                     <field name="capacity" readonly="1"/>
+                                    <!-- Campo invisible para triggear el compute -->
+                                    <field name="available_roster_ids" invisible="1"/>
                                     <field name="roster_passenger_ids"
                                            widget="many2many_tags"
+                                           domain="[('id', 'in', available_roster_ids)]"
                                            options="{'no_create': True}"/>
+                                    <!-- Campo invisible para triggear el compute -->
+                                    <field name="available_staff_ids" invisible="1"/>
                                     <field name="staff_passenger_ids"
                                            widget="many2many_tags"
+                                           domain="[('id', 'in', available_staff_ids)]"
                                            options="{'no_create': True}"/>
                                     <field name="total_pax" readonly="1"/>
                                     <field name="remaining_seats" readonly="1"/>
