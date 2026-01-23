@@ -54,10 +54,12 @@
                                     <field name="room_type" readonly="1" string="Type"/>
                                     <field name="bed_setup" readonly="1" string="Beds"/>
                                     <field name="pax_count" readonly="1" string="# Pax"/>
+                                    <!-- Campo invisible para triggear el compute -->
+                                    <field name="available_roster_ids" invisible="1"/>
                                     <field name="occupant_ids"
                                            widget="many2many_tags"
                                            string="Occupants"
-                                           domain="[('brigade_id','=',parent.brigade_id)]"
+                                           domain="[('id', 'in', available_roster_ids)]"
                                            options="{'no_create': True}"/>
                                     <field name="display_name" invisible="1"/>
                                 </list>
@@ -72,9 +74,11 @@
                                             <field name="pax_count" readonly="1"/>
                                         </group>
                                         <group>
+                                            <!-- Campo invisible para triggear el compute -->
+                                            <field name="available_roster_ids" invisible="1"/>
                                             <field name="occupant_ids"
                                                    widget="many2many_checkboxes"
-                                                   domain="[('brigade_id','=',parent.brigade_id)]"
+                                                   domain="[('id', 'in', available_roster_ids)]"
                                                    options="{'no_create': True}"/>
                                         </group>
                                     </group>
@@ -91,10 +95,12 @@
                                     <field name="room_type" readonly="1" string="Type"/>
                                     <field name="bed_setup" readonly="1" string="Beds"/>
                                     <field name="pax_count" readonly="1" string="# Pax"/>
+                                    <!-- Campo invisible para triggear el compute -->
+                                    <field name="available_staff_ids" invisible="1"/>
                                     <field name="occupant_staff_ids"
                                            widget="many2many_tags"
                                            string="Occupants"
-                                           domain="[('brigade_id','=',parent.brigade_id)]"
+                                           domain="[('id', 'in', available_staff_ids)]"
                                            options="{'no_create': True}"/>
                                 </list>
 
@@ -108,9 +114,11 @@
                                             <field name="pax_count" readonly="1"/>
                                         </group>
                                         <group>
+                                            <!-- Campo invisible para triggear el compute -->
+                                            <field name="available_staff_ids" invisible="1"/>
                                             <field name="occupant_staff_ids"
                                                    widget="many2many_checkboxes"
-                                                   domain="[('brigade_id','=',parent.brigade_id)]"
+                                                   domain="[('id', 'in', available_staff_ids)]"
                                                    options="{'no_create': True}"/>
                                         </group>
                                     </group>
