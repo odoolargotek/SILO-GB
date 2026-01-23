@@ -153,6 +153,25 @@
     </record>
 
     <!-- =========================================================
+         ROSTER TREE VIEW (for "Search More..." dialog)
+         ========================================================= -->
+    <record id="view_gb_brigade_roster_tree" model="ir.ui.view">
+        <field name="name">gb.brigade.roster.tree</field>
+        <field name="model">gb.brigade.roster</field>
+        <field name="arch" type="xml">
+            <list string="Roster">
+                <field name="line_number" string="N" readonly="1"/>
+                <field name="partner_id" string="Name"/>
+                <field name="brigade_role" string="Role"/>
+                <field name="gender"/>
+                <field name="last_booking_check_in" string="Last Check-In" readonly="1"/>
+                <field name="last_booking_check_out" string="Last Check-Out" readonly="1"/>
+                <field name="last_booking_hotel" string="Last Hotel" readonly="1"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- =========================================================
          FORM VIEW (detalle de brigada)
          ========================================================= -->
     <record id="view_gb_brigade_form" model="ir.ui.view">
@@ -610,6 +629,7 @@
                 <field name="departure_date"/>
                 <field name="coordinator_id"/>
                 <field name="program_associate_id"/>
+                <field name="volunteer_count" string="# Volunteers" readonly="1"/>
                 <field name="volunteer_count" string="# Volunteers" readonly="1"/>
                 <field name="program_count" string="# Programs" readonly="1"/>
                 <field name="activity_count" string="# Activities" readonly="1"/>
