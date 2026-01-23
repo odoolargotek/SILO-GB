@@ -78,6 +78,7 @@ class ResPartner(models.Model):
             ('doctor', 'Doctor'),
             ('dentist', 'Dentist'),
             ('pharmacist', 'Pharmacist'),
+            ('nutritionist', 'Nutritionist'),
             ('paramedic', 'Paramedic'),
             ('optometrist', 'Optometrist'),
             ('nurse', 'Nurse'),
