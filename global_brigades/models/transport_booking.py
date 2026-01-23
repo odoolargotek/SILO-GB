@@ -283,7 +283,16 @@ class GBBrigadeTransportLine(models.Model):
         "line_id",
         "roster_id",
         string="Roster Passengers",
+        domain="[('id', 'in', available_roster_ids)]",
         help="Brigade roster people assigned to this vehicle.",
+    )
+
+    # Campo computado para filtrar roster ya asignados
+    available_roster_ids = fields.Many2many(
+        "gb.brigade.roster",
+        compute="_compute_available_roster_ids",
+        store=False,
+        help="Roster members not yet assigned to other vehicles in this transport.",
     )
 
     staff_passenger_ids = fields.Many2many(
@@ -292,7 +301,16 @@ class GBBrigadeTransportLine(models.Model):
         "line_id",
         "staff_id",
         string="Staff Passengers",
+        domain="[('id', 'in', available_staff_ids)]",
         help="Staff members assigned to this vehicle.",
+    )
+
+    # Campo computado para filtrar staff ya asignados
+    available_staff_ids = fields.Many2many(
+        "gb.brigade.staff",
+        compute="_compute_available_staff_ids",
+        store=False,
+        help="Staff members not yet assigned to other vehicles in this transport.",
     )
 
     total_pax = fields.Integer(
@@ -317,3 +335,65 @@ class GBBrigadeTransportLine(models.Model):
         for rec in self:
             capacity = rec.capacity or 0
             rec.remaining_seats = max(capacity - (rec.total_pax or 0), 0)
+
+    @api.depends(
+        "transport_id",
+        "transport_id.brigade_id",
+        "transport_id.brigade_id.roster_ids",
+        "transport_id.vehicle_line_ids",
+        "transport_id.vehicle_line_ids.roster_passenger_ids",
+        "roster_passenger_ids",
+    )
+    def _compute_available_roster_ids(self):
+        """
+        Filtra el roster disponible:
+        - Todos los del roster de la brigada
+        - MENOS los ya asignados en OTRAS líneas de vehículo de este transporte
+        - MÁS los pasajeros actuales (para poder editarlos)
+        """
+        for rec in self:
+            if not rec.transport_id or not rec.transport_id.brigade_id:
+                rec.available_roster_ids = self.env["gb.brigade.roster"]
+                continue
+
+            # Todo el roster de la brigada
+            all_roster = rec.transport_id.brigade_id.roster_ids
+
+            # Ya asignados en OTRAS líneas de vehículo
+            other_lines = rec.transport_id.vehicle_line_ids.filtered(lambda line: line.id != rec.id)
+            already_assigned = other_lines.mapped("roster_passenger_ids")
+
+            # Disponibles = Todos - Ya asignados + Pasajeros actuales
+            available = (all_roster - already_assigned) | rec.roster_passenger_ids
+            rec.available_roster_ids = available
+
+    @api.depends(
+        "transport_id",
+        "transport_id.brigade_id",
+        "transport_id.brigade_id.staff_ids",
+        "transport_id.vehicle_line_ids",
+        "transport_id.vehicle_line_ids.staff_passenger_ids",
+        "staff_passenger_ids",
+    )
+    def _compute_available_staff_ids(self):
+        """
+        Filtra el staff disponible:
+        - Todos los del staff de la brigada
+        - MENOS los ya asignados en OTRAS líneas de vehículo de este transporte
+        - MÁS los pasajeros actuales (para poder editarlos)
+        """
+        for rec in self:
+            if not rec.transport_id or not rec.transport_id.brigade_id:
+                rec.available_staff_ids = self.env["gb.brigade.staff"]
+                continue
+
+            # Todo el staff de la brigada
+            all_staff = rec.transport_id.brigade_id.staff_ids
+
+            # Ya asignados en OTRAS líneas de vehículo
+            other_lines = rec.transport_id.vehicle_line_ids.filtered(lambda line: line.id != rec.id)
+            already_assigned = other_lines.mapped("staff_passenger_ids")
+
+            # Disponibles = Todos - Ya asignados + Pasajeros actuales
+            available = (all_staff - already_assigned) | rec.staff_passenger_ids
+            rec.available_staff_ids = available
