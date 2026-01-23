@@ -1036,6 +1036,38 @@ class GBBrigadeRoster(models.Model):
         help="Additional notes or observations about this roster participant.",
     )
 
+    # =========================
+    # LAST HOTEL BOOKING INFO
+    # =========================
+    last_hotel_booking_id = fields.Many2one(
+        "gb.brigade.hotel.booking",
+        string="Last Hotel Booking",
+        compute="_compute_last_hotel_booking",
+        store=False,
+        help="Most recent hotel booking where this person is assigned.",
+    )
+
+    last_booking_check_in = fields.Date(
+        string="Last Check-In",
+        compute="_compute_last_hotel_booking",
+        store=False,
+        help="Check-in date of last hotel booking.",
+    )
+
+    last_booking_check_out = fields.Date(
+        string="Last Check-Out",
+        compute="_compute_last_hotel_booking",
+        store=False,
+        help="Check-out date of last hotel booking.",
+    )
+
+    last_booking_hotel = fields.Char(
+        string="Last Hotel",
+        compute="_compute_last_hotel_booking",
+        store=False,
+        help="Hotel name of last booking.",
+    )
+
     @api.depends("partner_id.mobile", "partner_id.phone")
     def _compute_phone_display(self):
         for rec in self:
@@ -1045,6 +1077,41 @@ class GBBrigadeRoster(models.Model):
                 rec.phone_display = f"{mobile} / {phone}"
             else:
                 rec.phone_display = mobile or phone or ""
+
+    def _compute_last_hotel_booking(self):
+        """
+        Computes the last hotel booking where this roster entry appears.
+        Shows check-in, check-out, and hotel name for reference.
+        """
+        for rec in self:
+            if not rec.brigade_id:
+                rec.last_hotel_booking_id = False
+                rec.last_booking_check_in = False
+                rec.last_booking_check_out = False
+                rec.last_booking_hotel = False
+                continue
+
+            # Find bookings where this roster is assigned
+            bookings = self.env["gb.brigade.hotel.booking"].search(
+                [
+                    ("brigade_id", "=", rec.brigade_id.id),
+                    ("assignment_ids.occupant_ids", "in", rec.id),
+                ],
+                order="check_in_date desc, id desc",
+                limit=1,
+            )
+
+            if bookings:
+                booking = bookings[0]
+                rec.last_hotel_booking_id = booking.id
+                rec.last_booking_check_in = booking.check_in_date
+                rec.last_booking_check_out = booking.check_out_date
+                rec.last_booking_hotel = booking.partner_id.name if booking.partner_id else ""
+            else:
+                rec.last_hotel_booking_id = False
+                rec.last_booking_check_in = False
+                rec.last_booking_check_out = False
+                rec.last_booking_hotel = False
 
     @api.model_create_multi
     def create(self, vals_list):
