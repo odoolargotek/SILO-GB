@@ -11,6 +11,7 @@
         <field name="arch" type="xml">
             <list string="Brigades">
                 <!-- Brigade Code -->
+                <field name="external_brigade_code"/>
                 <field name="brigade_code" readonly="1" string="Brigade Code"/>
                 
                 <!-- Chapter name / Brigade Name -->
