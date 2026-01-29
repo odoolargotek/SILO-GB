@@ -1,106 +1,219 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_gb_brigade_admin,access_gb_brigade_admin,model_gb_brigade,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_coord,access_gb_brigade_coord,model_gb_brigade,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_pa,access_gb_brigade_pa,model_gb_brigade,global_brigades.group_gb_pa,1,1,1,1
 
-access_gb_brigade_program_admin,access_gb_brigade_program_admin,model_gb_brigade_program,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_program_coord,access_gb_brigade_program_coord,model_gb_brigade_program,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_program_pa,access_gb_brigade_program_pa,model_gb_brigade_program,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE (Fichas principales)
+# ========================================
+access_gb_brigade_admin,gb.brigade admin,model_gb_brigade,group_gb_admin,1,1,1,1
+access_gb_brigade_pa,gb.brigade program_advisor,model_gb_brigade,group_gb_program_advisor,1,1,1,0
+access_gb_brigade_op1,gb.brigade operative_1,model_gb_brigade,group_gb_operative_1,1,1,1,1
+access_gb_brigade_op2,gb.brigade operative_2,model_gb_brigade,group_gb_operative_2,1,1,0,0
 
-access_gb_brigade_roster_admin,access_gb_brigade_roster_admin,model_gb_brigade_roster,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_roster_coord,access_gb_brigade_roster_coord,model_gb_brigade_roster,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_roster_pa,access_gb_brigade_roster_pa,model_gb_brigade_roster,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE PROGRAM (Pestaña Programs)
+# ========================================
+access_gb_brigade_program_admin,gb.brigade.program admin,model_gb_brigade_program,group_gb_admin,1,1,1,1
+access_gb_brigade_program_pa,gb.brigade.program program_advisor,model_gb_brigade_program,group_gb_program_advisor,1,0,0,0
+access_gb_brigade_program_op1,gb.brigade.program operative_1,model_gb_brigade_program,group_gb_operative_1,1,1,1,1
+access_gb_brigade_program_op2,gb.brigade.program operative_2,model_gb_brigade_program,group_gb_operative_2,1,1,1,0
 
-access_gb_brigade_arrival_admin,access_gb_brigade_arrival_admin,model_gb_brigade_arrival,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_arrival_coord,access_gb_brigade_arrival_coord,model_gb_brigade_arrival,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_arrival_pa,access_gb_brigade_arrival_pa,model_gb_brigade_arrival,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE ROSTER (Participantes)
+# ========================================
+access_gb_brigade_roster_admin,gb.brigade.roster admin,model_gb_brigade_roster,group_gb_admin,1,1,1,1
+access_gb_brigade_roster_pa,gb.brigade.roster program_advisor,model_gb_brigade_roster,group_gb_program_advisor,1,1,1,1
+access_gb_brigade_roster_op1,gb.brigade.roster operative_1,model_gb_brigade_roster,group_gb_operative_1,1,1,1,1
+access_gb_brigade_roster_op2,gb.brigade.roster operative_2,model_gb_brigade_roster,group_gb_operative_2,1,0,0,0
 
-access_gb_brigade_departure_admin,access_gb_brigade_departure_admin,model_gb_brigade_departure,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_departure_coord,access_gb_brigade_departure_coord,model_gb_brigade_departure,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_departure_pa,access_gb_brigade_departure_pa,model_gb_brigade_departure,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE ARRIVAL (Vuelos de llegada)
+# ========================================
+access_gb_brigade_arrival_admin,gb.brigade.arrival admin,model_gb_brigade_arrival,group_gb_admin,1,1,1,1
+access_gb_brigade_arrival_pa,gb.brigade.arrival program_advisor,model_gb_brigade_arrival,group_gb_program_advisor,1,1,1,1
+access_gb_brigade_arrival_op1,gb.brigade.arrival operative_1,model_gb_brigade_arrival,group_gb_operative_1,1,0,0,0
+access_gb_brigade_arrival_op2,gb.brigade.arrival operative_2,model_gb_brigade_arrival,group_gb_operative_2,1,0,0,0
 
-access_gb_brigade_staff_admin,access_gb_brigade_staff_admin,model_gb_brigade_staff,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_staff_coord,access_gb_brigade_staff_coord,model_gb_brigade_staff,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_staff_pa,access_gb_brigade_staff_pa,model_gb_brigade_staff,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE DEPARTURE (Vuelos de salida)
+# ========================================
+access_gb_brigade_departure_admin,gb.brigade.departure admin,model_gb_brigade_departure,group_gb_admin,1,1,1,1
+access_gb_brigade_departure_pa,gb.brigade.departure program_advisor,model_gb_brigade_departure,group_gb_program_advisor,1,1,1,1
+access_gb_brigade_departure_op1,gb.brigade.departure operative_1,model_gb_brigade_departure,group_gb_operative_1,1,0,0,0
+access_gb_brigade_departure_op2,gb.brigade.departure operative_2,model_gb_brigade_departure,group_gb_operative_2,1,0,0,0
 
-access_gb_activity_tag_admin,access_gb_activity_tag_admin,model_gb_activity_tag,global_brigades.group_gb_admin,1,1,1,1
-access_gb_activity_tag_coord,access_gb_activity_tag_coord,model_gb_activity_tag,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_activity_tag_pa,access_gb_activity_tag_pa,model_gb_activity_tag,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE STAFF (Personal temporal)
+# ========================================
+access_gb_brigade_staff_admin,gb.brigade.staff admin,model_gb_brigade_staff,group_gb_admin,1,1,1,1
+access_gb_brigade_staff_pa,gb.brigade.staff program_advisor,model_gb_brigade_staff,group_gb_program_advisor,1,0,0,0
+access_gb_brigade_staff_op1,gb.brigade.staff operative_1,model_gb_brigade_staff,group_gb_operative_1,1,1,1,1
+access_gb_brigade_staff_op2,gb.brigade.staff operative_2,model_gb_brigade_staff,group_gb_operative_2,1,1,1,0
 
-access_gb_brigade_activity_admin,access_gb_brigade_activity_admin,model_gb_brigade_activity,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_activity_coord,access_gb_brigade_activity_coord,model_gb_brigade_activity,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_activity_pa,access_gb_brigade_activity_pa,model_gb_brigade_activity,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB ACTIVITY TAG (Etiquetas de actividades)
+# ========================================
+access_gb_activity_tag_admin,gb.activity.tag admin,model_gb_activity_tag,group_gb_admin,1,1,1,1
+access_gb_activity_tag_pa,gb.activity.tag program_advisor,model_gb_activity_tag,group_gb_program_advisor,1,1,1,0
+access_gb_activity_tag_op1,gb.activity.tag operative_1,model_gb_activity_tag,group_gb_operative_1,1,1,1,1
+access_gb_activity_tag_op2,gb.activity.tag operative_2,model_gb_activity_tag,group_gb_operative_2,1,1,1,0
 
-access_gb_brigade_hotel_booking_admin,access_gb_brigade_hotel_booking_admin,model_gb_brigade_hotel_booking,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_hotel_booking_coord,access_gb_brigade_hotel_booking_coord,model_gb_brigade_hotel_booking,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_hotel_booking_pa,access_gb_brigade_hotel_booking_pa,model_gb_brigade_hotel_booking,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE ACTIVITY (Actividades/Itinerario)
+# ========================================
+access_gb_brigade_activity_admin,gb.brigade.activity admin,model_gb_brigade_activity,group_gb_admin,1,1,1,1
+access_gb_brigade_activity_pa,gb.brigade.activity program_advisor,model_gb_brigade_activity,group_gb_program_advisor,1,1,1,0
+access_gb_brigade_activity_op1,gb.brigade.activity operative_1,model_gb_brigade_activity,group_gb_operative_1,1,1,1,1
+access_gb_brigade_activity_op2,gb.brigade.activity operative_2,model_gb_brigade_activity,group_gb_operative_2,1,1,1,0
 
-access_gb_brigade_hotel_booking_line_admin,access_gb_brigade_hotel_booking_line_admin,model_gb_brigade_hotel_booking_line,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_hotel_booking_line_coord,access_gb_brigade_hotel_booking_line_coord,model_gb_brigade_hotel_booking_line,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_hotel_booking_line_pa,access_gb_brigade_hotel_booking_line_pa,model_gb_brigade_hotel_booking_line,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE HOTEL BOOKING (Reservas de hotel)
+# ========================================
+access_gb_brigade_hotel_booking_admin,gb.brigade.hotel.booking admin,model_gb_brigade_hotel_booking,group_gb_admin,1,1,1,1
+access_gb_brigade_hotel_booking_pa,gb.brigade.hotel.booking program_advisor,model_gb_brigade_hotel_booking,group_gb_program_advisor,1,0,0,0
+access_gb_brigade_hotel_booking_op1,gb.brigade.hotel.booking operative_1,model_gb_brigade_hotel_booking,group_gb_operative_1,1,1,1,1
+access_gb_brigade_hotel_booking_op2,gb.brigade.hotel.booking operative_2,model_gb_brigade_hotel_booking,group_gb_operative_2,1,0,0,0
 
-access_gb_brigade_hotel_booking_staff_line_admin,access_gb_brigade_hotel_booking_staff_line_admin,model_gb_brigade_hotel_booking_staff_line,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_hotel_booking_staff_line_coord,access_gb_brigade_hotel_booking_staff_line_coord,model_gb_brigade_hotel_booking_staff_line,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_hotel_booking_staff_line_pa,access_gb_brigade_hotel_booking_staff_line_pa,model_gb_brigade_hotel_booking_staff_line,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE HOTEL BOOKING LINE (Líneas de asignación)
+# ========================================
+access_gb_brigade_hotel_booking_line_admin,gb.brigade.hotel.booking.line admin,model_gb_brigade_hotel_booking_line,group_gb_admin,1,1,1,1
+access_gb_brigade_hotel_booking_line_pa,gb.brigade.hotel.booking.line program_advisor,model_gb_brigade_hotel_booking_line,group_gb_program_advisor,1,0,0,0
+access_gb_brigade_hotel_booking_line_op1,gb.brigade.hotel.booking.line operative_1,model_gb_brigade_hotel_booking_line,group_gb_operative_1,1,1,1,1
+access_gb_brigade_hotel_booking_line_op2,gb.brigade.hotel.booking.line operative_2,model_gb_brigade_hotel_booking_line,group_gb_operative_2,1,0,0,0
 
-access_gb_hotel_offer_admin,access_gb_hotel_offer_admin,model_gb_hotel_offer,global_brigades.group_gb_admin,1,1,1,1
-access_gb_hotel_offer_coord,access_gb_hotel_offer_coord,model_gb_hotel_offer,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_hotel_offer_pa,access_gb_hotel_offer_pa,model_gb_hotel_offer,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE HOTEL BOOKING STAFF LINE (Staff en hoteles)
+# ========================================
+access_gb_brigade_hotel_booking_staff_line_admin,gb.brigade.hotel.booking.staff.line admin,model_gb_brigade_hotel_booking_staff_line,group_gb_admin,1,1,1,1
+access_gb_brigade_hotel_booking_staff_line_pa,gb.brigade.hotel.booking.staff.line program_advisor,model_gb_brigade_hotel_booking_staff_line,group_gb_program_advisor,1,0,0,0
+access_gb_brigade_hotel_booking_staff_line_op1,gb.brigade.hotel.booking.staff.line operative_1,model_gb_brigade_hotel_booking_staff_line,group_gb_operative_1,1,1,1,1
+access_gb_brigade_hotel_booking_staff_line_op2,gb.brigade.hotel.booking.staff.line operative_2,model_gb_brigade_hotel_booking_staff_line,group_gb_operative_2,1,0,0,0
 
-access_gb_hotel_offer_room_admin,access_gb_hotel_offer_room_admin,model_gb_hotel_offer_room,global_brigades.group_gb_admin,1,1,1,1
-access_gb_hotel_offer_room_coord,access_gb_hotel_offer_room_coord,model_gb_hotel_offer_room,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_hotel_offer_room_pa,access_gb_hotel_offer_room_pa,model_gb_hotel_offer_room,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB HOTEL OFFER (Catálogo de hoteles)
+# ========================================
+access_gb_hotel_offer_admin,gb.hotel.offer admin,model_gb_hotel_offer,group_gb_admin,1,1,1,1
+access_gb_hotel_offer_pa,gb.hotel.offer program_advisor,model_gb_hotel_offer,group_gb_program_advisor,1,0,0,0
+access_gb_hotel_offer_op1,gb.hotel.offer operative_1,model_gb_hotel_offer,group_gb_operative_1,1,1,1,0
+access_gb_hotel_offer_op2,gb.hotel.offer operative_2,model_gb_hotel_offer,group_gb_operative_2,1,0,0,0
 
-access_gb_rooming_admin,access_gb_rooming_admin,model_gb_brigade_rooming,global_brigades.group_gb_admin,1,1,1,1
-access_gb_rooming_coord,access_gb_rooming_coord,model_gb_brigade_rooming,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_rooming_pa,access_gb_rooming_pa,model_gb_brigade_rooming,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB HOTEL OFFER ROOM (Habitaciones de hotel)
+# ========================================
+access_gb_hotel_offer_room_admin,gb.hotel.offer.room admin,model_gb_hotel_offer_room,group_gb_admin,1,1,1,1
+access_gb_hotel_offer_room_pa,gb.hotel.offer.room program_advisor,model_gb_hotel_offer_room,group_gb_program_advisor,1,0,0,0
+access_gb_hotel_offer_room_op1,gb.hotel.offer.room operative_1,model_gb_hotel_offer_room,group_gb_operative_1,1,1,1,0
+access_gb_hotel_offer_room_op2,gb.hotel.offer.room operative_2,model_gb_hotel_offer_room,group_gb_operative_2,1,0,0,0
 
-access_gb_rooming_line_admin,access_gb_rooming_line_admin,model_gb_brigade_rooming_line,global_brigades.group_gb_admin,1,1,1,1
-access_gb_rooming_line_coord,access_gb_rooming_line_coord,model_gb_brigade_rooming_line,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_rooming_line_pa,access_gb_rooming_line_pa,model_gb_brigade_rooming_line,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE ROOMING (Asignación de habitaciones - deprecated)
+# ========================================
+access_gb_rooming_admin,gb.brigade.rooming admin,model_gb_brigade_rooming,group_gb_admin,1,1,1,1
+access_gb_rooming_pa,gb.brigade.rooming program_advisor,model_gb_brigade_rooming,group_gb_program_advisor,1,0,0,0
+access_gb_rooming_op1,gb.brigade.rooming operative_1,model_gb_brigade_rooming,group_gb_operative_1,1,1,1,1
+access_gb_rooming_op2,gb.brigade.rooming operative_2,model_gb_brigade_rooming,group_gb_operative_2,1,0,0,0
 
-access_gb_program_admin,access_gb_program_admin,model_gb_program,global_brigades.group_gb_admin,1,1,1,1
-access_gb_program_coord,access_gb_program_coord,model_gb_program,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_program_pa,access_gb_program_pa,model_gb_program,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE ROOMING LINE (Líneas de rooming - deprecated)
+# ========================================
+access_gb_rooming_line_admin,gb.brigade.rooming.line admin,model_gb_brigade_rooming_line,group_gb_admin,1,1,1,1
+access_gb_rooming_line_pa,gb.brigade.rooming.line program_advisor,model_gb_brigade_rooming_line,group_gb_program_advisor,1,0,0,0
+access_gb_rooming_line_op1,gb.brigade.rooming.line operative_1,model_gb_brigade_rooming_line,group_gb_operative_1,1,1,1,1
+access_gb_rooming_line_op2,gb.brigade.rooming.line operative_2,model_gb_brigade_rooming_line,group_gb_operative_2,1,0,0,0
 
-access_gb_transport_tag_admin,access_gb_transport_tag_admin,model_gb_transport_tag,global_brigades.group_gb_admin,1,1,1,1
-access_gb_transport_tag_coord,access_gb_transport_tag_coord,model_gb_transport_tag,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_transport_tag_pa,access_gb_transport_tag_pa,model_gb_transport_tag,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB PROGRAM (Catálogo de programas)
+# ========================================
+access_gb_program_admin,gb.program admin,model_gb_program,group_gb_admin,1,1,1,1
+access_gb_program_pa,gb.program program_advisor,model_gb_program,group_gb_program_advisor,1,0,0,0
+access_gb_program_op1,gb.program operative_1,model_gb_program,group_gb_operative_1,1,1,1,0
+access_gb_program_op2,gb.program operative_2,model_gb_program,group_gb_operative_2,1,1,1,0
 
-access_gb_transport_vehicle_admin,access_gb_transport_vehicle_admin,model_gb_transport_vehicle,global_brigades.group_gb_admin,1,1,1,1
-access_gb_transport_vehicle_coord,access_gb_transport_vehicle_coord,model_gb_transport_vehicle,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_transport_vehicle_pa,access_gb_transport_vehicle_pa,model_gb_transport_vehicle,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB TRANSPORT TAG (Etiquetas de transporte)
+# ========================================
+access_gb_transport_tag_admin,gb.transport.tag admin,model_gb_transport_tag,group_gb_admin,1,1,1,1
+access_gb_transport_tag_pa,gb.transport.tag program_advisor,model_gb_transport_tag,group_gb_program_advisor,1,0,0,0
+access_gb_transport_tag_op1,gb.transport.tag operative_1,model_gb_transport_tag,group_gb_operative_1,1,1,1,0
+access_gb_transport_tag_op2,gb.transport.tag operative_2,model_gb_transport_tag,group_gb_operative_2,1,0,0,0
 
-access_gb_transport_provider_admin,access_gb_transport_provider_admin,model_gb_transport_provider,global_brigades.group_gb_admin,1,1,1,1
-access_gb_transport_provider_coord,access_gb_transport_provider_coord,model_gb_transport_provider,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_transport_provider_pa,access_gb_transport_provider_pa,model_gb_transport_provider,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB TRANSPORT VEHICLE (Vehículos)
+# ========================================
+access_gb_transport_vehicle_admin,gb.transport.vehicle admin,model_gb_transport_vehicle,group_gb_admin,1,1,1,1
+access_gb_transport_vehicle_pa,gb.transport.vehicle program_advisor,model_gb_transport_vehicle,group_gb_program_advisor,1,0,0,0
+access_gb_transport_vehicle_op1,gb.transport.vehicle operative_1,model_gb_transport_vehicle,group_gb_operative_1,1,1,1,0
+access_gb_transport_vehicle_op2,gb.transport.vehicle operative_2,model_gb_transport_vehicle,group_gb_operative_2,1,0,0,0
 
-access_gb_add_participants_wizard_admin,access_gb_add_participants_wizard_admin,model_gb_add_participants_wizard,global_brigades.group_gb_admin,1,1,1,1
-access_gb_add_participants_wizard_coord,access_gb_add_participants_wizard_coord,model_gb_add_participants_wizard,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_add_participants_wizard_pa,access_gb_add_participants_wizard_pa,model_gb_add_participants_wizard,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB TRANSPORT PROVIDER (Proveedores de transporte)
+# ========================================
+access_gb_transport_provider_admin,gb.transport.provider admin,model_gb_transport_provider,group_gb_admin,1,1,1,1
+access_gb_transport_provider_pa,gb.transport.provider program_advisor,model_gb_transport_provider,group_gb_program_advisor,1,0,0,0
+access_gb_transport_provider_op1,gb.transport.provider operative_1,model_gb_transport_provider,group_gb_operative_1,1,1,1,0
+access_gb_transport_provider_op2,gb.transport.provider operative_2,model_gb_transport_provider,group_gb_operative_2,1,0,0,0
 
-access_gb_passenger_list_wizard_admin,access_gb_passenger_list_wizard_admin,model_gb_passenger_list_wizard,global_brigades.group_gb_admin,1,1,1,1
-access_gb_passenger_list_wizard_coord,access_gb_passenger_list_wizard_coord,model_gb_passenger_list_wizard,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_passenger_list_wizard_pa,access_gb_passenger_list_wizard_pa,model_gb_passenger_list_wizard,global_brigades.group_gb_pa,1,1,1,1
-access_gb_brigade_transport_admin,gb.brigade.transport,model_gb_brigade_transport,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_transport_coord,gb.brigade.transport,model_gb_brigade_transport,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_transport_pa,gb.brigade.transport,model_gb_brigade_transport,global_brigades.group_gb_pa,1,1,1,0
+# ========================================
+# GB BRIGADE TRANSPORT (Transporte de brigada)
+# ========================================
+access_gb_brigade_transport_admin,gb.brigade.transport admin,model_gb_brigade_transport,group_gb_admin,1,1,1,1
+access_gb_brigade_transport_pa,gb.brigade.transport program_advisor,model_gb_brigade_transport,group_gb_program_advisor,1,0,0,0
+access_gb_brigade_transport_op1,gb.brigade.transport operative_1,model_gb_brigade_transport,group_gb_operative_1,1,1,1,0
+access_gb_brigade_transport_op2,gb.brigade.transport operative_2,model_gb_brigade_transport,group_gb_operative_2,1,0,0,0
 
-access_gb_brigade_transport_line_admin,gb.brigade.transport.line,model_gb_brigade_transport_line,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_transport_line_coord,gb.brigade.transport.line,model_gb_brigade_transport_line,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_transport_line_pa,gb.brigade.transport.line,model_gb_brigade_transport_line,global_brigades.group_gb_pa,1,1,1,0
-access_gb_partner_eligibility_user,access_gb_partner_eligibility_user,model_gb_partner_eligibility,base.group_user,1,1,1,1
-access_gb_community_admin,access_gb_community_admin,model_gb_community,global_brigades.group_gb_admin,1,1,1,1
-access_gb_community_coord,access_gb_community_coord,model_gb_community,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_community_pa,access_gb_community_pa,model_gb_community,global_brigades.group_gb_pa,1,1,1,1
-access_gb_roster_import_wizard,access_gb_roster_import_wizard,model_gb_roster_import_wizard,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_roster_import_wizard_admin,access_gb_roster_import_wizard_admin,model_gb_roster_import_wizard,global_brigades.group_gb_admin,1,1,1,1
-access_gb_roster_import_wizard_pa,access_gb_roster_import_wizard_pa,model_gb_roster_import_wizard,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# GB BRIGADE TRANSPORT LINE (Líneas de transporte)
+# ========================================
+access_gb_brigade_transport_line_admin,gb.brigade.transport.line admin,model_gb_brigade_transport_line,group_gb_admin,1,1,1,1
+access_gb_brigade_transport_line_pa,gb.brigade.transport.line program_advisor,model_gb_brigade_transport_line,group_gb_program_advisor,1,0,0,0
+access_gb_brigade_transport_line_op1,gb.brigade.transport.line operative_1,model_gb_brigade_transport_line,group_gb_operative_1,1,1,1,0
+access_gb_brigade_transport_line_op2,gb.brigade.transport.line operative_2,model_gb_brigade_transport_line,group_gb_operative_2,1,0,0,0
 
-access_gb_brigade_general_report_admin,access_gb_brigade_general_report_admin,model_gb_brigade_general_report,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_general_report_coord,access_gb_brigade_general_report_coord,model_gb_brigade_general_report,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_general_report_pa,access_gb_brigade_general_report_pa,model_gb_brigade_general_report,global_brigades.group_gb_pa,1,0,0,0
+# ========================================
+# GB COMMUNITY (Comunidades)
+# ========================================
+access_gb_community_admin,gb.community admin,model_gb_community,group_gb_admin,1,1,1,1
+access_gb_community_pa,gb.community program_advisor,model_gb_community,group_gb_program_advisor,1,0,0,0
+access_gb_community_op1,gb.community operative_1,model_gb_community,group_gb_operative_1,1,1,1,0
+access_gb_community_op2,gb.community operative_2,model_gb_community,group_gb_operative_2,1,1,1,1
 
-access_gb_brigade_general_report_wizard_admin,access_gb_brigade_general_report_wizard_admin,model_gb_brigade_general_report_wizard,global_brigades.group_gb_admin,1,1,1,1
-access_gb_brigade_general_report_wizard_coord,access_gb_brigade_general_report_wizard_coord,model_gb_brigade_general_report_wizard,global_brigades.group_gb_coordinator,1,1,1,1
-access_gb_brigade_general_report_wizard_pa,access_gb_brigade_general_report_wizard_pa,model_gb_brigade_general_report_wizard,global_brigades.group_gb_pa,1,1,1,1
+# ========================================
+# WIZARDS Y REPORTES
+# ========================================
+
+# Wizard: Importar Roster
+access_gb_roster_import_wizard_admin,gb.roster.import.wizard admin,model_gb_roster_import_wizard,group_gb_admin,1,1,1,1
+access_gb_roster_import_wizard_pa,gb.roster.import.wizard program_advisor,model_gb_roster_import_wizard,group_gb_program_advisor,1,1,1,1
+access_gb_roster_import_wizard_op1,gb.roster.import.wizard operative_1,model_gb_roster_import_wizard,group_gb_operative_1,1,1,1,1
+access_gb_roster_import_wizard_op2,gb.roster.import.wizard operative_2,model_gb_roster_import_wizard,group_gb_operative_2,1,0,0,0
+
+# Wizard: Agregar participantes a actividades
+access_gb_add_participants_wizard_admin,gb.add.participants.wizard admin,model_gb_add_participants_wizard,group_gb_admin,1,1,1,1
+access_gb_add_participants_wizard_pa,gb.add.participants.wizard program_advisor,model_gb_add_participants_wizard,group_gb_program_advisor,1,1,1,0
+access_gb_add_participants_wizard_op1,gb.add.participants.wizard operative_1,model_gb_add_participants_wizard,group_gb_operative_1,1,1,1,1
+access_gb_add_participants_wizard_op2,gb.add.participants.wizard operative_2,model_gb_add_participants_wizard,group_gb_operative_2,1,1,1,0
+
+# Wizard: Lista de pasajeros
+access_gb_passenger_list_wizard_admin,gb.passenger.list.wizard admin,model_gb_passenger_list_wizard,group_gb_admin,1,1,1,1
+access_gb_passenger_list_wizard_pa,gb.passenger.list.wizard program_advisor,model_gb_passenger_list_wizard,group_gb_program_advisor,1,1,1,1
+access_gb_passenger_list_wizard_op1,gb.passenger.list.wizard operative_1,model_gb_passenger_list_wizard,group_gb_operative_1,1,1,1,1
+access_gb_passenger_list_wizard_op2,gb.passenger.list.wizard operative_2,model_gb_passenger_list_wizard,group_gb_operative_2,1,1,1,0
+
+# Reporte General (modelo de datos)
+access_gb_brigade_general_report_admin,gb.brigade.general.report admin,model_gb_brigade_general_report,group_gb_admin,1,1,1,1
+access_gb_brigade_general_report_pa,gb.brigade.general.report program_advisor,model_gb_brigade_general_report,group_gb_program_advisor,1,0,0,0
+access_gb_brigade_general_report_op1,gb.brigade.general.report operative_1,model_gb_brigade_general_report,group_gb_operative_1,1,0,0,0
+access_gb_brigade_general_report_op2,gb.brigade.general.report operative_2,model_gb_brigade_general_report,group_gb_operative_2,1,0,0,0
+
+# Wizard: Reporte General
+access_gb_brigade_general_report_wizard_admin,gb.brigade.general.report.wizard admin,model_gb_brigade_general_report_wizard,group_gb_admin,1,1,1,1
+access_gb_brigade_general_report_wizard_pa,gb.brigade.general.report.wizard program_advisor,model_gb_brigade_general_report_wizard,group_gb_program_advisor,1,1,1,1
+access_gb_brigade_general_report_wizard_op1,gb.brigade.general.report.wizard operative_1,model_gb_brigade_general_report_wizard,group_gb_operative_1,1,1,1,1
+access_gb_brigade_general_report_wizard_op2,gb.brigade.general.report.wizard operative_2,model_gb_brigade_general_report_wizard,group_gb_operative_2,1,1,1,1
+
+# ========================================
+# RES.PARTNER - Acceso para crear contactos
+# ========================================
+access_gb_partner_eligibility_admin,res.partner.eligibility admin,model_gb_partner_eligibility,group_gb_admin,1,1,1,1
+access_gb_partner_eligibility_pa,res.partner.eligibility program_advisor,model_gb_partner_eligibility,group_gb_program_advisor,1,1,1,0
+access_gb_partner_eligibility_op1,res.partner.eligibility operative_1,model_gb_partner_eligibility,group_gb_operative_1,1,1,1,0
+access_gb_partner_eligibility_op2,res.partner.eligibility operative_2,model_gb_partner_eligibility,group_gb_operative_2,1,1,1,0
