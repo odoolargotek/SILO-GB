@@ -20,6 +20,7 @@ Logistics and volunteer management for Global Brigades:
     "data": [
         "data/sequence.xml",
         "security/security.xml",
+        "security/security_rules.xml",
         "security/ir.model.access.csv",
         "views/brigade_views.xml",
         "views/add_participants_wizard_views.xml",
