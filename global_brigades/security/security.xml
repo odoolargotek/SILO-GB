@@ -7,21 +7,32 @@
         <field name="sequence">10</field>
     </record>
 
-    <!-- Grupos -->
+    <!-- ========================================= -->
+    <!-- GRUPOS DE SEGURIDAD -->
+    <!-- ========================================= -->
+
+    <!-- Admin - Control Total -->
     <record id="group_gb_admin" model="res.groups">
         <field name="name">GB / Admin</field>
-        <field name="category_id" ref="global_brigades.category_gb_admin"/>
-        <!-- Asignar automáticamente al superadmin -->
+        <field name="category_id" ref="category_gb_admin"/>
         <field name="users" eval="[(4, ref('base.user_admin'))]"/>
     </record>
 
-    <record id="group_gb_coordinator" model="res.groups">
-        <field name="name">GB / Coordinator</field>
-        <field name="category_id" ref="global_brigades.category_gb_admin"/>
+    <!-- Program Advisors - Gestión de Rosters y Vuelos -->
+    <record id="group_gb_program_advisor" model="res.groups">
+        <field name="name">GB / Program Advisor</field>
+        <field name="category_id" ref="category_gb_admin"/>
     </record>
 
-    <record id="group_gb_pa" model="res.groups">
-        <field name="name">GB / Program Associate (PA)</field>
-        <field name="category_id" ref="global_brigades.category_gb_admin"/>
+    <!-- Operativo/Programático 1 - Gestión Operativa Completa -->
+    <record id="group_gb_operative_1" model="res.groups">
+        <field name="name">GB / Operativo Programático 1</field>
+        <field name="category_id" ref="category_gb_admin"/>
+    </record>
+
+    <!-- Operativo/Programático 2 - Gestión Programática Limitada -->
+    <record id="group_gb_operative_2" model="res.groups">
+        <field name="name">GB / Operativo Programático 2</field>
+        <field name="category_id" ref="category_gb_admin"/>
     </record>
 </odoo>
