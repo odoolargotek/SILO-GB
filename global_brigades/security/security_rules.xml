@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- ========================================== -->
+    <!-- REGLAS DE REGISTRO (RECORD RULES) -->
+    <!-- ========================================== -->
+    
+    <!-- NOTA IMPORTANTE:
+         Las reglas a nivel de CAMPO (ej: mostrar/ocultar pestañas según rol)
+         se controlan principalmente en las VISTAS XML usando el atributo groups="..."
+         
+         Estas reglas controlan el acceso a REGISTROS completos.
+         Si necesitas que Program Advisors solo vean ciertas brigadas, aquí se define.
+    -->
+
+    <!-- ========================================== -->
+    <!-- ADMIN: Acceso total a todo -->
+    <!-- ========================================== -->
+    <record id="brigade_admin_rule" model="ir.rule">
+        <field name="name">Admin: Full Brigade Access</field>
+        <field name="model_id" ref="model_gb_brigade"/>
+        <field name="groups" eval="[(4, ref('group_gb_admin'))]"/>
+        <field name="perm_read">1</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">1</field>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- PROGRAM ADVISORS: Ver todas las brigadas -->
+    <!-- ========================================== -->
+    <record id="brigade_program_advisor_rule" model="ir.rule">
+        <field name="name">Program Advisor: All Brigades (Read/Write Limited)</field>
+        <field name="model_id" ref="model_gb_brigade"/>
+        <field name="groups" eval="[(4, ref('group_gb_program_advisor'))]"/>
+        <field name="perm_read">1</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">0</field>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- OPERATIVE 1: Ver todas las brigadas -->
+    <!-- ========================================== -->
+    <record id="brigade_operative1_rule" model="ir.rule">
+        <field name="name">Operative 1: All Brigades (Full Access)</field>
+        <field name="model_id" ref="model_gb_brigade"/>
+        <field name="groups" eval="[(4, ref('group_gb_operative_1'))]"/>
+        <field name="perm_read">1</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">1</field>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- OPERATIVE 2: Ver todas las brigadas (solo lectura a nivel brigada) -->
+    <!-- ========================================== -->
+    <record id="brigade_operative2_rule" model="ir.rule">
+        <field name="name">Operative 2: All Brigades (Read Only)</field>
+        <field name="model_id" ref="model_gb_brigade"/>
+        <field name="groups" eval="[(4, ref('group_gb_operative_2'))]"/>
+        <field name="perm_read">1</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">0</field>
+        <field name="perm_unlink">0</field>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- ========================================== -->
+    <!-- CONTACTOS (res.partner) -->
+    <!-- Todos los roles pueden ver/crear contactos necesarios -->
+    <!-- ========================================== -->
+    
+    <!-- Admin tiene acceso total por defecto desde base -->
+    
+    <!-- Program Advisors: Crear contactos para roster -->
+    <record id="partner_program_advisor_rule" model="ir.rule">
+        <field name="name">Program Advisor: Create Contacts for Roster</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="groups" eval="[(4, ref('group_gb_program_advisor'))]"/>
+        <field name="perm_read">1</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">0</field>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- Operative 1: Crear contactos para staff y operativo -->
+    <record id="partner_operative1_rule" model="ir.rule">
+        <field name="name">Operative 1: Create Contacts for Staff</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="groups" eval="[(4, ref('group_gb_operative_1'))]"/>
+        <field name="perm_read">1</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">0</field>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+    <!-- Operative 2: Crear contactos para staff -->
+    <record id="partner_operative2_rule" model="ir.rule">
+        <field name="name">Operative 2: Create Contacts for Staff</field>
+        <field name="model_id" ref="base.model_res_partner"/>
+        <field name="groups" eval="[(4, ref('group_gb_operative_2'))]"/>
+        <field name="perm_read">1</field>
+        <field name="perm_write">1</field>
+        <field name="perm_create">1</field>
+        <field name="perm_unlink">0</field>
+        <field name="domain_force">[(1, '=', 1)]</field>
+    </record>
+
+</odoo>
