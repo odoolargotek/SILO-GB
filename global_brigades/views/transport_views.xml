@@ -20,20 +20,20 @@
             name="Transport"
             parent="menu_gb_root"
             sequence="50"
-            groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin"/>
+            groups="global_brigades.group_gb_program_advisor,global_brigades.group_gb_operative_1,global_brigades.group_gb_admin"/>
 
   <menuitem id="menu_gb_transport_providers"
             name="Providers"
             parent="menu_gb_transport"
             action="action_gb_transport_provider"
             sequence="10"
-            groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin"/>
+            groups="global_brigades.group_gb_program_advisor,global_brigades.group_gb_operative_1,global_brigades.group_gb_admin"/>
 
   <menuitem id="menu_gb_transport_vehicles"
             name="Vehicles"
             parent="menu_gb_transport"
             action="action_gb_transport_vehicle"
             sequence="20"
-            groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin"/>
+            groups="global_brigades.group_gb_program_advisor,global_brigades.group_gb_operative_1,global_brigades.group_gb_admin"/>
 
 </odoo>
