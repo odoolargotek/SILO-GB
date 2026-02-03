@@ -288,7 +288,7 @@
               name="Transport"
               parent="global_brigades.menu_gb_root"
               sequence="40"
-              groups="global_brigades.group_gb_admin,global_brigades.group_gb_coordinator,global_brigades.group_gb_pa"/>
+              groups="global_brigades.group_gb_admin,global_brigades.group_gb_operative_1,global_brigades.group_gb_program_advisor"/>
 
     <menuitem id="menu_gb_transport_assignments"
               name="Transport Plan"
