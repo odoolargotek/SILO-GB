@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import api, fields, models, _
+import re
 
 
 class ResPartner(models.Model):
@@ -134,6 +135,105 @@ class ResPartner(models.Model):
         compute="_compute_gb_counts",
         store=False,
     )
+
+    def _normalize_tshirt_size(self, size_value):
+        """
+        Normaliza variaciones comunes de tallas de camiseta al valor técnico correcto.
+        
+        Acepta variaciones como:
+        - XS, X-Small, x-small, xsmall, extra small
+        - S, Small, small
+        - M, Medium, medium
+        - L, Large, large
+        - XL, X-Large, x-large, xlarge, extra large
+        - XXL, XX-Large, xx-large, xxlarge, 2xl
+        
+        Returns:
+            str: Valor normalizado (xs, s, m, l, xl, xxl) o el valor original si no se reconoce
+        """
+        if not size_value:
+            return size_value
+            
+        # Convertir a string y limpiar
+        size_str = str(size_value).strip().lower()
+        # Remover espacios, guiones y caracteres especiales
+        size_clean = re.sub(r'[\s\-_]+', '', size_str)
+        
+        # Mapeo de variaciones comunes
+        size_map = {
+            # Extra Small / XS
+            'xs': 'xs',
+            'xsmall': 'xs',
+            'extrasmall': 'xs',
+            'extra small': 'xs',
+            'x-small': 'xs',
+            'xtrasmall': 'xs',
+            
+            # Small / S
+            's': 's',
+            'small': 's',
+            'sm': 's',
+            
+            # Medium / M
+            'm': 'm',
+            'medium': 'm',
+            'med': 'm',
+            
+            # Large / L
+            'l': 'l',
+            'large': 'l',
+            'lrg': 'l',
+            
+            # Extra Large / XL
+            'xl': 'xl',
+            'xlarge': 'xl',
+            'extralarge': 'xl',
+            'extra large': 'xl',
+            'x-large': 'xl',
+            'xtralarge': 'xl',
+            
+            # XX-Large / XXL / 2XL
+            'xxl': 'xxl',
+            'xxlarge': 'xxl',
+            'xxlrg': 'xxl',
+            '2xl': 'xxl',
+            '2xlarge': 'xxl',
+            'xx-large': 'xxl',
+            'extraextralarge': 'xxl',
+            'extra extra large': 'xxl',
+        }
+        
+        # Intentar normalizar primero con el valor limpio
+        normalized = size_map.get(size_clean)
+        if normalized:
+            return normalized
+            
+        # Intentar con el valor sin limpiar por si tiene formato como "X-Small"
+        normalized = size_map.get(size_str)
+        if normalized:
+            return normalized
+            
+        # Si ya es un valor válido, devolverlo
+        valid_values = ['xs', 's', 'm', 'l', 'xl', 'xxl']
+        if size_clean in valid_values:
+            return size_clean
+            
+        # Si no se reconoce, devolver el valor original para que Odoo lance el error de validación
+        return size_value
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Normaliza gb_tshirt_size antes de crear"""
+        for vals in vals_list:
+            if 'gb_tshirt_size' in vals and vals['gb_tshirt_size']:
+                vals['gb_tshirt_size'] = self._normalize_tshirt_size(vals['gb_tshirt_size'])
+        return super(ResPartner, self).create(vals_list)
+
+    def write(self, vals):
+        """Normaliza gb_tshirt_size antes de actualizar"""
+        if 'gb_tshirt_size' in vals and vals['gb_tshirt_size']:
+            vals['gb_tshirt_size'] = self._normalize_tshirt_size(vals['gb_tshirt_size'])
+        return super(ResPartner, self).write(vals)
 
     def _compute_gb_counts(self):
         HotelOffer = self.env['gb.hotel.offer']
