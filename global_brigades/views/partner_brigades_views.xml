@@ -13,7 +13,7 @@
                   name="action_view_gb_hotel_offers"
                   class="oe_stat_button"
                   icon="fa-bed"
-                  groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin">
+                  groups="global_brigades.group_gb_program_advisor,global_brigades.group_gb_operative_1,global_brigades.group_gb_admin">
             <div class="o_stat_info">
               <span class="o_stat_value">
                 <field name="gb_hotel_offer_count" widget="statinfo"/>
@@ -26,7 +26,7 @@
                   name="action_view_gb_transport_vehicles"
                   class="oe_stat_button"
                   icon="fa-bus"
-                  groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin">
+                  groups="global_brigades.group_gb_program_advisor,global_brigades.group_gb_operative_1,global_brigades.group_gb_admin">
             <div class="o_stat_info">
               <span class="o_stat_value">
                 <field name="gb_transport_vehicle_count" widget="statinfo"/>
