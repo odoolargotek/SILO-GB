@@ -75,6 +75,6 @@
               parent="menu_gb_root"
               action="action_gb_community"
               sequence="30"
-              groups="global_brigades.group_gb_pa,global_brigades.group_gb_coordinator,global_brigades.group_gb_admin"/>
+              groups="global_brigades.group_gb_program_advisor,global_brigades.group_gb_operative_1,global_brigades.group_gb_operative_2,global_brigades.group_gb_admin"/>
 
 </odoo>
