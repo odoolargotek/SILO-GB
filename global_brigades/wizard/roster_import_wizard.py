@@ -318,6 +318,23 @@ class GBRosterImportWizard(models.TransientModel):
             ec_phone = (str(get_cell(row, emergency_contact_phone_col)).strip() if get_cell(row, emergency_contact_phone_col) is not None else "").strip()
             ec_mobile = (str(get_cell(row, emergency_contact_mobile_col)).strip() if get_cell(row, emergency_contact_mobile_col) is not None else "").strip()
 
+            # Create/find emergency contact FIRST (before main partner)
+            emergency_contact = False
+            if ec_email:
+                emergency_contact = Partner.search([("email", "=", ec_email)], limit=1)
+                if not emergency_contact:
+                    emergency_contact_vals = {
+                        "email": ec_email,
+                        "name": ec_name or ec_email,
+                    }
+                    if ec_phone:
+                        emergency_contact_vals["phone"] = ec_phone
+                    if ec_mobile:
+                        emergency_contact_vals["mobile"] = ec_mobile
+
+                    emergency_contact = Partner.create(emergency_contact_vals)
+                    created_emergency_contacts += 1
+
             # Find/create main partner by email
             partner = Partner.search([("email", "=", email)], limit=1)
             created_now = False
@@ -346,27 +363,14 @@ class GBRosterImportWizard(models.TransientModel):
                 self._safe_set(vals, "gb_medical_condition", medical_condition or False)
                 self._safe_set(vals, "gb_medications", medications or False)
                 self._safe_set(vals, "gb_allergy", allergy or False)
+                
+                # ✅ FIX: Associate emergency contact to new partners
+                if emergency_contact:
+                    self._safe_set(vals, "gb_emergency_contact_id", emergency_contact.id)
 
                 partner = Partner.create(vals)
                 created_partners += 1
                 created_now = True
-
-            # Create/find emergency contact (email is key; if name missing -> use email as name)
-            emergency_contact = False
-            if ec_email:
-                emergency_contact = Partner.search([("email", "=", ec_email)], limit=1)
-                if not emergency_contact:
-                    emergency_contact_vals = {
-                        "email": ec_email,
-                        "name": ec_name or ec_email,  # ✅ key rule: name defaults to email
-                    }
-                    if ec_phone:
-                        emergency_contact_vals["phone"] = ec_phone
-                    if ec_mobile:
-                        emergency_contact_vals["mobile"] = ec_mobile
-
-                    emergency_contact = Partner.create(emergency_contact_vals)
-                    created_emergency_contacts += 1
 
             # Update existing partner (or fill blanks) based on checkbox
             if not created_now:
@@ -496,4 +500,3 @@ class GBRosterImportWizard(models.TransientModel):
                 "next": {"type": "ir.actions.act_window_close"},
             },
         }
-
