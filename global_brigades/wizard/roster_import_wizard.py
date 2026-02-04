@@ -364,6 +364,10 @@ class GBRosterImportWizard(models.TransientModel):
                 self._safe_set(vals, "gb_medications", medications or False)
                 self._safe_set(vals, "gb_allergy", allergy or False)
                 
+                # ✅ FIX: Save brigade_role to partner's default role field
+                if brigade_role:
+                    self._safe_set(vals, "gb_brigade_role", brigade_role)
+                
                 # ✅ FIX: Associate emergency contact to new partners
                 if emergency_contact:
                     self._safe_set(vals, "gb_emergency_contact_id", emergency_contact.id)
@@ -408,6 +412,8 @@ class GBRosterImportWizard(models.TransientModel):
                         self._safe_set(upd, "gb_medications", medications)
                     if allergy:
                         self._safe_set(upd, "gb_allergy", allergy)
+                    if brigade_role:
+                        self._safe_set(upd, "gb_brigade_role", brigade_role)
                     if emergency_contact:
                         self._safe_set(upd, "gb_emergency_contact_id", emergency_contact.id)
 
@@ -440,6 +446,8 @@ class GBRosterImportWizard(models.TransientModel):
                         upd["gb_medications"] = medications
                     if "gb_allergy" in partner._fields and not partner.gb_allergy and allergy:
                         upd["gb_allergy"] = allergy
+                    if brigade_role and "gb_brigade_role" in partner._fields and not partner.gb_brigade_role:
+                        upd["gb_brigade_role"] = brigade_role
                     if emergency_contact and "gb_emergency_contact_id" in partner._fields and not partner.gb_emergency_contact_id:
                         upd["gb_emergency_contact_id"] = emergency_contact.id
 
