@@ -1068,6 +1068,30 @@ class GBBrigadeRoster(models.Model):
         help="Hotel name of last booking.",
     )
 
+    # =========================
+    # ONCHANGE METHODS
+    # =========================
+
+    @api.onchange('partner_id')
+    def _onchange_partner_id_brigade_role(self):
+        """
+        Auto-fill brigade_role from partner's default brigade role.
+        Converts the selection value to its readable label.
+        """
+        for rec in self:
+            if rec.partner_id and rec.partner_id.gb_brigade_role:
+                # Get the selection field from partner model
+                selection_field = self.env['res.partner']._fields.get('gb_brigade_role')
+                if selection_field and hasattr(selection_field, 'selection'):
+                    # Convert selection value to label
+                    selection_dict = dict(selection_field.selection)
+                    role_label = selection_dict.get(rec.partner_id.gb_brigade_role, rec.partner_id.gb_brigade_role)
+                    rec.brigade_role = role_label
+
+    # =========================
+    # COMPUTE METHODS
+    # =========================
+
     @api.depends("partner_id.mobile", "partner_id.phone")
     def _compute_phone_display(self):
         for rec in self:
