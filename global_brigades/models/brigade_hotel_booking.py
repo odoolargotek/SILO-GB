@@ -313,7 +313,7 @@ class GBBrigadeHotelBookingLine(models.Model):
     @api.depends(
         "booking_id",
         "booking_id.hotel_offer_id",
-        "booking_id.hotel_offer_id.room_ids",
+        "booking_id.hotel_offer_id.room_line_ids",
         "booking_id.assignment_ids",
         "booking_id.assignment_ids.hotel_room_id",
         "booking_id.staff_assignment_ids",
@@ -334,7 +334,7 @@ class GBBrigadeHotelBookingLine(models.Model):
                 continue
 
             # Todas las habitaciones del hotel offer
-            all_rooms = rec.booking_id.hotel_offer_id.room_ids
+            all_rooms = rec.booking_id.hotel_offer_id.room_line_ids
 
             # Ya asignadas en OTRAS líneas de Roster (no esta)
             other_roster_lines = rec.booking_id.assignment_ids.filtered(lambda line: line.id != rec.id)
@@ -461,7 +461,7 @@ class GBBrigadeHotelBookingStaffLine(models.Model):
     @api.depends(
         "booking_id",
         "booking_id.hotel_offer_id",
-        "booking_id.hotel_offer_id.room_ids",
+        "booking_id.hotel_offer_id.room_line_ids",
         "booking_id.assignment_ids",
         "booking_id.assignment_ids.hotel_room_id",
         "booking_id.staff_assignment_ids",
@@ -482,7 +482,7 @@ class GBBrigadeHotelBookingStaffLine(models.Model):
                 continue
 
             # Todas las habitaciones del hotel offer
-            all_rooms = rec.booking_id.hotel_offer_id.room_ids
+            all_rooms = rec.booking_id.hotel_offer_id.room_line_ids
 
             # Ya asignadas en líneas de Roster
             already_assigned_roster = rec.booking_id.assignment_ids.mapped("hotel_room_id")
