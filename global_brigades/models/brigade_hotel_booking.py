@@ -218,7 +218,7 @@ class GBBrigadeHotelBookingLine(models.Model):
         "gb.hotel.offer.room",
         string="Room",
         required=True,
-        domain="[('offer_id', '=', parent.hotel_offer_id)]",
+        domain="[('offer_id', '=', parent.hotel_offer_id), ('id', 'in', available_room_ids)]",
         help="Room from the selected Hotel Offer.",
     )
 
@@ -257,6 +257,14 @@ class GBBrigadeHotelBookingLine(models.Model):
         compute="_compute_available_roster_ids",
         store=False,
         help="Roster members not yet assigned to other rooms in this booking.",
+    )
+
+    # Campo computado para filtrar habitaciones ya asignadas
+    available_room_ids = fields.Many2many(
+        "gb.hotel.offer.room",
+        compute="_compute_available_room_ids",
+        store=False,
+        help="Rooms not yet assigned to other lines in this booking (Roster + Staff).",
     )
 
     pax_count = fields.Integer(
@@ -302,6 +310,46 @@ class GBBrigadeHotelBookingLine(models.Model):
             available = (all_roster - already_assigned) | rec.occupant_ids
             rec.available_roster_ids = available
 
+    @api.depends(
+        "booking_id",
+        "booking_id.hotel_offer_id",
+        "booking_id.hotel_offer_id.room_ids",
+        "booking_id.assignment_ids",
+        "booking_id.assignment_ids.hotel_room_id",
+        "booking_id.staff_assignment_ids",
+        "booking_id.staff_assignment_ids.hotel_room_id",
+        "hotel_room_id",
+    )
+    def _compute_available_room_ids(self):
+        """
+        Filtra las habitaciones disponibles:
+        - Todas las habitaciones del hotel offer
+        - MENOS las ya asignadas en OTRAS líneas de Roster
+        - MENOS las ya asignadas en líneas de Staff
+        - MÁS la habitación actual (para poder editarla)
+        """
+        for rec in self:
+            if not rec.booking_id or not rec.booking_id.hotel_offer_id:
+                rec.available_room_ids = self.env["gb.hotel.offer.room"]
+                continue
+
+            # Todas las habitaciones del hotel offer
+            all_rooms = rec.booking_id.hotel_offer_id.room_ids
+
+            # Ya asignadas en OTRAS líneas de Roster (no esta)
+            other_roster_lines = rec.booking_id.assignment_ids.filtered(lambda line: line.id != rec.id)
+            already_assigned_roster = other_roster_lines.mapped("hotel_room_id")
+
+            # Ya asignadas en líneas de Staff
+            already_assigned_staff = rec.booking_id.staff_assignment_ids.mapped("hotel_room_id")
+
+            # Ya asignadas = unión de ambas
+            already_assigned = already_assigned_roster | already_assigned_staff
+
+            # Disponibles = Todas - Ya asignadas + Habitación actual
+            available = (all_rooms - already_assigned) | rec.hotel_room_id
+            rec.available_room_ids = available
+
 
 class GBBrigadeHotelBookingStaffLine(models.Model):
     _name = "gb.brigade.hotel.booking.staff.line"
@@ -319,7 +367,7 @@ class GBBrigadeHotelBookingStaffLine(models.Model):
         "gb.hotel.offer.room",
         string="Room",
         required=True,
-        domain="[('offer_id', '=', parent.hotel_offer_id)]",
+        domain="[('offer_id', '=', parent.hotel_offer_id), ('id', 'in', available_room_ids)]",
         help="Room from the selected Hotel Offer.",
     )
 
@@ -358,6 +406,14 @@ class GBBrigadeHotelBookingStaffLine(models.Model):
         compute="_compute_available_staff_ids",
         store=False,
         help="Staff members not yet assigned to other rooms in this booking.",
+    )
+
+    # Campo computado para filtrar habitaciones ya asignadas
+    available_room_ids = fields.Many2many(
+        "gb.hotel.offer.room",
+        compute="_compute_available_room_ids",
+        store=False,
+        help="Rooms not yet assigned to other lines in this booking (Staff + Roster).",
     )
 
     pax_count = fields.Integer(
@@ -401,3 +457,43 @@ class GBBrigadeHotelBookingStaffLine(models.Model):
             # Disponibles = Todos - Ya asignados + Ocupantes actuales
             available = (all_staff - already_assigned) | rec.occupant_staff_ids
             rec.available_staff_ids = available
+
+    @api.depends(
+        "booking_id",
+        "booking_id.hotel_offer_id",
+        "booking_id.hotel_offer_id.room_ids",
+        "booking_id.assignment_ids",
+        "booking_id.assignment_ids.hotel_room_id",
+        "booking_id.staff_assignment_ids",
+        "booking_id.staff_assignment_ids.hotel_room_id",
+        "hotel_room_id",
+    )
+    def _compute_available_room_ids(self):
+        """
+        Filtra las habitaciones disponibles:
+        - Todas las habitaciones del hotel offer
+        - MENOS las ya asignadas en líneas de Roster
+        - MENOS las ya asignadas en OTRAS líneas de Staff (no esta)
+        - MÁS la habitación actual (para poder editarla)
+        """
+        for rec in self:
+            if not rec.booking_id or not rec.booking_id.hotel_offer_id:
+                rec.available_room_ids = self.env["gb.hotel.offer.room"]
+                continue
+
+            # Todas las habitaciones del hotel offer
+            all_rooms = rec.booking_id.hotel_offer_id.room_ids
+
+            # Ya asignadas en líneas de Roster
+            already_assigned_roster = rec.booking_id.assignment_ids.mapped("hotel_room_id")
+
+            # Ya asignadas en OTRAS líneas de Staff (no esta)
+            other_staff_lines = rec.booking_id.staff_assignment_ids.filtered(lambda line: line.id != rec.id)
+            already_assigned_staff = other_staff_lines.mapped("hotel_room_id")
+
+            # Ya asignadas = unión de ambas
+            already_assigned = already_assigned_roster | already_assigned_staff
+
+            # Disponibles = Todas - Ya asignadas + Habitación actual
+            available = (all_rooms - already_assigned) | rec.hotel_room_id
+            rec.available_room_ids = available
