@@ -1068,34 +1068,6 @@ class GBBrigadeRoster(models.Model):
         help="Hotel name of last booking.",
     )
 
-    def _normalize_brigade_role(self, role_value):
-        """
-        Intenta normalizar un valor de brigade_role en texto plano
-        a uno de los valores válidos del campo Selection gb_brigade_role.
-        
-        Returns:
-            str: Valor normalizado (clave técnica) o el valor original si no se reconoce
-        """
-        if not role_value:
-            return role_value
-            
-        # Obtener las opciones válidas del campo Selection
-        Partner = self.env['res.partner']
-        valid_options = dict(Partner._fields['gb_brigade_role'].selection)
-        
-        # Normalizar el texto de entrada
-        role_str = str(role_value).strip().lower()
-        
-        # Primero intentar coincidencia exacta (sin considerar mayúsculas)
-        for key, label in valid_options.items():
-            if role_str == key.lower():
-                return key
-            if role_str == label.lower():
-                return key
-                
-        # Si no hay coincidencia exacta, devolver el valor original
-        return role_value
-
     @api.depends("partner_id.mobile", "partner_id.phone")
     def _compute_phone_display(self):
         for rec in self:
@@ -1143,19 +1115,6 @@ class GBBrigadeRoster(models.Model):
 
     @api.model_create_multi
     def create(self, vals_list):
-        """Override create to sync brigade_role with partner's gb_brigade_role"""
-        for vals in vals_list:
-            # Normalizar brigade_role si existe
-            if 'brigade_role' in vals and vals.get('brigade_role'):
-                normalized_role = self._normalize_brigade_role(vals['brigade_role'])
-                vals['brigade_role'] = normalized_role
-                
-                # Actualizar el gb_brigade_role del partner
-                if 'partner_id' in vals and vals['partner_id']:
-                    partner = self.env['res.partner'].browse(vals['partner_id'])
-                    if partner.exists():
-                        partner.write({'gb_brigade_role': normalized_role})
-        
         records = super().create(vals_list)
         # Renumerar después de crear
         brigades = records.mapped('brigade_id')
@@ -1164,17 +1123,6 @@ class GBBrigadeRoster(models.Model):
         return records
 
     def write(self, vals):
-        """Override write to sync brigade_role with partner's gb_brigade_role"""
-        # Normalizar brigade_role si se está actualizando
-        if 'brigade_role' in vals and vals.get('brigade_role'):
-            normalized_role = self._normalize_brigade_role(vals['brigade_role'])
-            vals['brigade_role'] = normalized_role
-            
-            # Actualizar el gb_brigade_role del partner para todos los registros
-            for rec in self:
-                if rec.partner_id:
-                    rec.partner_id.write({'gb_brigade_role': normalized_role})
-        
         result = super().write(vals)
         # Renumerar después de escribir
         if 'sequence' in vals:
@@ -1191,4 +1139,584 @@ class GBBrigadeRoster(models.Model):
             brigade._renumber_roster()
         return result
 
-# ... (rest of the file remains the same)
+# ===========================================================
+# Arrivals (Warning only, no blocking)
+# ===========================================================
+
+class GBBrigadeArrival(models.Model):
+    _name = "gb.brigade.arrival"
+    _description = "Global Brigades - Arrival Info"
+    _order = "date_time_arrival, id"
+
+    brigade_id = fields.Many2one(
+        "gb.brigade",
+        string="Brigade",
+        required=True,
+        ondelete="cascade",
+    )
+
+    title = fields.Char(string="Airline", required=True)
+    flight_number = fields.Char(string="Flight #")
+    date_time_arrival = fields.Datetime(string="Arrival DateTime")
+    flight_through_sap = fields.Char(string="Through SAP / Stopover")
+
+    arrival_hotel_id = fields.Many2one(
+        "gb.hotel.offer",
+        string="Arrival Hotel",
+    )
+
+    arrival_hotel_city_time = fields.Char(
+        string="Arrival Hotel Notes (City / Time)",
+    )
+
+    passenger_ids = fields.Many2many(
+        "gb.brigade.roster",
+        "gb_arrival_roster_rel",
+        "arrival_id",
+        "roster_id",
+        string="Passengers",
+    )
+
+    available_passenger_ids = fields.Many2many(
+        "gb.brigade.roster",
+        compute="_compute_available_passenger_ids",
+        store=False,
+    )
+
+    n_pax = fields.Integer(
+        string="# Pax",
+        compute="_compute_n_pax",
+        store=False,
+    )
+
+    special_transport = fields.Boolean(string="Special Transport Needed?")
+    extra_charge = fields.Char(string="Extra Charge / Notes")
+
+    # ---------------- COMPUTES ----------------
+
+    @api.depends("passenger_ids")
+    def _compute_n_pax(self):
+        for rec in self:
+            rec.n_pax = len(rec.passenger_ids)
+
+    @api.depends("brigade_id", "brigade_id.roster_ids",
+                 "brigade_id.arrival_ids.passenger_ids", "passenger_ids")
+    def _compute_available_passenger_ids(self):
+        for rec in self:
+            if not rec.brigade_id:
+                rec.available_passenger_ids = False
+                continue
+
+            all_roster = rec.brigade_id.roster_ids
+            other_arrivals_passengers = rec.brigade_id.arrival_ids.filtered(
+                lambda a: a.id != rec.id
+            ).mapped("passenger_ids")
+
+            used = other_arrivals_passengers
+            available = (all_roster - used) | rec.passenger_ids
+            rec.available_passenger_ids = available
+
+    # ---------------- WARNING ONLY ----------------
+
+    @api.onchange("passenger_ids")
+    def _onchange_passenger_ids_duplicates(self):
+        """
+        Warning only (no constraint). User can still save.
+        """
+        for rec in self:
+            if not rec.brigade_id or not rec.passenger_ids:
+                continue
+
+            passenger_ids = rec.passenger_ids.ids
+            Arrival = self.env["gb.brigade.arrival"]
+
+            other_arrivals = Arrival.search([
+                ("brigade_id", "=", rec.brigade_id.id),
+                ("id", "!=", rec.id),
+                ("passenger_ids", "in", passenger_ids),
+            ])
+
+            if not other_arrivals:
+                continue
+
+            conflicts = {}
+            for other in other_arrivals:
+                common = other.passenger_ids.filtered(
+                    lambda p: p.id in passenger_ids
+                )
+                for p in common:
+                    conflicts.setdefault(
+                        p.partner_id.name or p.display_name, []
+                    ).append(
+                        _("Arrival: %(title)s (%(date)s)") % {
+                            "title": other.title or "",
+                            "date": fields.Datetime.to_string(
+                                other.date_time_arrival
+                            ) if other.date_time_arrival else "",
+                        }
+                    )
+
+            if conflicts:
+                lines = []
+                for name, entries in conflicts.items():
+                    lines.append(f"- {name}: " + "; ".join(entries))
+
+                message = (
+                    "These passengers already appear in another Arrival of this brigade:\n"
+                    + "\n".join(lines)
+                )
+
+                return {
+                    "warning": {
+                        "title": _("Passenger already in another Arrival"),
+                        "message": message,
+                    }
+                }
+
+# ===========================================================
+# Departures (Warning only, no blocking)
+# ===========================================================
+
+class GBBrigadeDeparture(models.Model):
+    _name = "gb.brigade.departure"
+    _description = "Global Brigades - Departure Info"
+    _order = "date_time_departure, id"
+
+    brigade_id = fields.Many2one(
+        "gb.brigade",
+        string="Brigade",
+        required=True,
+        ondelete="cascade",
+    )
+
+    title = fields.Char(string="Airline", required=True)
+    flight_number = fields.Char(string="Flight #")
+    date_time_departure = fields.Datetime(string="Departure DateTime")
+    flight_through_sap = fields.Char(string="Through SAP / Stopover")
+
+    departure_hotel_id = fields.Many2one(
+        "gb.hotel.offer",
+        string="Departure Hotel",
+    )
+
+    departure_hotel_city = fields.Char(
+        string="Departure Hotel Notes (City)",
+    )
+
+    passenger_ids = fields.Many2many(
+        "gb.brigade.roster",
+        "gb_departure_roster_rel",
+        "departure_id",
+        "roster_id",
+        string="Passengers",
+    )
+
+    available_passenger_ids = fields.Many2many(
+        "gb.brigade.roster",
+        compute="_compute_available_passenger_ids",
+        store=False,
+    )
+
+    n_pax = fields.Integer(
+        string="# Pax",
+        compute="_compute_n_pax",
+        store=False,
+    )
+
+    special_transport = fields.Boolean(string="Special Transport Needed?")
+    extra_charge = fields.Char(string="Extra Charge / Notes")
+
+    # ---------------- COMPUTES ----------------
+
+    @api.depends("passenger_ids")
+    def _compute_n_pax(self):
+        for rec in self:
+            rec.n_pax = len(rec.passenger_ids)
+
+    @api.depends("brigade_id", "brigade_id.roster_ids",
+                 "brigade_id.departure_ids.passenger_ids", "passenger_ids")
+    def _compute_available_passenger_ids(self):
+        for rec in self:
+            if not rec.brigade_id:
+                rec.available_passenger_ids = False
+                continue
+
+            all_roster = rec.brigade_id.roster_ids
+            other_departures_passengers = rec.brigade_id.departure_ids.filtered(
+                lambda d: d.id != rec.id
+            ).mapped("passenger_ids")
+
+            used = other_departures_passengers
+            available = (all_roster - used) | rec.passenger_ids
+            rec.available_passenger_ids = available
+
+    # ---------------- WARNING ONLY ----------------
+
+    @api.onchange("passenger_ids")
+    def _onchange_passenger_ids_duplicates(self):
+        """
+        Warning only (no constraint). User can still save.
+        """
+        for rec in self:
+            if not rec.brigade_id or not rec.passenger_ids:
+                continue
+
+            passenger_ids = rec.passenger_ids.ids
+            Departure = self.env["gb.brigade.departure"]
+
+            other_departures = Departure.search([
+                ("brigade_id", "=", rec.brigade_id.id),
+                ("id", "!=", rec.id),
+                ("passenger_ids", "in", passenger_ids),
+            ])
+
+            if not other_departures:
+                continue
+
+            conflicts = {}
+            for other in other_departures:
+                common = other.passenger_ids.filtered(
+                    lambda p: p.id in passenger_ids
+                )
+                for p in common:
+                    conflicts.setdefault(
+                        p.partner_id.name or p.display_name, []
+                    ).append(
+                        _("Departure: %(title)s (%(date)s)") % {
+                            "title": other.title or "",
+                            "date": fields.Datetime.to_string(
+                                other.date_time_departure
+                            ) if other.date_time_departure else "",
+                        }
+                    )
+
+            if conflicts:
+                lines = []
+                for name, entries in conflicts.items():
+                    lines.append(f"- {name}: " + "; ".join(entries))
+
+                message = (
+                    "These passengers already appear in another Departure of this brigade:\n"
+                    + "\n".join(lines)
+                )
+
+                return {
+                    "warning": {
+                        "title": _("Passenger already in another Departure"),
+                        "message": message,
+                    }
+                }
+
+# ===========================================================
+# Staff temporal
+# ===========================================================
+
+class GBBrigadeStaff(models.Model):
+    _name = 'gb.brigade.staff'
+    _description = 'Brigade Staff Assignment'
+    _order = 'sequence, start_datetime, person_id'
+    _rec_name = 'name'
+
+    sequence = fields.Integer(
+        string="Sequence",
+        default=10,
+        help="Order for sorting",
+    )
+
+    line_number = fields.Integer(
+        string="N",
+        default=0,
+        help="Line number (1, 2, 3...), automatically calculated",
+    )
+
+    # Nombre "humano" que usaremos en checkboxes, tags, etc.
+    name = fields.Char(
+        string='Name',
+        compute='_compute_name',
+        store=True,
+    )
+
+    brigade_id = fields.Many2one(
+        'gb.brigade',
+        string='Brigade',
+        required=True,
+        ondelete='cascade',
+    )
+
+    person_id = fields.Many2one(
+        'res.partner',
+        string='Person',
+        required=True,
+        help='Person (contact) assigned as staff member in this brigade.',
+    )
+
+    # Datos traídos desde el contacto
+    gender = fields.Selection(
+        related='person_id.gb_gender',
+        string='Gender',
+        readonly=True,
+    )
+
+    diet = fields.Char(
+        related='person_id.gb_diet',
+        string='Diet',
+        readonly=True,
+    )
+
+    allergy = fields.Char(
+        related='person_id.gb_allergy',
+        string='Allergy',
+        readonly=True,
+    )
+
+    # CORREGIDO: Ahora lee directamente del campo gb_professional_registration
+    professional_registration = fields.Char(
+        string='Professional Registration',
+        related='person_id.gb_professional_registration',
+        readonly=True,
+        store=False,
+        help='Professional registration number from contact profile.',
+    )
+
+    # NUEVO: Brigade Role desde el contacto
+    brigade_role_default = fields.Selection(
+        related='person_id.gb_brigade_role',
+        string='Brigade Role',
+        readonly=True,
+        store=False,
+        help='Default brigade role from contact profile.',
+    )
+
+    staff_role = fields.Selection(
+        [
+            ('driver', 'DRIVER'),
+            ('operations_coord', 'OPERATIONS COORDINATOR'),
+            ('interpreter_1', 'INTERPRETER 1'),
+            ('interpreter_2', 'INTERPRETER 2'),
+            ('interpreter_3', 'INTERPRETER 3'),
+            ('interpreter_4', 'INTERPRETER 4'),
+            ('interpreter_5', 'INTERPRETER 5'),
+            ('interpreter_extra', 'INTERPRETER EXTRA'),
+            ('doctor_1', 'DOCTOR 1'),
+            ('doctor_2', 'DOCTOR 2'),
+            ('doctor_3', 'DOCTOR 3'),
+            ('doctor_4', 'DOCTOR 4'),
+            ('dentist_1', 'DENTIST 1'),
+            ('dentist_2', 'DENTIST 2'),
+            ('dentist_3', 'DENTIST 3'),
+            ('dentist_4', 'DENTIST 4'),
+            ('pharmacist', 'PHARMACIST'),
+            ('cashier', 'CASHIER'),
+            ('nutritionist', 'NUTRITIONIST'),
+            ('public_health_tech', 'PUBLIC HEALTH TECHNICIAN'),
+            ('paramedic', 'PARAMEDIC'),
+            ('water_technician', 'WATER TECHNICIAN'),
+            ('optometrist', 'OPTOMETRIST'),
+            ('nurse', 'NURSE'),
+            ('obgyn', 'OB/GYN'),
+            ('pa_visit', 'PA VISIT'),
+            ('emergency_vehicle', 'EMERGENCY VEHICLE'),
+            ('physiotherapist', 'PHYSIOTHERAPIST'),
+            ('doctor_de_cobertura', 'DOCTOR DE COBERTURA'),
+            ('doctor_on_call', 'DOCTOR ON CALL'),
+            ('coord_assistant_1', 'COORDINATION ASSISTANT 1'),
+            ('coord_assistant_2', 'COORDINATION ASSISTANT 2'),
+            ('coord_assistant_3', 'COORDINATION ASSISTANT 3'),
+            ('coord_assistant_4', 'COORDINATION ASSISTANT 4'),
+            ('coord_assistant_5', 'COORDINATION ASSISTANT 5'),
+            ('coord_assistant_extra', 'COORDINATION ASSISTANT EXTRA'),
+            ('counselor_1', 'COUNSELOR 1'),
+            ('counselor_2', 'COUNSELOR 2'),
+            ('counselor_3', 'COUNSELOR 3'),
+            ('lead_coord_1', 'LEAD COORDINATOR 1'),
+            ('lead_coord_2', 'LEAD COORDINATOR 2'),
+            ('lead_coord_3', 'LEAD COORDINATOR 3'),
+            ('lead_coord_4', 'LEAD COORDINATOR 4'),
+            ('lead_coord_5', 'LEAD COORDINATOR 5'),
+            ('lead_coord_extra', 'LEAD COORDINATOR EXTRA'),
+            ('psychologist', 'PSYCHOLOGIST'),
+            ('therapist', 'THERAPIST'),
+            ('other', 'OTHER / NOTES IN FIELD'),
+        ],
+        string='Role',
+        help='Role of this person during the brigade.',
+    )
+
+    # Fechas propias de la brigada
+    start_datetime = fields.Datetime(
+        string='Start Date/Time',
+        help='Date and time when this person starts working with the brigade.',
+    )
+
+    end_datetime = fields.Datetime(
+        string='End Date/Time',
+        help='Date and time when this person stops working with the brigade.',
+    )
+
+    # Campo antiguo (compatibilidad, opcional en vistas)
+    diet_allergy_note = fields.Char(
+        string='Diet / Allergy / Notes',
+        help='Relevant dietary restrictions, allergies or short notes.',
+    )
+
+    internal_note = fields.Text(
+        string='Internal Notes',
+        help='Internal notes for GB staff (not shown externally).',
+    )
+
+    provider_id = fields.Many2one(
+        'res.partner',
+        string='Provider',
+        help='Optional provider record, kept for backwards compatibility.',
+    )
+
+    @api.depends('person_id', 'person_id.name', 'provider_id', 'provider_id.name', 'staff_role')
+    def _compute_name(self):
+        """Nombre amigable para staff: 'Juan Pérez (LEAD COORDINATOR 1)'."""
+        selection_dict = dict(self._fields['staff_role'].selection)
+        for rec in self:
+            base = rec.person_id.name or rec.provider_id.name or ""
+            role_label = selection_dict.get(rec.staff_role, rec.staff_role or "")
+            if base and role_label:
+                rec.name = f"{base} ({role_label})"
+            else:
+                rec.name = base or role_label or _("Staff #%s") % rec.id
+
+    @api.model_create_multi
+    def create(self, vals_list):
+        records = super().create(vals_list)
+        # Renumerar después de crear
+        brigades = records.mapped('brigade_id')
+        for brigade in brigades:
+            brigade._renumber_staff()
+        return records
+
+    def write(self, vals):
+        result = super().write(vals)
+        # Renumerar después de escribir
+        if 'sequence' in vals:
+            brigades = self.mapped('brigade_id')
+            for brigade in brigades:
+                brigade._renumber_staff()
+        return result
+
+    def unlink(self):
+        brigades = self.mapped('brigade_id')
+        result = super().unlink()
+        # Renumerar después de borrar
+        for brigade in brigades:
+            brigade._renumber_staff()
+        return result
+
+    def name_get(self):
+        res = []
+        selection_dict = dict(self._fields['staff_role'].selection)
+        for rec in self:
+            base = rec.person_id.name or rec.provider_id.name or ""
+            role_label = selection_dict.get(rec.staff_role, rec.staff_role or "")
+            if base and role_label:
+                name = f"{base} ({role_label})"
+            else:
+                name = base or role_label or _("Staff #%s") % rec.id
+            res.append((rec.id, name))
+        return res
+
+
+# ===========================================================
+# Activity Tag (for itinerary activities)
+# ===========================================================
+
+class GBActivityTag(models.Model):
+    _name = "gb.activity.tag"
+    _description = "Activity Tag / Type"
+    _order = "name"
+    
+    name = fields.Char(string="Tag", required=True)
+    color = fields.Integer(string="Color Index")
+
+# ===========================================================
+# Brigade Activity / Itinerary entry
+# ===========================================================
+
+class GBBrigadeActivity(models.Model):
+    _name = "gb.brigade.activity"
+    _description = "Global Brigades - Brigade Activity / Itinerary Entry"
+    _order = "start_datetime, id"
+    
+    brigade_id = fields.Many2one(
+        "gb.brigade",
+        string="Brigade",
+        required=True,
+        ondelete="cascade",
+        help="Which brigade this activity belongs to.",
+    )
+    
+    name = fields.Char(string="Nombre de la actividad", required=True)
+    
+    tag_ids = fields.Many2many(
+        "gb.activity.tag",
+        "gb_activity_tag_rel",
+        "activity_id",
+        "tag_id",
+        string="Tipo de actividad",
+        help="Labels / categories for this activity (clinic, travel, orientation, etc.).",
+    )
+    
+    start_datetime = fields.Datetime(string="Inicio", help="Start datetime for this activity.")
+    end_datetime = fields.Datetime(string="Fin", help="End datetime for this activity.")
+    
+    place = fields.Char(string="Lugar", help="Location where the activity takes place.")
+    
+    responsible_id = fields.Many2one(
+        "res.partner",
+        string="Responsable",
+        help="Main person in charge of this activity.",
+    )
+    
+    participant_ids = fields.Many2many(
+        "gb.brigade.roster",
+        "gb_activity_participant_rel",
+        "activity_id",
+        "roster_id",
+        string="Participantes",
+        help="Participants attending this activity.",
+    )
+    
+    participant_count = fields.Integer(
+        string="N°",
+        compute="_compute_participant_count",
+        store=False,
+        help="How many participants are assigned to this activity.",
+    )
+    
+    notes = fields.Text(string="Notas", help="Any notes / logistics / reminders for this activity.")
+    
+    @api.depends("participant_ids")
+    def _compute_participant_count(self):
+        for rec in self:
+            rec.participant_count = len(rec.participant_ids)
+    
+    def action_add_all_participants(self):
+        """Botón 'Todos': mete todo el roster de la brigada en la actividad."""
+        for rec in self:
+            if rec.brigade_id:
+                all_roster = rec.brigade_id.roster_ids
+                rec.participant_ids = [(6, 0, all_roster.ids)]
+        return True
+    
+    def action_open_add_participants_wizard(self):
+        """
+        Botón 'Seleccionar': abre el wizard existente
+        para marcar participantes manualmente.
+        """
+        self.ensure_one()
+        return {
+            "type": "ir.actions.act_window",
+            "name": _("Seleccionar Participantes"),
+            "res_model": "gb.add.participants.wizard",
+            "view_mode": "form",
+            "target": "new",
+            "context": {
+                "default_activity_id": self.id,
+            },
+        }
