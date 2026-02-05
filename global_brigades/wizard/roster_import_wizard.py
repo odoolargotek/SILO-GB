@@ -106,6 +106,53 @@ class GBRosterImportWizard(models.TransientModel):
         }
         return mapping.get(sval, sval)
 
+    def _map_brigade_role(self, v):
+        """Normalizes brigade role values from Excel to match Selection field values."""
+        if not v:
+            return False
+        sval = str(v).strip().lower().replace(" ", "_").replace("/", "")
+        
+        # Map common variations to technical field values
+        mapping = {
+            "lead_coordinator": "lead_coordinator",
+            "interpreter": "interpreter",
+            "assistant_coordinator": "assistant_coordinator",
+            "counselor": "counselor",
+            "doctor": "doctor",
+            "dentist": "dentist",
+            "pharmacist": "pharmacist",
+            "nutritionist": "nutritionist",
+            "paramedic": "paramedic",
+            "optometrist": "optometrist",
+            "nurse": "nurse",
+            "nurse_technician": "nurse_technician",
+            "lab_technician": "lab_technician",
+            "dental_technician": "dental_technician",
+            "obgyn": "obgyn",
+            "compound_supervisor": "compound_supervisor",
+            "driver_(pacecar)": "driver_pacecar",
+            "driver_pacecar": "driver_pacecar",
+            "bus_driver": "bus_driver",
+            "driver": "driver",
+            "physiotherapist": "physiotherapist",
+            "public_health_technician": "public_health_technician",
+            "water_technician": "water_technician",
+            "program_advisor": "program_advisor",
+            "chapter_leader": "chapter_leader",
+            "chapter_president": "chapter_president",
+            "brigade_leader": "brigade_leader",
+            "hcp": "hcp",
+            "faculty_member": "faculty_member",
+            "chaperone": "chaperone",
+            "volunteer": "volunteer",
+            "student": "student",
+            "team_lead": "team_lead",
+            "ambassador": "ambassador",
+            "mentor": "mentor",
+            "other": "other",
+        }
+        return mapping.get(sval, sval)
+
     def _safe_set(self, vals, field_name, value):
         """Set vals[field_name] only if the field exists."""
         if field_name in self.env["res.partner"]._fields:
@@ -295,8 +342,9 @@ class GBRosterImportWizard(models.TransientModel):
             phone = (str(get_cell(row, phone_col)).strip() if get_cell(row, phone_col) is not None else "").strip()
             mobile = (str(get_cell(row, mobile_col)).strip() if get_cell(row, mobile_col) is not None else "").strip()
 
-            # Roster-only
-            brigade_role = (str(get_cell(row, brigade_role_col)).strip() if get_cell(row, brigade_role_col) is not None else "").strip()
+            # Roster-only - Apply normalization
+            brigade_role_raw = (str(get_cell(row, brigade_role_col)).strip() if get_cell(row, brigade_role_col) is not None else "").strip()
+            brigade_role = self._map_brigade_role(brigade_role_raw)
             sa = self._parse_bool(get_cell(row, sa_col))
 
             # Partner GB profile values
