@@ -218,24 +218,31 @@ class GBBrigadeGeneralReport(models.Model):
         ws = wb.create_sheet('Staff')
         
         headers = [
-            'Name', 'Role', 'Gender', 'Diet', 'Allergies',
-            'Professional Registration', 'Start DateTime', 'End DateTime',
-            'Notes'
+            'Name', 'Brigade Role', 'Mobile', 'Role', 'Gender', 'Diet', 'Allergies',
+            'Professional Registration', 'Start DateTime', 'End DateTime', 'Notes'
         ]
         
         self._write_sheet_headers(ws, headers)
         
         row = 2
         for staff in brigade.staff_ids:
+            # Get brigade role from person_id.gb_brigade_role
+            brigade_role = ''
+            if staff.brigade_role_default:
+                role_dict = dict(staff.person_id._fields['gb_brigade_role'].selection)
+                brigade_role = role_dict.get(staff.brigade_role_default, staff.brigade_role_default)
+            
             ws[f'A{row}'] = staff.person_id.name or ''
-            ws[f'B{row}'] = dict(staff._fields['staff_role'].selection).get(staff.staff_role, '') if staff.staff_role else ''
-            ws[f'C{row}'] = dict(staff.person_id._fields['gb_gender'].selection).get(staff.gender, '') if staff.gender else ''
-            ws[f'D{row}'] = staff.diet or ''
-            ws[f'E{row}'] = staff.allergy or ''
-            ws[f'F{row}'] = staff.professional_registration or ''
-            ws[f'G{row}'] = self._format_datetime(staff.start_datetime)
-            ws[f'H{row}'] = self._format_datetime(staff.end_datetime)
-            ws[f'I{row}'] = staff.internal_note or ''
+            ws[f'B{row}'] = brigade_role
+            ws[f'C{row}'] = staff.person_id.mobile or ''
+            ws[f'D{row}'] = dict(staff._fields['staff_role'].selection).get(staff.staff_role, '') if staff.staff_role else ''
+            ws[f'E{row}'] = dict(staff.person_id._fields['gb_gender'].selection).get(staff.gender, '') if staff.gender else ''
+            ws[f'F{row}'] = staff.diet or ''
+            ws[f'G{row}'] = staff.allergy or ''
+            ws[f'H{row}'] = staff.professional_registration or ''
+            ws[f'I{row}'] = self._format_datetime(staff.start_datetime)
+            ws[f'J{row}'] = self._format_datetime(staff.end_datetime)
+            ws[f'K{row}'] = staff.internal_note or ''
             row += 1
         
         self._auto_adjust_columns(ws)
@@ -376,7 +383,7 @@ class GBBrigadeGeneralReport(models.Model):
         self._write_sheet_headers(ws, headers)
         
         row = 2
-        for activity in brigade.activity_ids:
+        for activity in brigade.brigade_activity_ids:
             ws[f'A{row}'] = activity.name or ''
             ws[f'B{row}'] = ', '.join(activity.tag_ids.mapped('name'))
             ws[f'C{row}'] = self._format_datetime(activity.start_datetime)
