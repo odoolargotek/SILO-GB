@@ -4,6 +4,7 @@
 import base64
 from io import BytesIO
 from datetime import datetime
+import pytz
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError
 
@@ -42,6 +43,49 @@ class GBBrigadeGeneralReport(models.Model):
         string='Filename',
         readonly=True,
     )
+    
+    def _get_company_timezone(self):
+        """Get the timezone of the company."""
+        self.ensure_one()
+        # Try to get timezone from company country
+        company = self.brigade_id.company_id or self.env.company
+        
+        # If company has a country with timezone, use it
+        if company.country_id:
+            # Panama timezone
+            if company.country_id.code == 'PA':
+                return pytz.timezone('America/Panama')
+            # You can add more country-specific timezones here
+        
+        # Fallback to user timezone or UTC
+        tz_name = self.env.user.tz or 'America/Panama'
+        return pytz.timezone(tz_name)
+    
+    def _convert_to_local_time(self, utc_datetime):
+        """Convert UTC datetime to company's local timezone."""
+        if not utc_datetime:
+            return None
+        
+        # Get company timezone
+        local_tz = self._get_company_timezone()
+        
+        # Ensure UTC timezone is set
+        if not utc_datetime.tzinfo:
+            utc_datetime = pytz.utc.localize(utc_datetime)
+        
+        # Convert to local timezone
+        local_datetime = utc_datetime.astimezone(local_tz)
+        
+        return local_datetime
+    
+    def _format_datetime(self, utc_datetime, fmt='%Y-%m-%d %H:%M'):
+        """Format datetime in local timezone."""
+        local_dt = self._convert_to_local_time(utc_datetime)
+        return local_dt.strftime(fmt) if local_dt else ''
+    
+    def _format_date(self, date_value, fmt='%Y-%m-%d'):
+        """Format date value."""
+        return date_value.strftime(fmt) if date_value else ''
     
     def generate_excel_report(self):
         """Generate comprehensive Excel report for the brigade."""
@@ -105,10 +149,10 @@ class GBBrigadeGeneralReport(models.Model):
             ('Program', dict(brigade._fields['brigade_program'].selection).get(brigade.brigade_program, '') if brigade.brigade_program else ''),
             ('Tier', dict(brigade._fields['brigade_tier'].selection).get(brigade.brigade_tier, '') if brigade.brigade_tier else ''),
             ('Restrictions', dict(brigade._fields['brigade_restriction'].selection).get(brigade.brigade_restriction, '') if brigade.brigade_restriction else ''),
-            ('Arrival Date', brigade.arrival_date.strftime('%Y-%m-%d') if brigade.arrival_date else ''),
-            ('Departure Date', brigade.departure_date.strftime('%Y-%m-%d') if brigade.departure_date else ''),
-            ('Arrival to Compound', brigade.arrival_time_compound.strftime('%Y-%m-%d %H:%M') if brigade.arrival_time_compound else ''),
-            ('Departure from Compound', brigade.departure_time_compound.strftime('%Y-%m-%d %H:%M') if brigade.departure_time_compound else ''),
+            ('Arrival Date', self._format_date(brigade.arrival_date)),
+            ('Departure Date', self._format_date(brigade.departure_date)),
+            ('Arrival to Compound', self._format_datetime(brigade.arrival_time_compound)),
+            ('Departure from Compound', self._format_datetime(brigade.departure_time_compound)),
             ('Lead Coordinator', brigade.coordinator_id.name if brigade.coordinator_id else ''),
             ('Program Advisor', brigade.program_associate_id.name if brigade.program_associate_id else ''),
             ('Compound Supervisor', brigade.compound_manager_id.name if brigade.compound_manager_id else ''),
@@ -151,10 +195,10 @@ class GBBrigadeGeneralReport(models.Model):
             ws[f'B{row}'] = roster.email or ''
             ws[f'C{row}'] = roster.phone_display or ''
             ws[f'D{row}'] = dict(roster.partner_id._fields['gb_gender'].selection).get(roster.gender, '') if roster.gender else ''
-            ws[f'E{row}'] = roster.birthdate.strftime('%Y-%m-%d') if roster.birthdate else ''
+            ws[f'E{row}'] = self._format_date(roster.birthdate)
             ws[f'F{row}'] = 'Yes' if roster.spanish_speaker else 'No'
             ws[f'G{row}'] = roster.passport_no or ''
-            ws[f'H{row}'] = roster.passport_expiry.strftime('%Y-%m-%d') if roster.passport_expiry else ''
+            ws[f'H{row}'] = self._format_date(roster.passport_expiry)
             ws[f'I{row}'] = roster.citizenship or ''
             ws[f'J{row}'] = dict(roster.partner_id._fields['gb_tshirt_size'].selection).get(roster.tshirt_size, '') if roster.tshirt_size else ''
             ws[f'K{row}'] = roster.brigade_role or ''
@@ -189,8 +233,8 @@ class GBBrigadeGeneralReport(models.Model):
             ws[f'D{row}'] = staff.diet or ''
             ws[f'E{row}'] = staff.allergy or ''
             ws[f'F{row}'] = staff.professional_registration or ''
-            ws[f'G{row}'] = staff.start_datetime.strftime('%Y-%m-%d %H:%M') if staff.start_datetime else ''
-            ws[f'H{row}'] = staff.end_datetime.strftime('%Y-%m-%d %H:%M') if staff.end_datetime else ''
+            ws[f'G{row}'] = self._format_datetime(staff.start_datetime)
+            ws[f'H{row}'] = self._format_datetime(staff.end_datetime)
             ws[f'I{row}'] = staff.internal_note or ''
             row += 1
         
@@ -212,7 +256,7 @@ class GBBrigadeGeneralReport(models.Model):
         for arrival in brigade.arrival_ids:
             ws[f'A{row}'] = arrival.title or ''
             ws[f'B{row}'] = arrival.flight_number or ''
-            ws[f'C{row}'] = arrival.date_time_arrival.strftime('%Y-%m-%d %H:%M') if arrival.date_time_arrival else ''
+            ws[f'C{row}'] = self._format_datetime(arrival.date_time_arrival)
             ws[f'D{row}'] = arrival.flight_through_sap or ''
             ws[f'E{row}'] = arrival.arrival_hotel_id.name if arrival.arrival_hotel_id else ''
             ws[f'F{row}'] = arrival.arrival_hotel_city_time or ''
@@ -240,7 +284,7 @@ class GBBrigadeGeneralReport(models.Model):
         for departure in brigade.departure_ids:
             ws[f'A{row}'] = departure.title or ''
             ws[f'B{row}'] = departure.flight_number or ''
-            ws[f'C{row}'] = departure.date_time_departure.strftime('%Y-%m-%d %H:%M') if departure.date_time_departure else ''
+            ws[f'C{row}'] = self._format_datetime(departure.date_time_departure)
             ws[f'D{row}'] = departure.flight_through_sap or ''
             ws[f'E{row}'] = departure.departure_hotel_id.name if departure.departure_hotel_id else ''
             ws[f'F{row}'] = departure.departure_hotel_city or ''
@@ -278,8 +322,8 @@ class GBBrigadeGeneralReport(models.Model):
                 room_distribution.append(room_info)
             
             ws[f'A{row}'] = booking.partner_id.name if booking.partner_id else ''
-            ws[f'B{row}'] = booking.check_in_date.strftime('%Y-%m-%d') if booking.check_in_date else ''
-            ws[f'C{row}'] = booking.check_out_date.strftime('%Y-%m-%d') if booking.check_out_date else ''
+            ws[f'B{row}'] = self._format_date(booking.check_in_date)
+            ws[f'C{row}'] = self._format_date(booking.check_out_date)
             ws[f'D{row}'] = int(booking.stay_nights)
             ws[f'E{row}'] = total_rooms
             ws[f'F{row}'] = ', '.join(room_distribution) if room_distribution else ''
@@ -308,7 +352,7 @@ class GBBrigadeGeneralReport(models.Model):
             all_passengers = roster_names + staff_names
             
             ws[f'A{row}'] = transport.title or ''
-            ws[f'B{row}'] = transport.date_time.strftime('%Y-%m-%d %H:%M') if transport.date_time else ''
+            ws[f'B{row}'] = self._format_datetime(transport.date_time)
             ws[f'C{row}'] = transport.provider_id.name if transport.provider_id else ''
             ws[f'D{row}'] = transport.vehicle_id.name if transport.vehicle_id else ''
             ws[f'E{row}'] = transport.origin or ''
@@ -335,8 +379,8 @@ class GBBrigadeGeneralReport(models.Model):
         for activity in brigade.activity_ids:
             ws[f'A{row}'] = activity.name or ''
             ws[f'B{row}'] = ', '.join(activity.tag_ids.mapped('name'))
-            ws[f'C{row}'] = activity.start_datetime.strftime('%Y-%m-%d %H:%M') if activity.start_datetime else ''
-            ws[f'D{row}'] = activity.end_datetime.strftime('%Y-%m-%d %H:%M') if activity.end_datetime else ''
+            ws[f'C{row}'] = self._format_datetime(activity.start_datetime)
+            ws[f'D{row}'] = self._format_datetime(activity.end_datetime)
             ws[f'E{row}'] = activity.place or ''
             ws[f'F{row}'] = activity.responsible_id.name if activity.responsible_id else ''
             ws[f'G{row}'] = activity.participant_count
@@ -359,8 +403,8 @@ class GBBrigadeGeneralReport(models.Model):
         row = 2
         for program in brigade.program_line_ids:
             ws[f'A{row}'] = program.program_id.name if program.program_id else ''
-            ws[f'B{row}'] = program.start_date.strftime('%Y-%m-%d') if program.start_date else ''
-            ws[f'C{row}'] = program.end_date.strftime('%Y-%m-%d') if program.end_date else ''
+            ws[f'B{row}'] = self._format_date(program.start_date)
+            ws[f'C{row}'] = self._format_date(program.end_date)
             ws[f'D{row}'] = program.community_id.name if program.community_id else ''
             ws[f'E{row}'] = program.location or ''
             ws[f'F{row}'] = program.coordinator_id.name if program.coordinator_id else ''
