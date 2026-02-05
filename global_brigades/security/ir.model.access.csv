@@ -111,3 +111,6 @@ access_gb_partner_eligibility_admin,res.partner.eligibility admin,model_gb_partn
 access_gb_partner_eligibility_pa,res.partner.eligibility program_advisor,model_gb_partner_eligibility,group_gb_program_advisor,1,1,1,0
 access_gb_partner_eligibility_op1,res.partner.eligibility operative_1,model_gb_partner_eligibility,group_gb_operative_1,1,1,1,0
 access_gb_partner_eligibility_op2,res.partner.eligibility operative_2,model_gb_partner_eligibility,group_gb_operative_2,1,1,1,0
+access_ir_actions_act_window_pa,ir.actions.act_window program_advisor,base.model_ir_actions_act_window,group_gb_program_advisor,1,0,0,0
+access_ir_actions_actions_pa,ir.actions.actions program_advisor,base.model_ir_actions_actions,group_gb_program_advisor,1,0,0,0
+access_ir_ui_view_pa,ir.ui.view program_advisor,base.model_ir_ui_view,group_gb_program_advisor,1,0,0,0
