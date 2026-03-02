@@ -35,6 +35,17 @@ class GBBrigade(models.Model):
     )
 
     # =========================
+    # COMPANY (Multi-company support)
+    # =========================
+    company_id = fields.Many2one(
+        'res.company',
+        string='Company',
+        default=lambda self: self.env.company,
+        required=True,
+        tracking=True,
+    )
+
+    # =========================
     # IDENTIFICACIÓN BÁSICA
     # =========================
     external_brigade_code = fields.Char(
