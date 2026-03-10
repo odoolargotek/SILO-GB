@@ -62,7 +62,7 @@ class GBBrigade(models.Model):
         tracking=True,
     )
 
-    name = fields.Char(string="CHAPTER NAME", required=True, tracking=True)
+    name = fields.Char(string="Chapter Name", required=True, tracking=True)
     arrival_date = fields.Date(string="Arrival Date", tracking=True)
     departure_date = fields.Date(string="Departure Date", tracking=True)
 
