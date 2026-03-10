@@ -87,3 +87,7 @@ access_gb_brigade_role_admin,gb.brigade.role.admin,model_gb_brigade_role,global_
 access_gb_brigade_role_pa,gb.brigade.role.pa,model_gb_brigade_role,global_brigades.group_gb_program_advisor,1,1,1,1
 access_gb_brigade_role_op1,gb.brigade.role.op1,model_gb_brigade_role,global_brigades.group_gb_operative_1,1,0,0,0
 access_gb_brigade_role_op2,gb.brigade.role.op2,model_gb_brigade_role,global_brigades.group_gb_operative_2,1,0,0,0
+access_gb_activity_tag_admin,gb.activity.tag.admin,model_gb_activity_tag,global_brigades.group_gb_admin,1,1,1,1
+access_gb_activity_tag_pa,gb.activity.tag.pa,model_gb_activity_tag,global_brigades.group_gb_program_advisor,1,1,1,1
+access_gb_activity_tag_op1,gb.activity.tag.op1,model_gb_activity_tag,global_brigades.group_gb_operative_1,1,0,0,0
+access_gb_activity_tag_op2,gb.activity.tag.op2,model_gb_activity_tag,global_brigades.group_gb_operative_2,1,0,0,0
