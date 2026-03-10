@@ -110,16 +110,8 @@ class GBBrigade(models.Model):
         tracking=True,
     )
 
-    brigade_program = fields.Selection(
-        [
-            ("medical", "Medical"),
-            ("dental", "Dental"),
-            ("business", "Business"),
-            ("water", "Water"),
-            ("public_health", "Public Health"),
-            ("engineering", "Engineering"),
-            ("squads", "Squads"),
-        ],
+    brigade_program = fields.Many2one(
+        'gb.brigade.program.type',
         string="Official Program",
         help="Main official program.",
         tracking=True,
@@ -164,7 +156,7 @@ class GBBrigade(models.Model):
     @api.onchange("brigade_program")
     def _onchange_brigade_program_business_client(self):
         for record in self:
-            if record.brigade_program != "business":
+            if not record.brigade_program or record.brigade_program.name.lower() != 'business':
                 record.business_client_id = False
 
     brigade_tier = fields.Selection(
@@ -211,7 +203,7 @@ class GBBrigade(models.Model):
     )
 
     university_logo = fields.Image(string="University Logo")
-    
+
     # =========================
     # CONTACTOS MULTIPLES (Many2many)
     # =========================
@@ -224,7 +216,7 @@ class GBBrigade(models.Model):
         tracking=True,
         help="Success Advisors assigned to this brigade (multiple allowed)",
     )
-    
+
     coordinator_ids = fields.Many2many(
         "res.partner",
         "gb_brigade_coordinator_rel",
@@ -234,7 +226,7 @@ class GBBrigade(models.Model):
         tracking=True,
         help="Lead Coordinators assigned to this brigade (multiple allowed)",
     )
-    
+
     program_associate_ids = fields.Many2many(
         "res.partner",
         "gb_brigade_program_associate_rel",
@@ -244,7 +236,7 @@ class GBBrigade(models.Model):
         tracking=True,
         help="Program Advisors assigned to this brigade (multiple allowed)",
     )
-    
+
     sending_organization_ids = fields.Many2many(
         "res.partner",
         "gb_brigade_sending_org_rel",
@@ -552,7 +544,7 @@ class GBBrigade(models.Model):
 
         if not booking_recs:
             raise UserError(_("No hotel bookings/rooming assignments found for this brigade. "
-                            "Please create hotel bookings in the 'Hotels / Rooming' tab first."))
+                              "Please create hotel bookings in the 'Hotels / Rooming' tab first."))
 
         wb = Workbook()
         ws = wb.active
@@ -628,7 +620,6 @@ class GBBrigade(models.Model):
                     ) if sline.room_type else ""
                     bed_setup = sline.bed_setup or ""
                     staff_name = staff_occupant.person_id.name if staff_occupant.person_id else ""
-                    # brigade_role_default is Many2one to gb.brigade.role — use .name directly
                     brigade_role = staff_occupant.brigade_role_default.name if staff_occupant.brigade_role_default else ""
                     gender_val = ""
                     if staff_occupant.gender:
@@ -723,7 +714,7 @@ class GBBrigade(models.Model):
 
         if not transport_recs:
             raise UserError(_("No transport records found for this brigade. "
-                            "Please create transport records first."))
+                              "Please create transport records first."))
 
         wb = Workbook()
         ws = wb.active
