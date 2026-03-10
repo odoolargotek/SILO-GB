@@ -628,10 +628,8 @@ class GBBrigade(models.Model):
                     ) if sline.room_type else ""
                     bed_setup = sline.bed_setup or ""
                     staff_name = staff_occupant.person_id.name if staff_occupant.person_id else ""
-                    brigade_role = ""
-                    if staff_occupant.brigade_role_default:
-                        role_dict = dict(staff_occupant.person_id._fields["gb_brigade_role"].selection)
-                        brigade_role = role_dict.get(staff_occupant.brigade_role_default, staff_occupant.brigade_role_default)
+                    # brigade_role_default is Many2one to gb.brigade.role — use .name directly
+                    brigade_role = staff_occupant.brigade_role_default.name if staff_occupant.brigade_role_default else ""
                     gender_val = ""
                     if staff_occupant.gender:
                         gender_dict = dict(staff_occupant.person_id._fields["gb_gender"].selection)
