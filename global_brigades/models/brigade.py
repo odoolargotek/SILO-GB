@@ -230,7 +230,7 @@ class GBBrigade(models.Model):
         "gb_brigade_coordinator_rel",
         "brigade_id",
         "partner_id",
-        string="LEAD COORDINATOR",
+        string="Lead Coordinator",
         tracking=True,
         help="Lead Coordinators assigned to this brigade (multiple allowed)",
     )
@@ -240,7 +240,7 @@ class GBBrigade(models.Model):
         "gb_brigade_program_associate_rel",
         "brigade_id",
         "partner_id",
-        string="PROGRAM ADVISOR",
+        string="Program Advisor",
         tracking=True,
         help="Program Advisors assigned to this brigade (multiple allowed)",
     )
