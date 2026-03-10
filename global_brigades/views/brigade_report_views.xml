@@ -23,11 +23,12 @@
                 <!-- Información de negocio / logística general -->
                 <field name="brigade_type" string="Tipo" optional="show"/>
                 <field name="business_client_id" string="Cliente (Universidad/Capítulo)" optional="show"/>
-                <field name="compound_manager_id" string="Compound Manager" optional="show"/>
 
-                <!-- Responsables operativos -->
-                <field name="coordinator_id" string="Coordinador/a"/>
-                <field name="program_associate_id" string="Program Associate" optional="show"/>
+                <!-- Responsables operativos (MANY2MANY) -->
+                <field name="success_advisor_ids" widget="many2many_tags" string="Success Advisor" optional="show"/>
+                <field name="coordinator_ids" widget="many2many_tags" string="Coordinador/a"/>
+                <field name="program_associate_ids" widget="many2many_tags" string="Program Associate" optional="show"/>
+                <field name="sending_organization_ids" widget="many2many_tags" string="Sending Org" optional="show"/>
 
                 <!-- KPIs ya existentes en el modelo -->
                 <field name="program_count" string="# Programs" readonly="1" optional="show"/>
@@ -54,8 +55,10 @@
                 <field name="brigade_program" string="Programa"/>
                 <field name="brigade_tier" string="Tier"/>
                 <field name="brigade_type" string="Tipo"/>
-                <field name="coordinator_id" string="Coordinador/a"/>
-                <field name="program_associate_id" string="Program Associate"/>
+                <field name="coordinator_ids" string="Coordinador/a"/>
+                <field name="program_associate_ids" string="Program Associate"/>
+                <field name="success_advisor_ids" string="Success Advisor"/>
+                <field name="sending_organization_ids" string="Sending Org"/>
                 <field name="business_client_id" string="Cliente"/>
                 <field name="arrival_date" string="Fecha Brigada"/>
 
@@ -86,9 +89,6 @@
                     <filter name="group_type"
                             string="Tipo"
                             context="{'group_by': 'brigade_type'}"/>
-                    <filter name="group_coordinator"
-                            string="Coordinador/a"
-                            context="{'group_by': 'coordinator_id'}"/>
                 </group>
             </search>
         </field>

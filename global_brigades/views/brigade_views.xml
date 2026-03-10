@@ -12,17 +12,12 @@
             <list string="Brigades">
                 <!-- Brigade Code -->
                 <field name="external_brigade_code"/>
-                <field name="brigade_code" readonly="1" string="Brigade Code"/>
+
                 
                 <!-- Chapter name / Brigade Name -->
                 <field name="name" string="Chapter name/Brigade Name"/>
                 
-                <!-- Open Button -->
-                <button name="open_form_action"
-                        type="object"
-                        string="Open"
-                        class="btn-primary"
-                        icon="fa-folder-open"/>
+
                 
                 <!-- Official Program -->
                 <field name="brigade_program" string="Official Program"/>
@@ -46,11 +41,14 @@
                 <!-- Brigade type: In Person/Virtual -->
                 <field name="brigade_type" string="Brigade Type"/>
                 
-                <!-- Program Advisor -->
-                <field name="program_associate_id" string="Program Advisor"/>
+                <!-- Program Advisor (MANY2MANY) con teléfono -->
+                <field name="program_associate_ids" widget="many2many_tags" string="Program Advisor" context="{'show_mobile_in_name': True}"/>
                 
-                <!-- Coordinator -->
-                <field name="coordinator_id" string="Coordinator"/>
+                <!-- Coordinator (MANY2MANY) con teléfono -->
+                <field name="coordinator_ids" widget="many2many_tags" string="Coordinator" context="{'show_mobile_in_name': True}"/>
+
+                <!-- Sending Organization (MANY2MANY) -->
+                <field name="sending_organization_ids" widget="many2many_tags" string="Sending Organization"/>
             </list>
         </field>
     </record>
@@ -64,6 +62,8 @@
         <field name="model">gb.brigade</field>
         <field name="arch" type="xml">
             <kanban string="Brigades" default_group_by="state" class="o_kanban_small_column">
+                <field name="coordinator_ids"/>
+                <field name="program_associate_ids"/>
                 <templates>
                     <t t-name="kanban-box">
                         <div class="o_kanban_record">
@@ -102,14 +102,22 @@
                                     </t>
                                 </div>
 
-                                <!-- Responsables -->
-                                <div t-if="record.coordinator_id.value">
+                                <!-- Responsables (MANY2MANY) -->
+                                <div t-if="record.coordinator_ids.raw_value and record.coordinator_ids.raw_value.length">
                                     <span class="fa fa-user"/> Coord:
-                                    <t t-esc="record.coordinator_id.value"/>
+                                    <t t-foreach="record.coordinator_ids.raw_value.slice(0,2)" t-as="coord_id">
+                                        <span class="badge badge-secondary">
+                                            <t t-esc="coord_id[1]"/>
+                                        </span>
+                                    </t>
                                 </div>
-                                <div t-if="record.program_associate_id.value">
+                                <div t-if="record.program_associate_ids.raw_value and record.program_associate_ids.raw_value.length">
                                     <span class="fa fa-user-circle"/> PA:
-                                    <t t-esc="record.program_associate_id.value"/>
+                                    <t t-foreach="record.program_associate_ids.raw_value.slice(0,2)" t-as="pa_id">
+                                        <span class="badge badge-secondary">
+                                            <t t-esc="pa_id[1]"/>
+                                        </span>
+                                    </t>
                                 </div>
 
                                 <!-- KPIs -->
@@ -154,6 +162,49 @@
     </record>
 
     <!-- =========================================================
+         ROSTER SEARCH VIEW (criterios de búsqueda)
+         ========================================================= -->
+    <record id="view_gb_brigade_roster_search" model="ir.ui.view">
+        <field name="name">gb.brigade.roster.search</field>
+        <field name="model">gb.brigade.roster</field>
+        <field name="arch" type="xml">
+            <search string="Search Roster">
+                <!-- Campos de búsqueda rápida -->
+                <field name="partner_id" string="Name" filter_domain="[('partner_id.name','ilike',self)]"/>
+                <field name="brigade_role" string="Role" filter_domain="[('brigade_role','ilike',self)]"/>
+                <field name="email" string="Email" filter_domain="[('email','ilike',self)]"/>
+                <field name="brigade_id" string="Brigade"/>
+                
+                <!-- Separador -->
+                <separator/>
+                
+                <!-- Filtros predefinidos -->
+                <filter string="Male" name="filter_male" domain="[('gender','=','male')]"/>
+                <filter string="Female" name="filter_female" domain="[('gender','=','female')]"/>
+                
+                <separator/>
+                
+                <filter string="Spanish Speaker" name="filter_spanish" domain="[('spanish_speaker','=',True)]"/>
+                <filter string="Non-Spanish Speaker" name="filter_non_spanish" domain="[('spanish_speaker','=',False)]"/>
+                
+                <separator/>
+                
+                <filter string="S.A." name="filter_sa" domain="[('sa','=',True)]"/>
+                
+                <separator/>
+                
+                <!-- Agrupaciones -->
+                <group expand="0" string="Group By">
+                    <filter string="Brigade" name="group_brigade" context="{'group_by':'brigade_id'}"/>
+                    <filter string="Role" name="group_role" context="{'group_by':'brigade_role'}"/>
+                    <filter string="Gender" name="group_gender" context="{'group_by':'gender'}"/>
+                    <filter string="Spanish Speaker" name="group_spanish" context="{'group_by':'spanish_speaker'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- =========================================================
          ROSTER TREE VIEW (for "Search More..." dialog)
          ========================================================= -->
     <record id="view_gb_brigade_roster_tree" model="ir.ui.view">
@@ -165,6 +216,9 @@
                 <field name="partner_id" string="Name"/>
                 <field name="brigade_role" string="Role"/>
                 <field name="gender"/>
+                <field name="email"/>
+                <field name="spanish_speaker" string="Spanish"/>
+                <field name="sa" string="S.A."/>
                 <field name="last_booking_check_in" string="Last Check-In" readonly="1"/>
                 <field name="last_booking_check_out" string="Last Check-Out" readonly="1"/>
                 <field name="last_booking_hotel" string="Last Hotel" readonly="1"/>
@@ -192,11 +246,10 @@
                         </group>
 
                         <group>
-                            <field name="coordinator_id"/>
-                            <field name="program_associate_id"/>
-                            <field name="compound_manager_id"/>
-                            <field name="arrival_time_compound"/>
-                            <field name="departure_time_compound"/>
+                            <field name="success_advisor_ids" widget="many2many_tags" context="{'show_mobile_in_name': True}"/>
+                            <field name="coordinator_ids" widget="many2many_tags" context="{'show_mobile_in_name': True}"/>
+                            <field name="program_associate_ids" widget="many2many_tags" context="{'show_mobile_in_name': True}"/>
+                            <field name="sending_organization_ids" widget="many2many_tags" context="{'show_mobile_in_name': True}"/>
                         </group>
                     </group>
 
@@ -244,10 +297,11 @@
                             <field name="program_line_ids">
                                 <list editable="bottom">
                                     <field name="program_id" required="1"/>
+                                    <field name="topic_ids" widget="many2many_tags"/>
                                     <field name="start_date"/>
                                     <field name="end_date"/>
                                     <field name="community_id"/>
-                                    <field name="coordinator_id"/>
+                                    <field name="coordinator_id" context="{'show_mobile_in_name': True}"/>
                                     <field name="notes"/>
                                 </list>
                                 <form string="Program Detail">
@@ -255,7 +309,8 @@
                                         <group>
                                             <group>
                                                 <field name="program_id" required="1"/>
-                                                <field name="coordinator_id"/>
+                                                <field name="topic_ids" widget="many2many_tags"/>
+                                                <field name="coordinator_id" context="{'show_mobile_in_name': True}"/>
                                                 <field name="community_id"/>
                                             </group>
                                             <group>
@@ -271,8 +326,18 @@
 
                         <!-- ROSTER -->
                         <page string="ROSTER">
+                            <!-- SEARCH ROSTER BUTTON -->
+                            <div class="oe_button_box" name="button_box">
+                                <button name="action_view_roster_search"
+                                        type="object"
+                                        class="oe_stat_button"
+                                        icon="fa-search"
+                                        string="Search Roster"
+                                        help="Open roster in full window with search and filters (Name, Email, Role, Gender, Spanish, S.A.)"/>
+                            </div>
+
                             <field name="roster_ids">
-                                <!-- LISTA: line_number muestra 1,2,3... -->
+                                <!-- LISTA EDITABLE -->
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" string=""/>
                                     <field name="line_number" string="N" readonly="1"/>
@@ -283,16 +348,18 @@
                                     <field name="phone_display" string="Phone Number" readonly="1"/>
                                     <field name="spanish_speaker" string="Spanish Speaker"/>
                                     <field name="brigade_role" string="Brigade Role"/>
-                                    <field name="passport_no" string="Passport N°"/>
+                                    <field name="passport_no" string="Passport Nº"/>
                                     <field name="passport_expiry" string="Passport Expiration Date"/>
                                     <field name="citizenship" string="Citizenship"/>
                                     <field name="sa" string="S.A."/>
+                                    <field name="emergency_contact_id" string="Emergency Contact" readonly="1"/>
                                     <field name="emergency_contact_email" string="Emergency Contact E-mail" readonly="1"/>
                                     <field name="diet" string="Diet"/>
                                     <field name="medical_condition" string="Medical Condition"/>
                                     <field name="medications" string="Medications"/>
                                     <field name="allergy" string="Allergy"/>
                                     <field name="tshirt_size" string="T-Shirt Size"/>
+                                    <field name="other_information" string="Other Information"/>
                                 </list>
 
                                 <!-- FORM: detalle de Roster Member -->
@@ -313,7 +380,7 @@
                                             </group>
 
                                             <group string="Passport &amp; Health">
-                                                <field name="passport_no" string="Passport N°"/>
+                                                <field name="passport_no" string="Passport Nº"/>
                                                 <field name="passport_expiry" string="Passport Expiration Date"/>
                                                 <field name="citizenship" string="Citizenship"/>
                                                 <field name="diet" string="Diet"/>
@@ -325,13 +392,17 @@
 
                                         <group string="Emergency Contact">
                                             <group>
-                                                <field name="emergency_contact_id" string="Emergency Contact"/>
+                                                <field name="emergency_contact_id" string="Emergency Contact" readonly="1"/>
                                             </group>
                                             <group>
                                                 <field name="emergency_contact_email"
                                                        string="Emergency Contact E-mail"
                                                        readonly="1"/>
                                             </group>
+                                        </group>
+
+                                        <group string="Additional Information">
+                                            <field name="other_information" string="Other Information" nolabel="1" placeholder="Additional notes, special requirements, travel details, etc."/>
                                         </group>
                                     </sheet>
                                 </form>
@@ -352,10 +423,11 @@
             <!-- Hotel seleccionado desde HOTELS -->
             <field name="arrival_hotel_id" string="Arrival Hotel / City / Time"/>
 
-            <!-- Pasajeros: todos los del roster de la brigada -->
+            <!-- Pasajeros: todos los del roster de la brigada CON TELÉFONO -->
             <field name="passenger_ids"
                    widget="many2many_tags"
-                   domain="[('brigade_id', '=', parent.id)]"/>
+                   domain="[('brigade_id', '=', parent.id)]"
+                   context="{'show_mobile_in_name': True}"/>
 
             <field name="n_pax" readonly="1"/>
             <field name="special_transport"/>
@@ -376,7 +448,8 @@
                         <field name="arrival_hotel_city_time"/>
                         <field name="passenger_ids"
                                widget="many2many_tags"
-                               domain="[('brigade_id', '=', parent.id)]"/>
+                               domain="[('brigade_id', '=', parent.id)]"
+                               context="{'show_mobile_in_name': True}"/>
                         <field name="n_pax" readonly="1"/>
                         <field name="special_transport"/>
                         <field name="extra_charge"/>
@@ -401,10 +474,11 @@
 
             <field name="departure_hotel_id" string="Departure Hotel / City"/>
 
-            <!-- Pasajeros: todos los del roster de la brigada -->
+            <!-- Pasajeros: todos los del roster de la brigada CON TELÉFONO -->
             <field name="passenger_ids"
                    widget="many2many_tags"
-                   domain="[('brigade_id', '=', parent.id)]"/>
+                   domain="[('brigade_id', '=', parent.id)]"
+                   context="{'show_mobile_in_name': True}"/>
 
             <field name="n_pax" readonly="1"/>
             <field name="special_transport"/>
@@ -425,7 +499,8 @@
                         <field name="departure_hotel_city"/>
                         <field name="passenger_ids"
                                widget="many2many_tags"
-                               domain="[('brigade_id', '=', parent.id)]"/>
+                               domain="[('brigade_id', '=', parent.id)]"
+                               context="{'show_mobile_in_name': True}"/>
                         <field name="n_pax" readonly="1"/>
                         <field name="special_transport"/>
                         <field name="extra_charge"/>
@@ -444,7 +519,7 @@
                                 <list editable="bottom">
                                     <field name="sequence" widget="handle" string=""/>
                                     <field name="line_number" string="N" readonly="1"/>
-                                    <field name="person_id" required="1"/>
+                                    <field name="person_id" required="1" context="{'show_mobile_in_name': True}"/>
                                     <field name="brigade_role_default" string="Brigade Role"/>
                                     <field name="gender"/>
                                     <field name="start_datetime"/>
@@ -459,7 +534,7 @@
                                         <group>
                                             <group>
                                                 <field name="line_number" string="N" readonly="1"/>
-                                                <field name="person_id" required="1"/>
+                                                <field name="person_id" required="1" context="{'show_mobile_in_name': True}"/>
                                                 <field name="brigade_role_default" string="Brigade Role"/>
                                                 <field name="gender" readonly="1"/>
                                                 <field name="staff_role"/>
@@ -492,7 +567,7 @@
                                     <field name="start_datetime" string="Inicio"/>
                                     <field name="end_datetime" string="Fin"/>
                                     <field name="place" string="Lugar"/>
-                                    <field name="responsible_id" string="Responsable"/>
+                                    <field name="responsible_id" string="Responsable" context="{'show_mobile_in_name': True}"/>
 
                                     <!-- Nueva columna de notas -->
                                     <field name="notes" string="Notas / Detalles"/>
@@ -501,10 +576,11 @@
                                            widget="many2many_tags"
                                            string="Participantes"
                                            domain="[('brigade_id','=',parent.id)]"
-                                           options="{'no_create': True}"/>
+                                           options="{'no_create': True}"
+                                           context="{'show_mobile_in_name': True}"/>
                                     <field name="participant_count"
                                            readonly="1"
-                                           string="N°"/>
+                                           string="Nº"/>
 
                                     <button name="action_open_add_participants_wizard"
                                             type="object"
@@ -535,7 +611,7 @@
 
                                         <group>
                                             <field name="place" string="Lugar"/>
-                                            <field name="responsible_id" string="Responsable"/>
+                                            <field name="responsible_id" string="Responsable" context="{'show_mobile_in_name': True}"/>
                                         </group>
 
                                         <group string="Participantes">
@@ -548,7 +624,8 @@
                                             <field name="participant_ids"
                                                    widget="many2many_checkboxes"
                                                    domain="[('brigade_id','=',parent.id)]"
-                                                   options="{'no_create': True}"/>
+                                                   options="{'no_create': True}"
+                                                   context="{'show_mobile_in_name': True}"/>
 
                                             <button name="action_open_add_participants_wizard"
                                                     type="object"
@@ -593,9 +670,6 @@
 
                     </notebook>
                 </sheet>
-                <!-- =========================================================
-                     ODOO 18 CHATTER: Using native <chatter/> tag
-                     ========================================================= -->
                 <chatter/>
             </form>
         </field>
@@ -628,8 +702,8 @@
                 <field name="state"/>
                 <field name="arrival_date"/>
                 <field name="departure_date"/>
-                <field name="coordinator_id"/>
-                <field name="program_associate_id"/>
+                <field name="coordinator_ids" widget="many2many_tags" context="{'show_mobile_in_name': True}"/>
+                <field name="program_associate_ids" widget="many2many_tags" context="{'show_mobile_in_name': True}"/>
                 <field name="volunteer_count" string="# Volunteers" readonly="1"/>
                 <field name="volunteer_count" string="# Volunteers" readonly="1"/>
                 <field name="program_count" string="# Programs" readonly="1"/>

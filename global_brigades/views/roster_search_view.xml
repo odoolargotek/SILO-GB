@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+    <!-- =========================================================
+         ROSTER SEARCH VIEW WITH QUICK FILTERS
+         ========================================================= -->
+    <record id="view_gb_brigade_roster_search" model="ir.ui.view">
+        <field name="name">gb.brigade.roster.search</field>
+        <field name="model">gb.brigade.roster</field>
+        <field name="arch" type="xml">
+            <search string="Search Roster">
+                <!-- Search bar for Name, Role, Email -->
+                <field name="partner_id" string="Name" 
+                       filter_domain="[('partner_id.name','ilike',self)]"/>
+                <field name="brigade_role" string="Role" 
+                       filter_domain="[('brigade_role','ilike',self)]"/>
+                <field name="email" string="Email" 
+                       filter_domain="[('email','ilike',self)]"/>
+                
+                <separator/>
+                
+                <!-- QUICK FILTERS SECTION -->
+                <group string="QUICK FILTERS">
+                    <!-- Gender Filters -->
+                    <filter string="Filter Gender" name="filter_gender_group"/>
+                    <filter string="Male" name="filter_male" 
+                            domain="[('gender','=','male')]"/>
+                    <filter string="Female" name="filter_female" 
+                            domain="[('gender','=','female')]"/>
+                    
+                    <separator/>
+                    
+                    <!-- Spanish Speaker Filters -->
+                    <filter string="Filter Spanish" name="filter_spanish_group"/>
+                    <filter string="Spanish Speaker" name="filter_spanish" 
+                            domain="[('spanish_speaker','=',True)]"/>
+                    <filter string="Non-Spanish Speaker" name="filter_non_spanish" 
+                            domain="[('spanish_speaker','=',False)]"/>
+                    
+                    <separator/>
+                    
+                    <!-- S.A. Filter -->
+                    <filter string="Only S.A." name="filter_sa" 
+                            domain="[('sa','=',True)]"/>
+                </group>
+                
+                <separator/>
+                
+                <!-- Group By Options -->
+                <group expand="0" string="Group By">
+                    <filter string="Brigade Role" name="group_role" 
+                            context="{'group_by':'brigade_role'}"/>
+                    <filter string="Gender" name="group_gender" 
+                            context="{'group_by':'gender'}"/>
+                    <filter string="Spanish Speaker" name="group_spanish" 
+                            context="{'group_by':'spanish_speaker'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <!-- =========================================================
+         ROSTER LIST VIEW (Read-Only Summary)
+         ========================================================= -->
+    <record id="view_gb_brigade_roster_list" model="ir.ui.view">
+        <field name="name">gb.brigade.roster.list</field>
+        <field name="model">gb.brigade.roster</field>
+        <field name="arch" type="xml">
+            <list string="ROSTER LIST" create="false" delete="false">
+                <field name="line_number" string="N"/>
+                <field name="partner_id" string="Name"/>
+                <field name="gender"/>
+                <field name="brigade_role" string="Brigade Role"/>
+                <field name="spanish_speaker" string="Spanish"/>
+                <field name="sa" string="S.A."/>
+                <field name="email" string="E-mail"/>
+                <field name="last_booking_check_in" string="Last Check-In"/>
+                <field name="last_booking_check_out" string="Last Check-Out"/>
+                <field name="last_booking_hotel" string="Last Hotel"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- =========================================================
+         FULL ROSTER VIEW (Editable with all fields)
+         ========================================================= -->
+    <record id="view_gb_brigade_roster_full" model="ir.ui.view">
+        <field name="name">gb.brigade.roster.full</field>
+        <field name="model">gb.brigade.roster</field>
+        <field name="arch" type="xml">
+            <list string="FULL ROSTER (FOR EDITING)" editable="bottom">
+                <field name="sequence" widget="handle" string=""/>
+                <field name="line_number" string="N" readonly="1"/>
+                <field name="partner_id" string="Name" required="1"/>
+                <field name="gender"/>
+                <field name="birthdate" string="Date of Birth"/>
+                <field name="email" string="E-mail"/>
+                <field name="phone_display" string="Phone" readonly="1"/>
+                <field name="spanish_speaker" string="Spanish"/>
+                <field name="brigade_role" string="Brigade Role"/>
+                <field name="passport_no" string="Passport Nº"/>
+                <field name="passport_expiry" string="Passport Expiry"/>
+                <field name="citizenship"/>
+                <field name="sa" string="S.A."/>
+                <field name="emergency_contact_id" string="Emergency Contact" readonly="1"/>
+                <field name="emergency_contact_email" string="Emergency Email" readonly="1"/>
+                <field name="diet"/>
+                <field name="medical_condition"/>
+                <field name="medications"/>
+                <field name="allergy"/>
+                <field name="tshirt_size" string="T-Shirt"/>
+                <field name="other_information"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- =========================================================
+         ROSTER FORM VIEW (Detail view)
+         ========================================================= -->
+    <record id="view_gb_brigade_roster_form" model="ir.ui.view">
+        <field name="name">gb.brigade.roster.form</field>
+        <field name="model">gb.brigade.roster</field>
+        <field name="arch" type="xml">
+            <form string="Roster Member">
+                <sheet>
+                    <group>
+                        <group string="Personal Info">
+                            <field name="line_number" string="N" readonly="1"/>
+                            <field name="partner_id" string="Name" required="1"/>
+                            <field name="gender"/>
+                            <field name="birthdate" string="Date of Birth"/>
+                            <field name="spanish_speaker" string="Spanish Speaker"/>
+                            <field name="email" string="E-mail"/>
+                            <field name="phone_display" string="Phone Number" readonly="1"/>
+                            <field name="tshirt_size" string="T-Shirt Size"/>
+                            <field name="brigade_role" string="Brigade Role"/>
+                            <field name="sa" string="S.A."/>
+                        </group>
+
+                        <group string="Passport &amp; Health">
+                            <field name="passport_no" string="Passport Nº"/>
+                            <field name="passport_expiry" string="Passport Expiration Date"/>
+                            <field name="citizenship"/>
+                            <field name="diet"/>
+                            <field name="medical_condition"/>
+                            <field name="medications"/>
+                            <field name="allergy"/>
+                        </group>
+                    </group>
+
+                    <group string="Emergency Contact">
+                        <group>
+                            <field name="emergency_contact_id" string="Emergency Contact" readonly="1"/>
+                        </group>
+                        <group>
+                            <field name="emergency_contact_email" string="Emergency Contact E-mail" readonly="1"/>
+                        </group>
+                    </group>
+
+                    <group string="Additional Information">
+                        <field name="other_information" string="Other Information" nolabel="1" 
+                               placeholder="Additional notes, special requirements, travel details, etc."/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- =========================================================
+         ACTION: Open Roster Search with Quick Filters
+         ========================================================= -->
+    <record id="action_gb_brigade_roster_search" model="ir.actions.act_window">
+        <field name="name">Roster Search</field>
+        <field name="res_model">gb.brigade.roster</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_gb_brigade_roster_search"/>
+        <field name="context">{
+            'search_default_filter_gender_group': 0,
+            'search_default_filter_spanish_group': 0,
+        }</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                No roster members found.
+            </p>
+            <p>
+                Use the QUICK FILTERS panel to filter by Gender, Spanish Speaker, or S.A.
+            </p>
+        </field>
+    </record>
+
+    </data>
+</odoo>

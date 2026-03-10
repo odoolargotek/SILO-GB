@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Global Brigades",
-    "version": "18.0.1.0.0",
+    "version": "18.0.1.0.5",
     "summary": "Customizations for Global Brigades",
     "description": """
 Logistics and volunteer management for Global Brigades:
@@ -16,9 +16,12 @@ Logistics and volunteer management for Global Brigades:
     "depends": [
         "base",
         "contacts",
+        "mail",
     ],
     "data": [
         "data/sequence.xml",
+        "data/gb_brigade_role_data.xml",
+        "data/mail_template_sa_notification.xml",
         "security/security.xml",
         "security/security_rules.xml",
         "security/ir.model.access.csv",
@@ -38,6 +41,7 @@ Logistics and volunteer management for Global Brigades:
         "views/brigade_general_report_views.xml",
         "views/brigade_rooming_report_views.xml",
         "views/brigade_transport_report_views.xml",
+        "views/sa_notification_brigade_view.xml",
     ],
     "images": ["static/description/icon.png"],
     "application": True,

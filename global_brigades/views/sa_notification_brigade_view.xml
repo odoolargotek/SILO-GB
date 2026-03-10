@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Extend Brigade form: add S.A. button in header + sa_notified column in roster -->
+        <record id="view_gb_brigade_form_sa_button" model="ir.ui.view">
+            <field name="name">gb.brigade.form.sa.button</field>
+            <field name="model">gb.brigade</field>
+            <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
+            <field name="arch" type="xml">
+
+                <!-- Add S.A. button before the sheet (creates a header above it) -->
+                <xpath expr="//form/sheet" position="before">
+                    <header>
+                        <button
+                            name="action_send_sa_notifications"
+                            type="object"
+                            string="&#9993; Send S.A. Notifications"
+                            class="btn-primary"
+                            invisible="sa_pending_count == 0"
+                            confirm="This will send arrival notification emails to the emergency contacts of all S.A. participants who have not been notified yet. Continue?"
+                        />
+                        <field name="sa_pending_count" invisible="1"/>
+                    </header>
+                </xpath>
+
+                <!-- Add sa_notified column after other_information in the roster list -->
+                <xpath expr="//field[@name='roster_ids']//list//field[@name='other_information']" position="after">
+                    <field name="sa_notified" string="S.A. Notified" readonly="1"
+                           decoration-success="sa_notified != False"
+                           decoration-muted="sa_notified == False"/>
+                </xpath>
+
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -58,8 +58,8 @@
     </record>
 
     <!-- Inherit Brigade Form: add button near roster -->
-    <record id="view_gb_brigade_form_roster_import_button" model="ir.ui.view">
-        <field name="name">gb.brigade.form.roster.import.button</field>
+    <record id="view_gb_brigade_form_roster_import_button_v2" model="ir.ui.view">
+        <field name="name">gb.brigade.form.roster.import.button.v2</field>
         <field name="model">gb.brigade</field>
         <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
         <field name="arch" type="xml">

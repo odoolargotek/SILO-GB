@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="role_lead_coordinator" model="gb.brigade.role"><field name="name">Lead Coordinator</field></record>
+        <record id="role_interpreter" model="gb.brigade.role"><field name="name">Interpreter</field></record>
+        <record id="role_assistant_coordinator" model="gb.brigade.role"><field name="name">Assistant Coordinator</field></record>
+        <record id="role_counselor" model="gb.brigade.role"><field name="name">Counselor</field></record>
+        <record id="role_doctor" model="gb.brigade.role"><field name="name">Doctor</field></record>
+        <record id="role_dentist" model="gb.brigade.role"><field name="name">Dentist</field></record>
+        <record id="role_pharmacist" model="gb.brigade.role"><field name="name">Pharmacist</field></record>
+        <record id="role_nutritionist" model="gb.brigade.role"><field name="name">Nutritionist</field></record>
+        <record id="role_paramedic" model="gb.brigade.role"><field name="name">Paramedic</field></record>
+        <record id="role_optometrist" model="gb.brigade.role"><field name="name">Optometrist</field></record>
+        <record id="role_nurse" model="gb.brigade.role"><field name="name">Nurse</field></record>
+        <record id="role_nurse_technician" model="gb.brigade.role"><field name="name">Nurse Technician</field></record>
+        <record id="role_lab_technician" model="gb.brigade.role"><field name="name">Lab Technician</field></record>
+        <record id="role_dental_technician" model="gb.brigade.role"><field name="name">Dental Technician</field></record>
+        <record id="role_obgyn" model="gb.brigade.role"><field name="name">OB/GYN</field></record>
+        <record id="role_compound_supervisor" model="gb.brigade.role"><field name="name">Compound Supervisor</field></record>
+        <record id="role_driver_pacecar" model="gb.brigade.role"><field name="name">Driver (Pacecar)</field></record>
+        <record id="role_bus_driver" model="gb.brigade.role"><field name="name">Bus Driver</field></record>
+        <record id="role_driver" model="gb.brigade.role"><field name="name">Driver</field></record>
+        <record id="role_physiotherapist" model="gb.brigade.role"><field name="name">Physiotherapist</field></record>
+        <record id="role_public_health_technician" model="gb.brigade.role"><field name="name">Public Health Technician</field></record>
+        <record id="role_water_technician" model="gb.brigade.role"><field name="name">Water Technician</field></record>
+        <record id="role_program_advisor" model="gb.brigade.role"><field name="name">Program Advisor</field></record>
+        <record id="role_chapter_leader" model="gb.brigade.role"><field name="name">Chapter Leader</field></record>
+        <record id="role_chapter_president" model="gb.brigade.role"><field name="name">Chapter President</field></record>
+        <record id="role_brigade_leader" model="gb.brigade.role"><field name="name">Brigade Leader</field></record>
+        <record id="role_hcp" model="gb.brigade.role"><field name="name">HCP</field></record>
+        <record id="role_faculty_member" model="gb.brigade.role"><field name="name">Faculty Member</field></record>
+        <record id="role_chaperone" model="gb.brigade.role"><field name="name">Chaperone</field></record>
+        <record id="role_volunteer" model="gb.brigade.role"><field name="name">Volunteer</field></record>
+        <record id="role_student" model="gb.brigade.role"><field name="name">Student</field></record>
+        <record id="role_team_lead" model="gb.brigade.role"><field name="name">Team Lead</field></record>
+        <record id="role_ambassador" model="gb.brigade.role"><field name="name">Ambassador</field></record>
+        <record id="role_mentor" model="gb.brigade.role"><field name="name">Mentor</field></record>
+        <record id="role_other" model="gb.brigade.role"><field name="name">Other</field></record>
+    </data>
+</odoo>

@@ -24,10 +24,11 @@
                 <field name="business_client_id" string="Cliente" optional="show"/>
                 <field name="community_names" string="Comunidades" optional="show"/>
 
-                <!-- Responsables -->
-                <field name="coordinator_id" string="Coordinador/a"/>
-                <field name="program_associate_id" string="Program Associate" optional="show"/>
-                <field name="compound_manager_id" string="Compound Manager" optional="show"/>
+                <!-- Responsables (MANY2MANY) -->
+                <field name="success_advisor_ids" widget="many2many_tags" string="Success Advisor" optional="show"/>
+                <field name="coordinator_ids" widget="many2many_tags" string="Coordinador/a"/>
+                <field name="program_associate_ids" widget="many2many_tags" string="Program Associate" optional="show"/>
+                <field name="sending_organization_ids" widget="many2many_tags" string="Sending Org" optional="show"/>
 
                 <!-- Voluntarios / programas / actividades -->
                 <field name="volunteer_count" string="# Voluntarios" readonly="1"/>
@@ -72,8 +73,10 @@
                 <field name="brigade_tier" string="Tier"/>
                 <field name="brigade_type" string="Tipo"/>
                 <field name="business_client_id" string="Cliente"/>
-                <field name="coordinator_id" string="Coordinador/a"/>
-                <field name="program_associate_id" string="Program Associate"/>
+                <field name="coordinator_ids" string="Coordinador/a"/>
+                <field name="program_associate_ids" string="Program Associate"/>
+                <field name="success_advisor_ids" string="Success Advisor"/>
+                <field name="sending_organization_ids" string="Sending Org"/>
                 <field name="arrival_date" string="Fecha Brigada"/>
 
                 <!-- Filtros rápidos por estado -->
@@ -103,9 +106,6 @@
                     <filter name="group_type"
                             string="Tipo"
                             context="{'group_by': 'brigade_type'}"/>
-                    <filter name="group_coordinator"
-                            string="Coordinador/a"
-                            context="{'group_by': 'coordinator_id'}"/>
                     <filter name="group_client"
                             string="Cliente"
                             context="{'group_by': 'business_client_id'}"/>

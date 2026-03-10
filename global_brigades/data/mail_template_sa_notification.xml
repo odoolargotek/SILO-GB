@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="email_template_gb_sa_notification" model="mail.template">
+            <field name="name">Global Brigades - S.A. Arrival Notification</field>
+            <field name="model_id" ref="model_gb_brigade_roster"/>
+            <field name="subject">Your family member has arrived safely – Global Brigades</field>
+            <field name="email_from">{{ (user.email_formatted or user.company_id.email) }}</field>
+            <field name="email_to">{{ object.partner_id.gb_emergency_contact_id.email }}</field>
+            <field name="body_html"><![CDATA[
+<div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;">
+
+    <div style="text-align: center; margin-bottom: 24px;">
+        <h2 style="color: #2e7d32;">&#10003; Safe Arrival Notification</h2>
+        <p style="color: #555; font-size: 14px;">Global Brigades Program Update</p>
+    </div>
+
+    <p>Dear <strong>{{ object.partner_id.gb_emergency_contact_id.name }}</strong>,</p>
+
+    <p>
+        We are pleased to inform you that <strong>{{ object.partner_id.name }}</strong>
+        has arrived safely and is now participating in the Global Brigades program.
+    </p>
+
+    <div style="background: #f1f8e9; border-left: 4px solid #66bb6a; padding: 16px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 0;"><strong>Brigade:</strong> {{ object.brigade_id.name }}</p>
+        <p style="margin: 4px 0;"><strong>Program:</strong> {{ object.brigade_id.brigade_program or 'N/A' }}</p>
+        % if object.brigade_id.arrival_date:
+        <p style="margin: 4px 0;"><strong>Arrival Date:</strong> {{ object.brigade_id.arrival_date }}</p>
+        % endif
+        % if object.brigade_id.departure_date:
+        <p style="margin: 4px 0;"><strong>Departure Date:</strong> {{ object.brigade_id.departure_date }}</p>
+        % endif
+        % if object.brigade_role:
+        <p style="margin: 4px 0 0 0;"><strong>Role:</strong> {{ object.brigade_role }}</p>
+        % endif
+    </div>
+
+    <p>
+        {{ object.partner_id.name }} is in good hands with the Global Brigades team.
+        If you have any urgent concerns, please contact the brigade coordinator directly.
+    </p>
+
+    <p style="color: #888; font-size: 12px; margin-top: 32px; border-top: 1px solid #eee; padding-top: 12px;">
+        This is an automated notification sent by the Global Brigades program management system.
+        Please do not reply to this email.
+    </p>
+
+</div>
+            ]]></field>
+            <field name="lang">{{ object.partner_id.lang }}</field>
+            <field name="auto_delete" eval="True"/>
+        </record>
+
+    </data>
+</odoo>
