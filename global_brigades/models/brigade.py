@@ -110,8 +110,16 @@ class GBBrigade(models.Model):
         tracking=True,
     )
 
-    brigade_program = fields.Many2one(
-        'gb.brigade.program.type',
+    brigade_program = fields.Selection(
+        [
+            ("medical", "Medical"),
+            ("dental", "Dental"),
+            ("business", "Business"),
+            ("water", "Water"),
+            ("public_health", "Public Health"),
+            ("engineering", "Engineering"),
+            ("squads", "Squads"),
+        ],
         string="Official Program",
         help="Main official program.",
         tracking=True,
@@ -156,7 +164,7 @@ class GBBrigade(models.Model):
     @api.onchange("brigade_program")
     def _onchange_brigade_program_business_client(self):
         for record in self:
-            if not record.brigade_program or record.brigade_program.name.lower() != 'business':
+            if record.brigade_program != "business":
                 record.business_client_id = False
 
     brigade_tier = fields.Selection(
@@ -620,6 +628,7 @@ class GBBrigade(models.Model):
                     ) if sline.room_type else ""
                     bed_setup = sline.bed_setup or ""
                     staff_name = staff_occupant.person_id.name if staff_occupant.person_id else ""
+                    # brigade_role_default is Many2one to gb.brigade.role — use .name directly
                     brigade_role = staff_occupant.brigade_role_default.name if staff_occupant.brigade_role_default else ""
                     gender_val = ""
                     if staff_occupant.gender:

@@ -1,5 +1,4 @@
 from . import brigade_role
-from . import brigade_program_type
 from . import brigade
 from . import brigade_activity
 from . import brigade_general_report
