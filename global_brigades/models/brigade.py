@@ -117,6 +117,13 @@ class GBBrigade(models.Model):
         tracking=True,
     )
 
+    lodging_facility_id = fields.Many2one(
+        'gb.hotel.offer',
+        string="Lodging Facility",
+        help="Main lodging facility for this brigade.",
+        tracking=True,
+    )
+
     # =========================
     # LT ITINERARY SIMPLE
     # =========================
