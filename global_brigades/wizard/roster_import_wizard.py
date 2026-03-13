@@ -106,55 +106,27 @@ class GBRosterImportWizard(models.TransientModel):
         }
         return mapping.get(sval, sval)
 
-    def _map_brigade_role(self, v):
-        """Normalizes brigade role values from Excel to match Selection field values."""
+    def _resolve_brigade_role(self, v):
+        """
+        Resolves a brigade role string from Excel to a gb.brigade.role record id.
+        - First tries an exact case-insensitive match on the 'name' field.
+        - If not found and create_missing_partners is not the concern here,
+          creates a new gb.brigade.role record with that name.
+        Returns the integer ID of the role record, or False if v is empty.
+        """
         if not v:
             return False
-        sval = str(v).strip().lower().replace(" ", "_").replace("/", "")
-        
-        # Map common variations to technical field values
-        mapping = {
-            "lead_coordinator": "lead_coordinator",
-            "interpreter": "interpreter",
-            "assistant_coordinator": "assistant_coordinator",
-            "counselor": "counselor",
-            "doctor": "doctor",
-            "dentist": "dentist",
-            "pharmacist": "pharmacist",
-            "nutritionist": "nutritionist",
-            "paramedic": "paramedic",
-            "optometrist": "optometrist",
-            "nurse": "nurse",
-            "nurse_technician": "nurse_technician",
-            "lab_technician": "lab_technician",
-            "dental_technician": "dental_technician",
-            "obgyn": "obgyn",
-            "compound_supervisor": "compound_supervisor",
-            "driver_(pacecar)": "driver_pacecar",
-            "driver_pacecar": "driver_pacecar",
-            "bus_driver": "bus_driver",
-            "driver": "driver",
-            "physiotherapist": "physiotherapist",
-            "public_health_technician": "public_health_technician",
-            "water_technician": "water_technician",
-            "program_advisor": "program_advisor",
-            "chapter_leader": "chapter_leader",
-            "chapter_president": "chapter_president",
-            "brigade_leader": "brigade_leader",
-            "hcp": "hcp",
-            "faculty_member": "faculty_member",
-            "chaperone": "chaperone",
-            "volunteer": "volunteer",
-            "student": "student",
-            "team_lead": "team_lead",
-            "ambassador": "ambassador",
-            "mentor": "mentor",
-            "other": "other",
-        }
-        return mapping.get(sval, sval)
+        sval = str(v).strip()
+        if not sval:
+            return False
+        BrigadeRole = self.env["gb.brigade.role"].sudo()
+        role = BrigadeRole.search([("name", "=ilike", sval)], limit=1)
+        if not role:
+            role = BrigadeRole.create({"name": sval})
+        return role.id
 
     def _safe_set(self, vals, field_name, value):
-        """Set vals[field_name] only if the field exists."""
+        """Set vals[field_name] only if the field exists on res.partner."""
         if field_name in self.env["res.partner"]._fields:
             vals[field_name] = value
 
@@ -164,7 +136,7 @@ class GBRosterImportWizard(models.TransientModel):
     def _build_template_xlsx(self):
         self._require_openpyxl()
         import openpyxl
-        from openpyxl.styles import Font
+        from openpyxl.styles import Font, PatternFill
         from openpyxl.utils import get_column_letter
 
         wb = openpyxl.Workbook()
@@ -185,6 +157,8 @@ class GBRosterImportWizard(models.TransientModel):
             "tshirt_size",
             "brigade_role",
             "sa",
+            "other_information",
+            "notes",
             "diet",
             "medical_condition",
             "medications",
@@ -211,20 +185,33 @@ class GBRosterImportWizard(models.TransientModel):
             "m",
             "Volunteer",
             "no",
+            "",   # other_information
+            "",   # notes
             "None",
             "None",
             "None",
             "None",
             "jane.doe@email.com",
-            "",  # name can be empty -> will use email as name
+            "",   # name can be empty -> will use email as name
             "+591 70000002",
             "+591 70000003",
         ])
 
         bold = Font(bold=True)
+        highlight = PatternFill(start_color="FFF2CC", end_color="FFF2CC", fill_type="solid")
+        # Columns that are roster-only (brigade_role, sa, other_information, notes) -> highlight
+        roster_only_cols = {
+            headers.index("brigade_role") + 1,
+            headers.index("sa") + 1,
+            headers.index("other_information") + 1,
+            headers.index("notes") + 1,
+        }
         for col_idx, _h in enumerate(headers, start=1):
-            ws.cell(row=1, column=col_idx).font = bold
-            ws.column_dimensions[get_column_letter(col_idx)].width = 22
+            cell = ws.cell(row=1, column=col_idx)
+            cell.font = bold
+            if col_idx in roster_only_cols:
+                cell.fill = highlight
+            ws.column_dimensions[get_column_letter(col_idx)].width = 24
 
         bio = BytesIO()
         wb.save(bio)
@@ -286,14 +273,18 @@ class GBRosterImportWizard(models.TransientModel):
         if "email" not in col_map:
             raise UserError(_("Missing required column: 'email'."))
 
-        # Optional columns
+        # Optional columns - partner basics
         name_col = col_map.get("name")
         phone_col = col_map.get("phone")
         mobile_col = col_map.get("mobile")
 
+        # Roster-only columns
         brigade_role_col = col_map.get("brigade_role")
         sa_col = col_map.get("sa")
+        other_information_col = col_map.get("other_information")
+        notes_col = col_map.get("notes")
 
+        # Partner GB profile columns
         gender_col = col_map.get("gender")
         birthdate_col = col_map.get("birthdate")
         spanish_speaker_col = col_map.get("spanish_speaker")
@@ -306,6 +297,7 @@ class GBRosterImportWizard(models.TransientModel):
         medications_col = col_map.get("medications")
         allergy_col = col_map.get("allergy")
 
+        # Emergency contact columns
         emergency_contact_email_col = col_map.get("emergency_contact_email")
         emergency_contact_name_col = col_map.get("emergency_contact_name")
         emergency_contact_phone_col = col_map.get("emergency_contact_phone")
@@ -327,6 +319,9 @@ class GBRosterImportWizard(models.TransientModel):
                 return None
             return row[idx].value
 
+        def str_val(raw):
+            return (str(raw).strip() if raw is not None else "").strip()
+
         for row_idx in range(2, ws.max_row + 1):
             row = ws[row_idx]
 
@@ -337,34 +332,42 @@ class GBRosterImportWizard(models.TransientModel):
                 errors.append(_("Row %s: missing email") % row_idx)
                 continue
 
-            # Basic values
-            name = (str(get_cell(row, name_col)).strip() if get_cell(row, name_col) is not None else "").strip()
-            phone = (str(get_cell(row, phone_col)).strip() if get_cell(row, phone_col) is not None else "").strip()
-            mobile = (str(get_cell(row, mobile_col)).strip() if get_cell(row, mobile_col) is not None else "").strip()
+            # Basic partner values
+            name = str_val(get_cell(row, name_col))
+            phone = str_val(get_cell(row, phone_col))
+            mobile = str_val(get_cell(row, mobile_col))
 
-            # Roster-only - Apply normalization
-            brigade_role_raw = (str(get_cell(row, brigade_role_col)).strip() if get_cell(row, brigade_role_col) is not None else "").strip()
-            brigade_role = self._map_brigade_role(brigade_role_raw)
+            # --- Roster-only fields ---
+            # brigade_role: Many2one to gb.brigade.role -> resolve to ID
+            brigade_role_raw = str_val(get_cell(row, brigade_role_col))
+            brigade_role_id = self._resolve_brigade_role(brigade_role_raw)
+
             sa = self._parse_bool(get_cell(row, sa_col))
 
-            # Partner GB profile values
+            # other_information: Text field on gb.brigade.roster (NOT on partner)
+            other_information = str_val(get_cell(row, other_information_col))
+
+            # notes: Text field on gb.brigade.roster (NOT on partner)
+            notes = str_val(get_cell(row, notes_col))
+
+            # --- Partner GB profile fields ---
             gender = self._map_gender(get_cell(row, gender_col))
             birthdate = self._parse_date(get_cell(row, birthdate_col)) if birthdate_col is not None else False
             spanish_speaker = self._parse_bool(get_cell(row, spanish_speaker_col)) if spanish_speaker_col is not None else False
-            passport_no = (str(get_cell(row, passport_no_col)).strip() if get_cell(row, passport_no_col) is not None else "").strip()
+            passport_no = str_val(get_cell(row, passport_no_col))
             passport_expiry = self._parse_date(get_cell(row, passport_expiry_col)) if passport_expiry_col is not None else False
-            citizenship = (str(get_cell(row, citizenship_col)).strip() if get_cell(row, citizenship_col) is not None else "").strip()
+            citizenship = str_val(get_cell(row, citizenship_col))
             tshirt_size = self._map_tshirt(get_cell(row, tshirt_size_col))
-            diet = (str(get_cell(row, diet_col)).strip() if get_cell(row, diet_col) is not None else "").strip()
-            medical_condition = (str(get_cell(row, medical_condition_col)).strip() if get_cell(row, medical_condition_col) is not None else "").strip()
-            medications = (str(get_cell(row, medications_col)).strip() if get_cell(row, medications_col) is not None else "").strip()
-            allergy = (str(get_cell(row, allergy_col)).strip() if get_cell(row, allergy_col) is not None else "").strip()
+            diet = str_val(get_cell(row, diet_col))
+            medical_condition = str_val(get_cell(row, medical_condition_col))
+            medications = str_val(get_cell(row, medications_col))
+            allergy = str_val(get_cell(row, allergy_col))
 
-            # Emergency contact values
+            # --- Emergency contact values ---
             ec_email = self._normalize_email(get_cell(row, emergency_contact_email_col)) if emergency_contact_email_col is not None else ""
-            ec_name = (str(get_cell(row, emergency_contact_name_col)).strip() if get_cell(row, emergency_contact_name_col) is not None else "").strip()
-            ec_phone = (str(get_cell(row, emergency_contact_phone_col)).strip() if get_cell(row, emergency_contact_phone_col) is not None else "").strip()
-            ec_mobile = (str(get_cell(row, emergency_contact_mobile_col)).strip() if get_cell(row, emergency_contact_mobile_col) is not None else "").strip()
+            ec_name = str_val(get_cell(row, emergency_contact_name_col))
+            ec_phone = str_val(get_cell(row, emergency_contact_phone_col))
+            ec_mobile = str_val(get_cell(row, emergency_contact_mobile_col))
 
             # Create/find emergency contact FIRST (before main partner)
             emergency_contact = False
@@ -411,12 +414,12 @@ class GBRosterImportWizard(models.TransientModel):
                 self._safe_set(vals, "gb_medical_condition", medical_condition or False)
                 self._safe_set(vals, "gb_medications", medications or False)
                 self._safe_set(vals, "gb_allergy", allergy or False)
-                
-                # ✅ FIX: Save brigade_role to partner's default role field
-                if brigade_role:
-                    self._safe_set(vals, "gb_brigade_role", brigade_role)
-                
-                # ✅ FIX: Associate emergency contact to new partners
+
+                # gb_brigade_role is Many2one -> assign the resolved ID
+                if brigade_role_id:
+                    self._safe_set(vals, "gb_brigade_role", brigade_role_id)
+
+                # Associate emergency contact to new partners
                 if emergency_contact:
                     self._safe_set(vals, "gb_emergency_contact_id", emergency_contact.id)
 
@@ -460,8 +463,9 @@ class GBRosterImportWizard(models.TransientModel):
                         self._safe_set(upd, "gb_medications", medications)
                     if allergy:
                         self._safe_set(upd, "gb_allergy", allergy)
-                    if brigade_role:
-                        self._safe_set(upd, "gb_brigade_role", brigade_role)
+                    # gb_brigade_role is Many2one -> use ID
+                    if brigade_role_id:
+                        self._safe_set(upd, "gb_brigade_role", brigade_role_id)
                     if emergency_contact:
                         self._safe_set(upd, "gb_emergency_contact_id", emergency_contact.id)
 
@@ -494,8 +498,9 @@ class GBRosterImportWizard(models.TransientModel):
                         upd["gb_medications"] = medications
                     if "gb_allergy" in partner._fields and not partner.gb_allergy and allergy:
                         upd["gb_allergy"] = allergy
-                    if brigade_role and "gb_brigade_role" in partner._fields and not partner.gb_brigade_role:
-                        upd["gb_brigade_role"] = brigade_role
+                    # gb_brigade_role is Many2one -> use ID, only fill if empty
+                    if brigade_role_id and "gb_brigade_role" in partner._fields and not partner.gb_brigade_role:
+                        upd["gb_brigade_role"] = brigade_role_id
                     if emergency_contact and "gb_emergency_contact_id" in partner._fields and not partner.gb_emergency_contact_id:
                         upd["gb_emergency_contact_id"] = emergency_contact.id
 
@@ -518,8 +523,14 @@ class GBRosterImportWizard(models.TransientModel):
                 "partner_id": partner.id,
                 "sa": sa,
             }
-            if brigade_role:
-                roster_vals["brigade_role"] = brigade_role
+            # brigade_role in gb.brigade.roster is Char (free text label), not Many2one
+            # We store the raw label string (not the technical key) for display purposes.
+            if brigade_role_raw:
+                roster_vals["brigade_role"] = brigade_role_raw
+            if other_information:
+                roster_vals["other_information"] = other_information
+            if notes:
+                roster_vals["notes"] = notes
 
             Roster.create(roster_vals)
             created_roster += 1
