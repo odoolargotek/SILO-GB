@@ -250,6 +250,16 @@
                             <field name="coordinator_ids" widget="many2many_tags" context="{'show_mobile_in_name': True}"/>
                             <field name="program_associate_ids" widget="many2many_tags" context="{'show_mobile_in_name': True}"/>
                             <field name="lodging_facility_id"/>
+                            <field name="chapter_president_faculty_ids"
+                                   widget="many2many_tags"
+                                   domain="[('brigade_id', '=', id)]"
+                                   options="{'no_create': True}"
+                                   context="{'show_mobile_in_name': True}"/>
+                            <field name="professor_chaperone_ids"
+                                   widget="many2many_tags"
+                                   domain="[('brigade_id', '=', id)]"
+                                   options="{'no_create': True}"
+                                   context="{'show_mobile_in_name': True}"/>
                             <field name="sending_organization_ids" widget="many2many_tags" context="{'show_mobile_in_name': True}"/>
                         </group>
                     </group>
