@@ -99,3 +99,7 @@ access_gb_roster_import_wizard_admin,gb.roster.import.wizard.admin,model_gb_rost
 access_gb_roster_import_wizard_pa,gb.roster.import.wizard.pa,model_gb_roster_import_wizard,global_brigades.group_gb_program_advisor,1,1,1,1
 access_gb_roster_import_wizard_op1,gb.roster.import.wizard.op1,model_gb_roster_import_wizard,global_brigades.group_gb_operative_1,1,1,1,1
 access_gb_roster_import_wizard_op2,gb.roster.import.wizard.op2,model_gb_roster_import_wizard,global_brigades.group_gb_operative_2,1,1,1,1
+access_gb_program_topic_admin,gb.program.topic.admin,model_gb_program_topic,global_brigades.group_gb_admin,1,1,1,1
+access_gb_program_topic_pa,gb.program.topic.pa,model_gb_program_topic,global_brigades.group_gb_program_advisor,1,1,1,1
+access_gb_program_topic_op1,gb.program.topic.op1,model_gb_program_topic,global_brigades.group_gb_operative_1,1,0,0,0
+access_gb_program_topic_op2,gb.program.topic.op2,model_gb_program_topic,global_brigades.group_gb_operative_2,1,0,0,0
