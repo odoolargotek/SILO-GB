@@ -1,14 +1,15 @@
 <odoo>
     <!-- 1) Acción de reporte PDF para una brigada -->
     <report
-        id="global_brigades_report_gb_brigade_detailed_ficha"
-        model="gb.brigade"
-        string="Brigade Detailed Report"
-        name="global_brigades.report_gb_brigade_detailed_ficha"
-        file="global_brigades.report_gb_brigade_detailed_ficha"
-        report_type="qweb-pdf"
-        print_report_name="'Ficha - %s' % (object.name or '')"
-    />
+    id="report_gb_brigade_detailed_ficha"
+    model="gb.brigade"
+    string="Brigade Detailed Report"
+    name="global_brigades.report_gb_brigade_detailed_ficha"
+    file="global_brigades.report_gb_brigade_detailed_ficha"
+    report_type="qweb-pdf"
+    print_report_name="'Ficha - %s' % (object.name or '')"
+/>
+
 
     <!-- 2) Template QWeb básico (de prueba) -->
     <template id="report_gb_brigade_detailed_ficha">
@@ -57,9 +58,9 @@
         <field name="arch" type="xml">
             <header position="inside">
                 <button name="%(global_brigades_report_gb_brigade_detailed_ficha)d"
-                        type="action"
-                        string="Generate Detailed Report (PDF)"
-                        class="btn-secondary"/>
+        type="action"
+        string="Generate Detailed Report (PDF)"
+        class="btn-secondary"/>
             </header>
         </field>
     </record>
