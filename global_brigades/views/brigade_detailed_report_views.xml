@@ -594,10 +594,11 @@
                                             <td><t t-esc="a.flight_through_sap or ''"/></td>
                                             <td class="gb-wrap"><t t-esc="a.arrival_hotel_id.display_name if a.arrival_hotel_id else ''"/></td>
                                             <td class="gb-wrap">
-                                                <t t-foreach="a.passenger_ids" t-as="p">
-                                                    <div><t t-esc="p.display_name"/></div>
-                                                </t>
-                                            </td>
+    <t t-foreach="a.passenger_ids" t-as="p">
+        <span t-esc="p.display_name"/>
+        <t t-if="p != a.passenger_ids[-1]">, </t>
+    </t>
+</td>
                                             <td class="gb-wrap"><t t-esc="a.special_transport or ''"/></td>
                                             <td class="gb-wrap"><t t-esc="a.extra_charge or ''"/></td>
                                         </tr>
@@ -633,10 +634,11 @@
                                             <td><t t-esc="d.flight_through_sap or ''"/></td>
                                             <td class="gb-wrap"><t t-esc="d.departure_hotel_id.display_name if d.departure_hotel_id else ''"/></td>
                                             <td class="gb-wrap">
-                                                <t t-foreach="d.passenger_ids" t-as="p">
-                                                    <div><t t-esc="p.display_name"/></div>
-                                                </t>
-                                            </td>
+    <t t-foreach="d.passenger_ids" t-as="p">
+        <span t-esc="p.display_name"/>
+        <t t-if="p != d.passenger_ids[-1]">, </t>
+    </t>
+</td>
                                             <td class="gb-wrap"><t t-esc="d.special_transport or ''"/></td>
                                             <td class="gb-wrap"><t t-esc="d.extra_charge or ''"/></td>
                                         </tr>
@@ -653,7 +655,6 @@
                                     <tr>
                                         <th style="width:3%;">N</th>
                                         <th style="width:10%;">Name</th>
-                                        <th style="width:10%;">Last Name</th>
                                         <th style="width:5%;">Gender</th>
                                         <th style="width:7%;">DOB</th>
                                         <th style="width:11%;">Email</th>
