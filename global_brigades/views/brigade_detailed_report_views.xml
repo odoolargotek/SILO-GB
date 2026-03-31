@@ -680,9 +680,9 @@
                                                 <t t-esc="r.partner_id.name if r.partner_id else ''"/>
                                             </td>
                                            <td class="gb-wrap">
-    <t t-esc="r.partner_id.display_name if r.partner_id else ''"/>
-</td>
-<td class="gb-wrap">
+                                              <t t-esc="r.partner_id.display_name if r.partner_id else ''"/>
+                                            </td>
+                                      <td class="gb-wrap"></td>
                                             <td><t t-esc="r.gender or ''"/></td>
                                             <td><t t-esc="r.birthdate or ''"/></td>
                                             <td class="gb-wrap"><t t-esc="r.email or ''"/></td>
