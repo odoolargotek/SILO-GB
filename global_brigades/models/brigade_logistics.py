@@ -5,7 +5,6 @@
 # License: LGPL-3.0
 
 from odoo import api, fields, models, _
-from datetime import datetime
 import pytz
 
 
@@ -24,12 +23,13 @@ class GBBrigadeArrival(models.Model):
 
     title = fields.Char(string="Airline", required=True)
     flight_number = fields.Char(string="Flight #")
-
-    # Campo técnico real que Odoo guarda
     date_time_arrival = fields.Datetime(string="Arrival DateTime")
 
-    # Campo visible para usuarios, siempre interpretado como hora Panamá
-    date_time_arrival_pa = fields.Char(string="Arrival DateTime (Panama)")
+    date_time_arrival_panama = fields.Char(
+        string="Arrival Time Panama",
+        compute="_compute_date_time_arrival_panama",
+        store=False,
+    )
 
     flight_through_sap = fields.Char(string="Through SAP / Stopover")
 
@@ -65,79 +65,16 @@ class GBBrigadeArrival(models.Model):
     special_transport = fields.Boolean(string="Special Transport Needed?")
     extra_charge = fields.Char(string="Extra Charge / Notes")
 
-    @api.onchange("date_time_arrival_pa")
-    def _onchange_date_time_arrival_pa(self):
-        tz_panama = pytz.timezone("America/Panama")
-        for rec in self:
-            if rec.date_time_arrival_pa:
-                try:
-                    dt_panama = tz_panama.localize(
-                        datetime.strptime(rec.date_time_arrival_pa, "%m/%d/%Y %H:%M:%S")
-                    )
-                    dt_utc = dt_panama.astimezone(pytz.utc)
-                    rec.date_time_arrival = fields.Datetime.to_string(dt_utc)
-                except Exception:
-                    rec.date_time_arrival = False
-
-    @api.onchange("date_time_arrival")
-    def _onchange_date_time_arrival(self):
+    @api.depends("date_time_arrival")
+    def _compute_date_time_arrival_panama(self):
         tz_panama = pytz.timezone("America/Panama")
         for rec in self:
             if rec.date_time_arrival:
                 dt_utc = fields.Datetime.from_string(rec.date_time_arrival)
                 dt_panama = pytz.utc.localize(dt_utc).astimezone(tz_panama)
-                rec.date_time_arrival_pa = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        tz_panama = pytz.timezone("America/Panama")
-        for vals in vals_list:
-            value = vals.get("date_time_arrival_pa")
-            if value:
-                try:
-                    dt_panama = tz_panama.localize(
-                        datetime.strptime(value, "%m/%d/%Y %H:%M:%S")
-                    )
-                    vals["date_time_arrival"] = fields.Datetime.to_string(
-                        dt_panama.astimezone(pytz.utc)
-                    )
-                except Exception:
-                    vals["date_time_arrival"] = False
-        records = super().create(vals_list)
-        for rec in records:
-            if rec.date_time_arrival and not rec.date_time_arrival_pa:
-                dt_utc = fields.Datetime.from_string(rec.date_time_arrival)
-                dt_panama = pytz.utc.localize(dt_utc).astimezone(tz_panama)
-                rec.date_time_arrival_pa = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
-        return records
-
-    def write(self, vals):
-        tz_panama = pytz.timezone("America/Panama")
-
-        value = vals.get("date_time_arrival_pa")
-        if value:
-            try:
-                dt_panama = tz_panama.localize(
-                    datetime.strptime(value, "%m/%d/%Y %H:%M:%S")
-                )
-                vals["date_time_arrival"] = fields.Datetime.to_string(
-                    dt_panama.astimezone(pytz.utc)
-                )
-            except Exception:
-                vals["date_time_arrival"] = False
-
-        result = super().write(vals)
-
-        if "date_time_arrival" in vals and "date_time_arrival_pa" not in vals:
-            for rec in self:
-                if rec.date_time_arrival:
-                    dt_utc = fields.Datetime.from_string(rec.date_time_arrival)
-                    dt_panama = pytz.utc.localize(dt_utc).astimezone(tz_panama)
-                    rec.date_time_arrival_pa = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
-                else:
-                    rec.date_time_arrival_pa = False
-
-        return result
+                rec.date_time_arrival_panama = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
+            else:
+                rec.date_time_arrival_panama = False
 
     @api.depends("passenger_ids")
     def _compute_n_pax(self):
@@ -186,15 +123,18 @@ class GBBrigadeArrival(models.Model):
 
             conflicts = {}
             for other in other_arrivals:
-                common = other.passenger_ids.filtered(lambda p: p.id in passenger_ids)
+                common = other.passenger_ids.filtered(
+                    lambda p: p.id in passenger_ids
+                )
                 for p in common:
                     conflicts.setdefault(
                         p.partner_id.name or p.display_name, []
                     ).append(
                         _("Arrival: %(title)s (%(date)s)") % {
                             "title": other.title or "",
-                            "date": fields.Datetime.to_string(other.date_time_arrival)
-                            if other.date_time_arrival else "",
+                            "date": fields.Datetime.to_string(
+                                other.date_time_arrival
+                            ) if other.date_time_arrival else "",
                         }
                     )
 
@@ -231,12 +171,13 @@ class GBBrigadeDeparture(models.Model):
 
     title = fields.Char(string="Airline", required=True)
     flight_number = fields.Char(string="Flight #")
-
-    # Campo técnico real que Odoo guarda
     date_time_departure = fields.Datetime(string="Departure DateTime")
 
-    # Campo visible para usuarios, siempre interpretado como hora Panamá
-    date_time_departure_pa = fields.Char(string="Departure DateTime (Panama)")
+    date_time_departure_panama = fields.Char(
+        string="Departure Time Panama",
+        compute="_compute_date_time_departure_panama",
+        store=False,
+    )
 
     flight_through_sap = fields.Char(string="Through SAP / Stopover")
 
@@ -272,79 +213,16 @@ class GBBrigadeDeparture(models.Model):
     special_transport = fields.Boolean(string="Special Transport Needed?")
     extra_charge = fields.Char(string="Extra Charge / Notes")
 
-    @api.onchange("date_time_departure_pa")
-    def _onchange_date_time_departure_pa(self):
-        tz_panama = pytz.timezone("America/Panama")
-        for rec in self:
-            if rec.date_time_departure_pa:
-                try:
-                    dt_panama = tz_panama.localize(
-                        datetime.strptime(rec.date_time_departure_pa, "%m/%d/%Y %H:%M:%S")
-                    )
-                    dt_utc = dt_panama.astimezone(pytz.utc)
-                    rec.date_time_departure = fields.Datetime.to_string(dt_utc)
-                except Exception:
-                    rec.date_time_departure = False
-
-    @api.onchange("date_time_departure")
-    def _onchange_date_time_departure(self):
+    @api.depends("date_time_departure")
+    def _compute_date_time_departure_panama(self):
         tz_panama = pytz.timezone("America/Panama")
         for rec in self:
             if rec.date_time_departure:
                 dt_utc = fields.Datetime.from_string(rec.date_time_departure)
                 dt_panama = pytz.utc.localize(dt_utc).astimezone(tz_panama)
-                rec.date_time_departure_pa = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
-
-    @api.model_create_multi
-    def create(self, vals_list):
-        tz_panama = pytz.timezone("America/Panama")
-        for vals in vals_list:
-            value = vals.get("date_time_departure_pa")
-            if value:
-                try:
-                    dt_panama = tz_panama.localize(
-                        datetime.strptime(value, "%m/%d/%Y %H:%M:%S")
-                    )
-                    vals["date_time_departure"] = fields.Datetime.to_string(
-                        dt_panama.astimezone(pytz.utc)
-                    )
-                except Exception:
-                    vals["date_time_departure"] = False
-        records = super().create(vals_list)
-        for rec in records:
-            if rec.date_time_departure and not rec.date_time_departure_pa:
-                dt_utc = fields.Datetime.from_string(rec.date_time_departure)
-                dt_panama = pytz.utc.localize(dt_utc).astimezone(tz_panama)
-                rec.date_time_departure_pa = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
-        return records
-
-    def write(self, vals):
-        tz_panama = pytz.timezone("America/Panama")
-
-        value = vals.get("date_time_departure_pa")
-        if value:
-            try:
-                dt_panama = tz_panama.localize(
-                    datetime.strptime(value, "%m/%d/%Y %H:%M:%S")
-                )
-                vals["date_time_departure"] = fields.Datetime.to_string(
-                    dt_panama.astimezone(pytz.utc)
-                )
-            except Exception:
-                vals["date_time_departure"] = False
-
-        result = super().write(vals)
-
-        if "date_time_departure" in vals and "date_time_departure_pa" not in vals:
-            for rec in self:
-                if rec.date_time_departure:
-                    dt_utc = fields.Datetime.from_string(rec.date_time_departure)
-                    dt_panama = pytz.utc.localize(dt_utc).astimezone(tz_panama)
-                    rec.date_time_departure_pa = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
-                else:
-                    rec.date_time_departure_pa = False
-
-        return result
+                rec.date_time_departure_panama = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
+            else:
+                rec.date_time_departure_panama = False
 
     @api.depends("passenger_ids")
     def _compute_n_pax(self):
@@ -393,15 +271,18 @@ class GBBrigadeDeparture(models.Model):
 
             conflicts = {}
             for other in other_departures:
-                common = other.passenger_ids.filtered(lambda p: p.id in passenger_ids)
+                common = other.passenger_ids.filtered(
+                    lambda p: p.id in passenger_ids
+                )
                 for p in common:
                     conflicts.setdefault(
                         p.partner_id.name or p.display_name, []
                     ).append(
                         _("Departure: %(title)s (%(date)s)") % {
                             "title": other.title or "",
-                            "date": fields.Datetime.to_string(other.date_time_departure)
-                            if other.date_time_departure else "",
+                            "date": fields.Datetime.to_string(
+                                other.date_time_departure
+                            ) if other.date_time_departure else "",
                         }
                     )
 
