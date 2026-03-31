@@ -46,19 +46,4 @@
             </div>
         </t>
     </template>
-
-    <!-- 3) Vista heredada: SOLO insertar el botón en el header -->
-    <record id="view_gb_brigade_form_inherit_report_btn" model="ir.ui.view">
-        <field name="name">gb.brigade.form.inherit.report.btn</field>
-        <field name="model">gb.brigade</field>
-        <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
-        <field name="arch" type="xml">
-            <header position="inside">
-                <button name="%(report_gb_brigade_detailed_ficha)d"
-                        type="action"
-                        string="Generate Detailed Report (PDF)"
-                        class="btn-secondary"/>
-            </header>
-        </field>
-    </record>
 </odoo>
