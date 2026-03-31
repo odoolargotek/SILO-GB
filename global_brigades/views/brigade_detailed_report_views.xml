@@ -11,19 +11,495 @@
         <field name="binding_type">report</field>
     </record>
 
-    <template id="report_gb_brigade_detailed_ficha_template">
+  <template id="report_gb_brigade_detailed_ficha_template">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
                     <div class="page">
-                        <h2>
-                            Brigade Ficha -
-                            <t t-esc="o.name"/>
-                        </h2>
-                        <p>
-                            External Brigade Code:
-                            <t t-esc="o.external_brigade_code or ''"/>
-                        </p>
+
+                        <style>
+                            .gb-title {
+                                font-size: 24px;
+                                font-weight: 700;
+                                margin-bottom: 8px;
+                                color: #1f2937;
+                            }
+                            .gb-subtitle {
+                                font-size: 12px;
+                                color: #6b7280;
+                                margin-bottom: 16px;
+                            }
+                            .gb-section {
+                                margin-top: 18px;
+                                margin-bottom: 10px;
+                            }
+                            .gb-section-title {
+                                font-size: 14px;
+                                font-weight: 700;
+                                text-transform: uppercase;
+                                color: #0f766e;
+                                border-bottom: 2px solid #0f766e;
+                                padding-bottom: 4px;
+                                margin-bottom: 8px;
+                            }
+                            .gb-kpi-box {
+                                width: 100%;
+                                border: 1px solid #d1d5db;
+                                padding: 8px;
+                                min-height: 56px;
+                            }
+                            .gb-kpi-label {
+                                font-size: 11px;
+                                color: #6b7280;
+                                text-transform: uppercase;
+                            }
+                            .gb-kpi-value {
+                                font-size: 20px;
+                                font-weight: 700;
+                                color: #111827;
+                            }
+                            .gb-table {
+                                width: 100%;
+                                border-collapse: collapse;
+                                font-size: 10px;
+                            }
+                            .gb-table th {
+                                background: #0f766e;
+                                color: white;
+                                border: 1px solid #d1d5db;
+                                padding: 6px;
+                                text-align: left;
+                                font-weight: 700;
+                            }
+                            .gb-table td {
+                                border: 1px solid #d1d5db;
+                                padding: 5px;
+                                vertical-align: top;
+                            }
+                            .gb-label {
+                                font-weight: 700;
+                                color: #111827;
+                            }
+                            .gb-muted {
+                                color: #6b7280;
+                            }
+                            .gb-small {
+                                font-size: 10px;
+                            }
+                            .gb-wrap {
+                                white-space: pre-wrap;
+                                word-wrap: break-word;
+                            }
+                            .gb-avoid-break {
+                                page-break-inside: avoid;
+                            }
+                            .gb-logo {
+                                max-width: 120px;
+                                max-height: 80px;
+                            }
+                        </style>
+
+                        <!-- HEADER -->
+                        <div class="gb-avoid-break">
+                            <table style="width:100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="width:75%; vertical-align:top;">
+                                        <div class="gb-title">
+                                            <t t-esc="o.name or ''"/>
+                                        </div>
+                                        <div class="gb-subtitle">
+                                            Brigade Detailed Report
+                                        </div>
+                                    </td>
+                                    <td style="width:25%; text-align:right; vertical-align:top;">
+                                        <t t-if="o.university_logo">
+                                            <img t-att-src="image_data_uri(o.university_logo)" class="gb-logo"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- GENERAL INFO -->
+                        <div class="gb-section gb-avoid-break">
+                            <div class="gb-section-title">Brigade General Information</div>
+
+                            <table style="width:100%; border-collapse: collapse; font-size: 11px;">
+                                <tr>
+                                    <td style="width:50%; vertical-align:top; padding-right:8px;">
+                                        <table style="width:100%;">
+                                            <tr>
+                                                <td class="gb-label">Chapter Name</td>
+                                                <td><t t-esc="o.name or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Brigade Code</td>
+                                                <td><t t-esc="o.external_brigade_code or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Internal Code</td>
+                                                <td><t t-esc="o.brigade_code or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Status</td>
+                                                <td><t t-esc="o.state or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Arrival Date</td>
+                                                <td><t t-esc="o.arrival_date or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Departure Date</td>
+                                                <td><t t-esc="o.departure_date or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Brigade Type</td>
+                                                <td><t t-esc="o.brigade_type or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Program</td>
+                                                <td><t t-esc="o.brigade_program or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Restrictions</td>
+                                                <td><t t-esc="o.brigade_restriction or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Tier</td>
+                                                <td><t t-esc="o.brigade_tier or ''"/></td>
+                                            </tr>
+                                        </table>
+                                    </td>
+
+                                    <td style="width:50%; vertical-align:top; padding-left:8px;">
+                                        <table style="width:100%;">
+                                            <tr>
+                                                <td class="gb-label">Sending Organization</td>
+                                                <td>
+                                                    <t t-foreach="o.sending_organization_ids" t-as="x">
+                                                        <span t-esc="x.display_name"/>
+                                                        <t t-if="not loop.last">, </t>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Lead Coordinator</td>
+                                                <td>
+                                                    <t t-foreach="o.coordinator_ids" t-as="x">
+                                                        <span t-esc="x.display_name"/>
+                                                        <t t-if="not loop.last">, </t>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Program Associate</td>
+                                                <td>
+                                                    <t t-foreach="o.program_associate_ids" t-as="x">
+                                                        <span t-esc="x.display_name"/>
+                                                        <t t-if="not loop.last">, </t>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Success Advisor</td>
+                                                <td>
+                                                    <t t-foreach="o.success_advisor_ids" t-as="x">
+                                                        <span t-esc="x.display_name"/>
+                                                        <t t-if="not loop.last">, </t>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Lodging Facility</td>
+                                                <td><t t-esc="o.lodging_facility_id.display_name if o.lodging_facility_id else ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Chapter President / Faculty</td>
+                                                <td>
+                                                    <t t-foreach="o.chapter_president_faculty_ids" t-as="x">
+                                                        <span t-esc="x.display_name"/>
+                                                        <t t-if="not loop.last">, </t>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Professor / Chaperone</td>
+                                                <td>
+                                                    <t t-foreach="o.professor_chaperone_ids" t-as="x">
+                                                        <span t-esc="x.display_name"/>
+                                                        <t t-if="not loop.last">, </t>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Business Client</td>
+                                                <td><t t-esc="o.business_client_id.display_name if o.business_client_id else ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Communities</td>
+                                                <td class="gb-wrap"><t t-esc="o.community_names or ''"/></td>
+                                            </tr>
+                                            <tr>
+                                                <td class="gb-label">Itinerary Link</td>
+                                                <td class="gb-wrap">
+                                                    <t t-if="o.lt_itinerary_url">
+                                                        <span t-esc="o.lt_itinerary_url"/>
+                                                    </t>
+                                                    <t t-elif="o.lt_itinerary_link">
+                                                        <span t-esc="o.lt_itinerary_link"/>
+                                                    </t>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- KPI ROW -->
+                        <div class="gb-section gb-avoid-break">
+                            <table style="width:100%; border-collapse: collapse;">
+                                <tr>
+                                    <td style="width:33.33%; padding-right:6px;">
+                                        <div class="gb-kpi-box">
+                                            <div class="gb-kpi-label">Total Roster</div>
+                                            <div class="gb-kpi-value"><t t-esc="o.volunteer_count or 0"/></div>
+                                        </div>
+                                    </td>
+                                    <td style="width:33.33%; padding-left:3px; padding-right:3px;">
+                                        <div class="gb-kpi-box">
+                                            <div class="gb-kpi-label">Total Staff</div>
+                                            <div class="gb-kpi-value"><t t-esc="o.staff_count or 0"/></div>
+                                        </div>
+                                    </td>
+                                    <td style="width:33.33%; padding-left:6px;">
+                                        <div class="gb-kpi-box">
+                                            <div class="gb-kpi-label">Total Participants</div>
+                                            <div class="gb-kpi-value"><t t-esc="o.total_participants or 0"/></div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+
+                        <!-- STAFF -->
+                        <div class="gb-section">
+                            <div class="gb-section-title">Temp Staff</div>
+                            <table class="gb-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:5%;">#</th>
+                                        <th style="width:20%;">Person</th>
+                                        <th style="width:15%;">Brigade Role</th>
+                                        <th style="width:10%;">Gender</th>
+                                        <th style="width:12%;">Start</th>
+                                        <th style="width:12%;">End</th>
+                                        <th style="width:10%;">Diet</th>
+                                        <th style="width:10%;">Allergy</th>
+                                        <th style="width:16%;">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.staff_ids" t-as="s">
+                                        <tr>
+                                            <td><t t-esc="s.line_number or ''"/></td>
+                                            <td><t t-esc="s.person_id.display_name if s.person_id else ''"/></td>
+                                            <td><t t-esc="s.brigade_role_default or ''"/></td>
+                                            <td><t t-esc="s.gender or ''"/></td>
+                                            <td><t t-esc="s.start_datetime or ''"/></td>
+                                            <td><t t-esc="s.end_datetime or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="s.diet or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="s.allergy or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="s.internal_note or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- ADD ONS / EXTRAS -->
+                        <div class="gb-section">
+                            <div class="gb-section-title">Add-Ons / Extras</div>
+                            <table class="gb-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:18%;">Activity</th>
+                                        <th style="width:14%;">Type</th>
+                                        <th style="width:12%;">Start</th>
+                                        <th style="width:12%;">End</th>
+                                        <th style="width:12%;">Place</th>
+                                        <th style="width:14%;">Responsible</th>
+                                        <th style="width:8%;">#</th>
+                                        <th style="width:10%;">Notes</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.brigade_activity_ids" t-as="a">
+                                        <tr>
+                                            <td class="gb-wrap"><t t-esc="a.name or ''"/></td>
+                                            <td>
+                                                <t t-foreach="a.tag_ids" t-as="tag">
+                                                    <span t-esc="tag.display_name"/>
+                                                    <t t-if="not loop.last">, </t>
+                                                </t>
+                                            </td>
+                                            <td><t t-esc="a.start_datetime or ''"/></td>
+                                            <td><t t-esc="a.end_datetime or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="a.place or ''"/></td>
+                                            <td><t t-esc="a.responsible_id.display_name if a.responsible_id else ''"/></td>
+                                            <td><t t-esc="a.participant_count or 0"/></td>
+                                            <td class="gb-wrap"><t t-esc="a.notes or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- ARRIVALS -->
+                        <div class="gb-section">
+                            <div class="gb-section-title">Arrivals</div>
+                            <table class="gb-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:12%;">Title</th>
+                                        <th style="width:12%;">Flight</th>
+                                        <th style="width:16%;">Arrival Datetime</th>
+                                        <th style="width:10%;">Through SAP</th>
+                                        <th style="width:16%;">Hotel / City / Time</th>
+                                        <th style="width:20%;">Passengers</th>
+                                        <th style="width:6%;">#PAX</th>
+                                        <th style="width:8%;">Extra</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.arrival_ids" t-as="a">
+                                        <tr>
+                                            <td class="gb-wrap"><t t-esc="a.title or ''"/></td>
+                                            <td><t t-esc="a.flight_number or ''"/></td>
+                                            <td><t t-esc="a.date_time_arrival or ''"/></td>
+                                            <td><t t-esc="a.flight_through_sap or ''"/></td>
+                                            <td class="gb-wrap">
+                                                <t t-esc="a.arrival_hotel_id.display_name if a.arrival_hotel_id else ''"/>
+                                            </td>
+                                            <td class="gb-wrap">
+                                                <t t-foreach="a.passenger_ids" t-as="p">
+                                                    <span t-esc="p.display_name"/>
+                                                    <t t-if="not loop.last">, </t>
+                                                </t>
+                                            </td>
+                                            <td><t t-esc="a.n_pax or 0"/></td>
+                                            <td class="gb-wrap">
+                                                <t t-esc="a.extra_charge or ''"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- DEPARTURES -->
+                        <div class="gb-section">
+                            <div class="gb-section-title">Departures</div>
+                            <table class="gb-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:12%;">Title</th>
+                                        <th style="width:12%;">Flight</th>
+                                        <th style="width:16%;">Departure Datetime</th>
+                                        <th style="width:10%;">Through SAP</th>
+                                        <th style="width:16%;">Hotel / City</th>
+                                        <th style="width:20%;">Passengers</th>
+                                        <th style="width:6%;">#PAX</th>
+                                        <th style="width:8%;">Extra</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.departure_ids" t-as="d">
+                                        <tr>
+                                            <td class="gb-wrap"><t t-esc="d.title or ''"/></td>
+                                            <td><t t-esc="d.flight_number or ''"/></td>
+                                            <td><t t-esc="d.date_time_departure or ''"/></td>
+                                            <td><t t-esc="d.flight_through_sap or ''"/></td>
+                                            <td class="gb-wrap">
+                                                <t t-esc="d.departure_hotel_id.display_name if d.departure_hotel_id else ''"/>
+                                            </td>
+                                            <td class="gb-wrap">
+                                                <t t-foreach="d.passenger_ids" t-as="p">
+                                                    <span t-esc="p.display_name"/>
+                                                    <t t-if="not loop.last">, </t>
+                                                </t>
+                                            </td>
+                                            <td><t t-esc="d.n_pax or 0"/></td>
+                                            <td class="gb-wrap">
+                                                <t t-esc="d.extra_charge or ''"/>
+                                            </td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- ROSTER -->
+                        <div class="gb-section">
+                            <div class="gb-section-title">Roster</div>
+                            <table class="gb-table">
+                                <thead>
+                                    <tr>
+                                        <th>N</th>
+                                        <th>Name</th>
+                                        <th>Gender</th>
+                                        <th>DOB</th>
+                                        <th>Email</th>
+                                        <th>Phone</th>
+                                        <th>Spanish</th>
+                                        <th>Role</th>
+                                        <th>Passport</th>
+                                        <th>Passport Exp.</th>
+                                        <th>Citizenship</th>
+                                        <th>S.A.</th>
+                                        <th>Emergency Email</th>
+                                        <th>Diet</th>
+                                        <th>Medical Condition</th>
+                                        <th>Medications</th>
+                                        <th>Allergy</th>
+                                        <th>T-Shirt</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.roster_ids" t-as="r">
+                                        <tr>
+                                            <td><t t-esc="r.line_number or ''"/></td>
+                                            <td><t t-esc="r.partner_id.display_name if r.partner_id else ''"/></td>
+                                            <td><t t-esc="r.gender or ''"/></td>
+                                            <td><t t-esc="r.birthdate or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="r.email or ''"/></td>
+                                            <td><t t-esc="r.phone_display or ''"/></td>
+                                            <td><t t-esc="r.spanish_speaker or ''"/></td>
+                                            <td><t t-esc="r.brigade_role or ''"/></td>
+                                            <td><t t-esc="r.passport_no or ''"/></td>
+                                            <td><t t-esc="r.passport_expiry or ''"/></td>
+                                            <td><t t-esc="r.citizenship or ''"/></td>
+                                            <td><t t-esc="r.sa or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="r.emergency_contact_email or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="r.diet or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="r.medical_condition or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="r.medications or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="r.allergy or ''"/></td>
+                                            <td><t t-esc="r.tshirt_size or ''"/></td>
+                                        </tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- ADDITIONAL INFO -->
+                        <div class="gb-section gb-avoid-break">
+                            <div class="gb-section-title">Additional Information</div>
+                            <div class="gb-wrap gb-small">
+                                <t t-esc="o.extra_info or ''"/>
+                            </div>
+                        </div>
+
                     </div>
                 </t>
             </t>
