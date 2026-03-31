@@ -1,17 +1,16 @@
 <odoo>
     <!-- 1) Acción de reporte PDF para una brigada -->
     <report
-    id="report_gb_brigade_detailed_ficha"
-    model="gb.brigade"
-    string="Brigade Detailed Report"
-    name="global_brigades.report_gb_brigade_detailed_ficha"
-    file="global_brigades.report_gb_brigade_detailed_ficha"
-    report_type="qweb-pdf"
-    print_report_name="'Ficha - %s' % (object.name or '')"
-/>
+        id="report_gb_brigade_detailed_ficha"
+        model="gb.brigade"
+        string="Brigade Detailed Report"
+        name="global_brigades.report_gb_brigade_detailed_ficha"
+        file="global_brigades.report_gb_brigade_detailed_ficha"
+        report_type="qweb-pdf"
+        print_report_name="'Ficha - %s' % (object.name or '')"
+    />
 
-
-    <!-- 2) Template QWeb básico (de prueba) -->
+    <!-- 2) Template QWeb básico (luego lo mejoramos con la ficha completa) -->
     <template id="report_gb_brigade_detailed_ficha">
         <t t-call="web.external_layout">
             <div class="page">
@@ -45,7 +44,9 @@
                     <t t-esc="o.departure_date or ''"/>
                 </p>
 
-                <!-- Más adelante cambiamos esto por el layout completo tipo ficha -->
+                <!-- Esto es solo para probar que el reporte funciona.
+                     Cuando confirme que se instala bien, reemplazamos
+                     este contenido por el layout tipo ficha completa. -->
             </div>
         </t>
     </template>
@@ -57,10 +58,10 @@
         <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
         <field name="arch" type="xml">
             <header position="inside">
-                <button name="%(global_brigades_report_gb_brigade_detailed_ficha)d"
-        type="action"
-        string="Generate Detailed Report (PDF)"
-        class="btn-secondary"/>
+                <button name="%(report_gb_brigade_detailed_ficha)d"
+                        type="action"
+                        string="Generate Detailed Report (PDF)"
+                        class="btn-secondary"/>
             </header>
         </field>
     </record>
