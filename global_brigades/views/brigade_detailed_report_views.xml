@@ -654,9 +654,9 @@
                                 <thead>
                                     <tr>
                                         <th style="width:3%;">N</th>
-                                        <th style="width:10%;">Name</th>
+                                        <th style="width:10%;">Name</th>                                        
                                         <th style="width:5%;">Gender</th>
-                                        <th style="width:7%;">DOB</th>
+                                        <th style="width:10%;">DOB</th>                                        
                                         <th style="width:11%;">Email</th>
                                         <th style="width:8%;">Phone</th>
                                         <th style="width:5%;">Spanish</th>
@@ -679,9 +679,6 @@
                                             <td><t t-esc="r.line_number or ''"/></td>
                                             <td class="gb-wrap">
                                                 <t t-esc="r.partner_id.name if r.partner_id else ''"/>
-                                            </td>
-                                           <td class="gb-wrap">
-                                              <t t-esc="r.partner_id.display_name if r.partner_id else ''"/>
                                             </td>
                                       <td class="gb-wrap"></td>
                                             <td><t t-esc="r.gender or ''"/></td>
