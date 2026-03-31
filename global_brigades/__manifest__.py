@@ -43,6 +43,7 @@ Logistics and volunteer management for Global Brigades:
         "views/brigade_transport_report_views.xml",
         "views/sa_notification_brigade_view.xml",
         "views/brigade_detailed_report_views.xml",
+        "data/brigade_detailed_report_action.xml",
 
 
 
