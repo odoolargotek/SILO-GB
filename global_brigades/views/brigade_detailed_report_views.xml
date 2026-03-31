@@ -176,37 +176,33 @@
                                             <tr>
                                                 <td class="gb-label">Sending Organization</td>
                                                 <td>
-                                                    <t t-foreach="o.sending_organization_ids" t-as="x">
-                                                        <span t-esc="x.display_name"/>
-                                                        <t t-if="not loop.last">, </t>
-                                                    </t>
+                                                      <t t-foreach="o.sending_organization_ids" t-as="x">
+        <div><span t-esc="x.display_name"/></div>
+    </t>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="gb-label">Lead Coordinator</td>
                                                 <td>
-                                                    <t t-foreach="o.coordinator_ids" t-as="x">
-                                                        <span t-esc="x.display_name"/>
-                                                        <t t-if="not loop.last">, </t>
-                                                    </t>
+                                                  <t t-foreach="o.coordinator_ids" t-as="x">
+        <div><span t-esc="x.display_name"/></div>
+    </t>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="gb-label">Program Associate</td>
                                                 <td>
-                                                    <t t-foreach="o.program_associate_ids" t-as="x">
-                                                        <span t-esc="x.display_name"/>
-                                                        <t t-if="not loop.last">, </t>
-                                                    </t>
+                                                      <t t-foreach="o.program_associate_ids" t-as="x">
+        <div><span t-esc="x.display_name"/></div>
+    </t>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="gb-label">Success Advisor</td>
                                                 <td>
-                                                    <t t-foreach="o.success_advisor_ids" t-as="x">
-                                                        <span t-esc="x.display_name"/>
-                                                        <t t-if="not loop.last">, </t>
-                                                    </t>
+                                                      <t t-foreach="o.success_advisor_ids" t-as="x">
+        <div><span t-esc="x.display_name"/></div>
+    </t>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -216,19 +212,17 @@
                                             <tr>
                                                 <td class="gb-label">Chapter President / Faculty</td>
                                                 <td>
-                                                    <t t-foreach="o.chapter_president_faculty_ids" t-as="x">
-                                                        <span t-esc="x.display_name"/>
-                                                        <t t-if="not loop.last">, </t>
-                                                    </t>
+         <t t-foreach="o.chapter_president_faculty_ids" t-as="x">
+        <div><span t-esc="x.display_name"/></div>
+    </t>
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="gb-label">Professor / Chaperone</td>
                                                 <td>
-                                                    <t t-foreach="o.professor_chaperone_ids" t-as="x">
-                                                        <span t-esc="x.display_name"/>
-                                                        <t t-if="not loop.last">, </t>
-                                                    </t>
+    <t t-foreach="o.professor_chaperone_ids" t-as="x">
+        <div><span t-esc="x.display_name"/></div>
+    </t>
                                                 </td>
                                             </tr>
                                             <tr>
@@ -338,10 +332,9 @@
                                         <tr>
                                             <td class="gb-wrap"><t t-esc="a.name or ''"/></td>
                                             <td>
-                                                <t t-foreach="a.tag_ids" t-as="tag">
-                                                    <span t-esc="tag.display_name"/>
-                                                    <t t-if="not loop.last">, </t>
-                                                </t>
+                                                    <t t-foreach="a.tag_ids" t-as="tag">
+        <div><span t-esc="tag.display_name"/></div>
+    </t>
                                             </td>
                                             <td><t t-esc="a.start_datetime or ''"/></td>
                                             <td><t t-esc="a.end_datetime or ''"/></td>
@@ -382,10 +375,9 @@
                                                 <t t-esc="a.arrival_hotel_id.display_name if a.arrival_hotel_id else ''"/>
                                             </td>
                                             <td class="gb-wrap">
-                                                <t t-foreach="a.passenger_ids" t-as="p">
-                                                    <span t-esc="p.display_name"/>
-                                                    <t t-if="not loop.last">, </t>
-                                                </t>
+                                                 <t t-foreach="a.passenger_ids" t-as="p">
+        <div><span t-esc="p.display_name"/></div>
+    </t>
                                             </td>
                                             <td><t t-esc="a.n_pax or 0"/></td>
                                             <td class="gb-wrap">
@@ -424,10 +416,9 @@
                                                 <t t-esc="d.departure_hotel_id.display_name if d.departure_hotel_id else ''"/>
                                             </td>
                                             <td class="gb-wrap">
-                                                <t t-foreach="d.passenger_ids" t-as="p">
-                                                    <span t-esc="p.display_name"/>
-                                                    <t t-if="not loop.last">, </t>
-                                                </t>
+                                                    <t t-foreach="d.passenger_ids" t-as="p">
+        <div><span t-esc="p.display_name"/></div>
+    </t>
                                             </td>
                                             <td><t t-esc="d.n_pax or 0"/></td>
                                             <td class="gb-wrap">
