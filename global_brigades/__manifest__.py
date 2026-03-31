@@ -42,9 +42,9 @@ Logistics and volunteer management for Global Brigades:
         "views/brigade_rooming_report_views.xml",
         "views/brigade_transport_report_views.xml",
         "views/sa_notification_brigade_view.xml",
-        # NUEVO: reporte detallado en PDF para una brigada
         "views/brigade_detailed_report_views.xml",
-        "views/brigade_detailed_report_button_views.xml",
+        "data/brigade_detailed_report_action.xml",
+
 
     ],
     "images": ["static/description/icon.png"],
