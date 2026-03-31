@@ -273,7 +273,7 @@
 
                                         <table class="gb-mini-table" style="margin-top:6px;">
                                             <tr>
-                                                <th colspan="2">Contacts & Logistics</th>
+                                                <th colspan="2">Contacts &amp; Logistics</th>
                                             </tr>
                                             <tr>
                                                 <td class="gb-label">Business Client</td>
@@ -472,7 +472,7 @@
 
                         <!-- COMMUNITY / EXTRA ACTIVITIES -->
                         <div class="gb-section">
-                            <div class="gb-section-title">Community &amp; Extra Activities Information</div>
+                            <div class="gb-section-title">Community &amp;amp; Extra Activities Information</div>
                             <table class="gb-mini-table">
                                 <tr>
                                     <td class="gb-label">Coordinator</td>
@@ -507,11 +507,11 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td class="gb-label">Community Names &amp; Dates</td>
+                                    <td class="gb-label">Community Names &amp;amp; Dates</td>
                                     <td class="gb-wrap"><t t-esc="o.community_names or ''"/></td>
                                 </tr>
                                 <tr>
-                                    <td class="gb-label">Additional Information &amp; Observations</td>
+                                    <td class="gb-label">Additional Information &amp;amp; Observations</td>
                                     <td class="gb-wrap"><t t-esc="o.extra_info or ''"/></td>
                                 </tr>
                             </table>
