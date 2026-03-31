@@ -1,21 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <report
-        id="report_gb_brigade_detailed_ficha"
-        model="gb.brigade"
-        string="Brigade Detailed Report"
-        name="global_brigades.report_gb_brigade_detailed_ficha"
-        file="global_brigades.report_gb_brigade_detailed_ficha"
-        report_type="qweb-pdf"
-        print_report_name="'Ficha - %s' % (object.name or '')"
-    />
+    <record id="action_report_gb_brigade_detailed_ficha" model="ir.actions.report">
+        <field name="name">Brigade Detailed Report</field>
+        <field name="model">gb.brigade</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">global_brigades.report_gb_brigade_detailed_ficha_template</field>
+        <field name="report_file">global_brigades.report_gb_brigade_detailed_ficha_template</field>
+        <field name="print_report_name">'Ficha - %s' % (object.name or '')</field>
+        <field name="binding_model_id" ref="model_gb_brigade"/>
+        <field name="binding_type">report</field>
+    </record>
 
-    <template id="report_gb_brigade_detailed_ficha">
-        <t t-call="web.external_layout">
-            <div class="page">
-                <h2>Brigade Ficha - <t t-esc="o.name"/></h2>
-                <p>External Brigade Code: <t t-esc="o.external_brigade_code or ''"/></p>
-            </div>
+    <template id="report_gb_brigade_detailed_ficha_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>
+                            Brigade Ficha -
+                            <t t-esc="o.name"/>
+                        </h2>
+                        <p>
+                            External Brigade Code:
+                            <t t-esc="o.external_brigade_code or ''"/>
+                        </p>
+                    </div>
+                </t>
+            </t>
         </t>
     </template>
 </odoo>
