@@ -1,0 +1,15 @@
+<odoo>
+    <record id="view_gb_brigade_form_inherit_report_btn2" model="ir.ui.view">
+        <field name="name">gb.brigade.form.inherit.report.btn2</field>
+        <field name="model">gb.brigade</field>
+        <field name="inherit_id" ref="global_brigades.view_gb_brigade_form"/>
+        <field name="arch" type="xml">
+            <header position="inside">
+                <button name="%(report_gb_brigade_detailed_ficha)d"
+                        type="action"
+                        string="Generate Detailed Report (PDF)"
+                        class="btn-secondary"/>
+            </header>
+        </field>
+    </record>
+</odoo>
