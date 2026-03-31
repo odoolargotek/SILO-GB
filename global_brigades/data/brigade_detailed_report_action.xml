@@ -6,6 +6,6 @@
         <field name="binding_model_id" ref="model_gb_brigade"/>
         <field name="binding_view_types">form</field>
         <field name="state">code</field>
-        <field name="code">action = env.ref('global_brigades.report_gb_brigade_detailed_ficha').report_action(record)</field>
+        <field name="code">action = env.ref('global_brigades.action_report_gb_brigade_detailed_ficha').report_action(record)</field>
     </record>
 </odoo>
