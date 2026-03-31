@@ -655,7 +655,7 @@
                                     <tr>
                                         <th style="width:3%;">N</th>
                                         <th style="width:10%;">Name</th>                                        
-                                        
+                                        <th style="width:5%;">Gender</th>
                                         <th style="width:10%;">DOB</th>                                        
                                         <th style="width:11%;">Email</th>
                                         <th style="width:8%;">Phone</th>
@@ -680,7 +680,7 @@
                                             <td class="gb-wrap">
                                                 <t t-esc="r.partner_id.name if r.partner_id else ''"/>
                                             </td>
-                                      <td class="gb-wrap"></td>
+                                  
                                             <td><t t-esc="r.gender or ''"/></td>
                                             <td><t t-esc="r.birthdate or ''"/></td>
                                             <td class="gb-wrap"><t t-esc="r.email or ''"/></td>
