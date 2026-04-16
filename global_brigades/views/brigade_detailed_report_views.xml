@@ -35,7 +35,6 @@
 
                         <style>
                             body { font-family: Arial, sans-serif; }
-                            .gb-report-header { margin-bottom: 6px; }
                             .gb-report-title { font-size: 18px; font-weight: 700; color: #1e3a5f; }
                             .gb-report-subtitle { font-size: 10px; color: #6b7280; }
                             .gb-report-code { font-size: 11px; font-weight: 700; color: #374151; }
@@ -113,13 +112,6 @@
                             .gb-avoid-break { page-break-inside: avoid; }
                             .gb-section { margin-top: 10px; }
                             .text-muted { color: #6b7280; }
-                            .gb-gender-box {
-                                border: 2px solid #214e7a;
-                                padding: 6px 10px;
-                                text-align: center;
-                                display: inline-block;
-                                min-width: 60px;
-                            }
                             .gb-gender-value { font-size: 22px; font-weight: 700; color: #1e3a5f; }
                             .gb-gender-label { font-size: 8px; text-transform: uppercase; color: #6b7280; }
                         </style>
@@ -128,7 +120,6 @@
                         <!-- PAGE 1: SUMMARY                                                  -->
                         <!-- ================================================================ -->
 
-                        <!-- REPORT HEADER -->
                         <table style="width:100%; border-collapse:collapse; margin-bottom:8px;">
                             <tr>
                                 <td style="vertical-align:top; width:75%;">
@@ -321,22 +312,18 @@
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Program lines -->
                                     <t t-foreach="o.program_line_ids" t-as="p">
                                         <tr>
                                             <td class="gb-wrap"><t t-esc="p.program_id.display_name if p.program_id else ''"/></td>
-                                            <td>
-                                                <t t-esc="p.program_id.name if p.program_id else ''"/>
-                                            </td>
+                                            <td><t t-esc="p.program_id.name if p.program_id else ''"/></td>
                                             <td><t t-esc="p.start_date.strftime('%Y-%m-%d') if p.start_date else ''"/></td>
                                             <td><t t-esc="p.end_date.strftime('%Y-%m-%d') if p.end_date else ''"/></td>
-                                            <td class="gb-wrap"><t t-esc="p.community_id.display_name if p.community_id else p.location or ''"/></td>
+                                            <td class="gb-wrap"><t t-esc="p.community_id.display_name if p.community_id else ''"/></td>
                                             <td class="gb-wrap"><t t-esc="p.coordinator_id.display_name if p.coordinator_id else ''"/></td>
                                             <td></td>
                                             <td class="gb-wrap"><t t-esc="p.notes or ''"/></td>
                                         </tr>
                                     </t>
-                                    <!-- Activities -->
                                     <t t-foreach="o.brigade_activity_ids" t-as="a">
                                         <tr>
                                             <td class="gb-wrap"><t t-esc="a.name or ''"/></td>
@@ -368,7 +355,6 @@
                         <!-- ================================================================ -->
                         <div class="gb-page-break">
 
-                            <!-- PAGE 2 HEADER -->
                             <table style="width:100%; border-collapse:collapse; margin-bottom:8px;">
                                 <tr>
                                     <td style="vertical-align:top; width:75%;">
@@ -387,7 +373,6 @@
                                 </tr>
                             </table>
 
-                            <!-- STAFF TABLE -->
                             <div class="gb-section-title">
                                 Temporary Staff Roster (<t t-esc="len(o.staff_ids)"/> Members)
                             </div>
@@ -395,20 +380,26 @@
                                 <thead>
                                     <tr>
                                         <th style="width:4%;">#</th>
-                                        <th style="width:18%;">Role</th>
-                                        <th style="width:24%;">Name</th>
+                                        <th style="width:20%;">Role</th>
+                                        <th style="width:26%;">Name</th>
                                         <th style="width:28%;">Diet / Restrictions</th>
                                         <th style="width:16%;">Allergy</th>
-                                        <th style="width:5%;">Start</th>
-                                        <th style="width:5%;">End</th>
+                                        <th style="width:3%;">Start</th>
+                                        <th style="width:3%;">End</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     <t t-foreach="o.staff_ids.sorted(key=lambda s: (s.sequence, s.id))" t-as="s">
                                         <tr>
                                             <td><t t-esc="s.line_number or s_index + 1"/></td>
+                                            <!-- brigade_role_default is Many2one to gb.brigade.role -->
                                             <td class="gb-wrap">
-                                                <t t-esc="dict(s.person_id._fields.get('gb_brigade_role', type('f', (), {'selection': []})()).selection).get(s.brigade_role_default, s.brigade_role_default) if s.brigade_role_default else s.staff_role or ''"/>
+                                                <t t-if="s.brigade_role_default">
+                                                    <t t-esc="s.brigade_role_default.name"/>
+                                                </t>
+                                                <t t-elif="s.staff_role">
+                                                    <t t-esc="s.staff_role"/>
+                                                </t>
                                             </td>
                                             <td class="gb-wrap">
                                                 <t t-esc="s.person_id.display_name if s.person_id else ''"/>
@@ -432,7 +423,6 @@
                         <!-- ================================================================ -->
                         <div class="gb-page-break">
 
-                            <!-- PAGE 3 HEADER -->
                             <table style="width:100%; border-collapse:collapse; margin-bottom:8px;">
                                 <tr>
                                     <td style="vertical-align:top; width:75%;">
@@ -451,7 +441,6 @@
                                 </tr>
                             </table>
 
-                            <!-- VOLUNTEERS TABLE -->
                             <div class="gb-section-title">
                                 Volunteer Roster (<t t-esc="len(o.roster_ids)"/> Participants)
                             </div>
@@ -499,9 +488,8 @@
                                                 </t>
                                             </td>
                                             <td class="gb-wrap"><t t-esc="r.medications or ''"/></td>
-                                            <td style="text-align:center;">
-                                                <t t-esc="dict(r.partner_id._fields['gb_tshirt_size'].selection).get(r.tshirt_size, r.tshirt_size or '') if r.tshirt_size else ''"/>
-                                            </td>
+                                            <!-- tshirt_size is a selection on partner: use r.tshirt_size directly (stored as key) -->
+                                            <td style="text-align:center;"><t t-esc="r.tshirt_size or ''"/></td>
                                         </tr>
                                     </t>
                                 </tbody>
