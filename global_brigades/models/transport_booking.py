@@ -5,10 +5,20 @@ from odoo import api, fields, models, _
 from odoo.exceptions import UserError
 
 
+def _time_slots_15min():
+    """Genera slots de hora cada 15 minutos: 00:00, 00:15, ..., 23:45"""
+    slots = []
+    for h in range(24):
+        for m in range(0, 60, 15):
+            val = f"{h:02d}:{m:02d}"
+            slots.append((val, val))
+    return slots
+
+
 class GBBrigadeTransport(models.Model):
     _name = "gb.brigade.transport"
     _description = "Global Brigades - Brigade Transport"
-    _order = "date_time, id"
+    _order = "date, time_slot, id"
 
     # ---------------------------------------------------------
     # Relaciones base
@@ -23,13 +33,51 @@ class GBBrigadeTransport(models.Model):
     title = fields.Char(
         string="Title / Ref",
         required=True,
-        help="Internal name, e.g. 'Airport → Compound - Arrival Day'.",
+        help="Internal name, e.g. 'Airport -> Compound - Arrival Day'.",
     )
 
+    # ----------------------------------------------------------
+    # CAMPO LEGADO - conservado para no perder datos historicos
+    # Se puede eliminar en version 18.0.1.0.7 tras confirmar
+    # que la migracion fue exitosa.
+    # ----------------------------------------------------------
     date_time = fields.Datetime(
-        string="Date / Time",
-        help="Planned date and time for this transport.",
+        string="Date/Time (legacy)",
+        help="Deprecated. Use 'date' + 'time_slot' instead. Kept for migration safety.",
     )
+
+    # ----------------------------------------------------------
+    # NUEVOS CAMPOS: fecha y hora separados, sin timezone
+    # ----------------------------------------------------------
+    date = fields.Date(
+        string="Date",
+        help="Transport date in Panama time. Not affected by user timezone.",
+    )
+
+    time_slot = fields.Selection(
+        selection=_time_slots_15min(),
+        string="Time (Panama)",
+        help="Departure/arrival time in Panama time (UTC-5). "
+             "This value is never recalculated or shifted by timezone profiles.",
+    )
+
+    date_time_display = fields.Char(
+        string="Date / Time",
+        compute="_compute_date_time_display",
+        store=True,
+        readonly=True,
+        help="Combined date and time for display and ordering.",
+    )
+
+    @api.depends("date", "time_slot")
+    def _compute_date_time_display(self):
+        for rec in self:
+            if rec.date and rec.time_slot:
+                rec.date_time_display = f"{rec.date} {rec.time_slot}"
+            elif rec.date:
+                rec.date_time_display = str(rec.date)
+            else:
+                rec.date_time_display = False
 
     # Proveedor del transporte
     provider_id = fields.Many2one(
@@ -38,7 +86,7 @@ class GBBrigadeTransport(models.Model):
         help="Provider who will supply the vehicles for this movement.",
     )
 
-    # Vehículo principal en la cabecera (informativo + usado en totales si no hay líneas)
+    # Vehiculo principal en la cabecera (informativo + usado en totales si no hay lineas)
     vehicle_id = fields.Many2one(
         "gb.transport.vehicle",
         string="Vehicle",
@@ -92,14 +140,6 @@ class GBBrigadeTransport(models.Model):
         help="Combined list of all passengers (Roster + Staff) as partners.",
     )
 
-    @api.depends("passenger_ids.partner_id", "staff_passenger_ids.person_id")
-    def _compute_transport_passenger_partner_ids(self):
-        for rec in self:
-            roster_partners = rec.passenger_ids.mapped("partner_id")
-            staff_partners = rec.staff_passenger_ids.mapped("person_id")
-            rec.transport_passenger_partner_ids = roster_partners | staff_partners
-
-
     n_pax = fields.Integer(
         string="# Pax",
         compute="_compute_n_pax",
@@ -107,7 +147,7 @@ class GBBrigadeTransport(models.Model):
     )
 
     # ---------------------------------------------------------
-    # Vehículos (líneas) y totales
+    # Vehiculos (lineas) y totales
     # ---------------------------------------------------------
     vehicle_line_ids = fields.One2many(
         "gb.brigade.transport.line",
@@ -141,7 +181,7 @@ class GBBrigadeTransport(models.Model):
     )
 
     # ---------------------------------------------------------
-    # Cálculos
+    # Calculos
     # ---------------------------------------------------------
     @api.depends("passenger_ids", "staff_passenger_ids")
     def _compute_n_pax(self):
@@ -155,7 +195,7 @@ class GBBrigadeTransport(models.Model):
         a partir de:
         - passenger_ids.partner_id  (roster)
         - staff_passenger_ids.person_id  (staff)
-        Solo para visualización (read-only).
+        Solo para visualizacion (read-only).
         """
         for rec in self:
             partners = self.env["res.partner"]
@@ -173,8 +213,8 @@ class GBBrigadeTransport(models.Model):
     )
     def _compute_totals(self):
         """
-        Si hay líneas de vehículo, usamos esas.
-        Si no hay líneas, usamos el vehículo de cabecera (vehicle_id).
+        Si hay lineas de vehiculo, usamos esas.
+        Si no hay lineas, usamos el vehiculo de cabecera (vehicle_id).
         """
         for rec in self:
             if rec.vehicle_line_ids:
@@ -197,7 +237,7 @@ class GBBrigadeTransport(models.Model):
     # ---------------------------------------------------------
     @api.onchange("vehicle_id")
     def _onchange_vehicle_id(self):
-        """Si elegimos vehículo con proveedor, sincronizamos provider_id."""
+        """Si elegimos vehiculo con proveedor, sincronizamos provider_id."""
         for rec in self:
             if rec.vehicle_id and rec.vehicle_id.provider_id:
                 rec.provider_id = rec.vehicle_id.provider_id
@@ -348,22 +388,17 @@ class GBBrigadeTransportLine(models.Model):
         """
         Filtra el roster disponible:
         - Todos los del roster de la brigada
-        - MENOS los ya asignados en OTRAS líneas de vehículo de este transporte
-        - MÁS los pasajeros actuales (para poder editarlos)
+        - MENOS los ya asignados en OTRAS lineas de vehiculo de este transporte
+        - MAS los pasajeros actuales (para poder editarlos)
         """
         for rec in self:
             if not rec.transport_id or not rec.transport_id.brigade_id:
                 rec.available_roster_ids = self.env["gb.brigade.roster"]
                 continue
 
-            # Todo el roster de la brigada
             all_roster = rec.transport_id.brigade_id.roster_ids
-
-            # Ya asignados en OTRAS líneas de vehículo
             other_lines = rec.transport_id.vehicle_line_ids.filtered(lambda line: line.id != rec.id)
             already_assigned = other_lines.mapped("roster_passenger_ids")
-
-            # Disponibles = Todos - Ya asignados + Pasajeros actuales
             available = (all_roster - already_assigned) | rec.roster_passenger_ids
             rec.available_roster_ids = available
 
@@ -379,21 +414,16 @@ class GBBrigadeTransportLine(models.Model):
         """
         Filtra el staff disponible:
         - Todos los del staff de la brigada
-        - MENOS los ya asignados en OTRAS líneas de vehículo de este transporte
-        - MÁS los pasajeros actuales (para poder editarlos)
+        - MENOS los ya asignados en OTRAS lineas de vehiculo de este transporte
+        - MAS los pasajeros actuales (para poder editarlos)
         """
         for rec in self:
             if not rec.transport_id or not rec.transport_id.brigade_id:
                 rec.available_staff_ids = self.env["gb.brigade.staff"]
                 continue
 
-            # Todo el staff de la brigada
             all_staff = rec.transport_id.brigade_id.staff_ids
-
-            # Ya asignados en OTRAS líneas de vehículo
             other_lines = rec.transport_id.vehicle_line_ids.filtered(lambda line: line.id != rec.id)
             already_assigned = other_lines.mapped("staff_passenger_ids")
-
-            # Disponibles = Todos - Ya asignados + Pasajeros actuales
             available = (all_staff - already_assigned) | rec.staff_passenger_ids
             rec.available_staff_ids = available
