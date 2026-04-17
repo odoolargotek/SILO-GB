@@ -5,14 +5,22 @@
 # License: LGPL-3.0
 
 from odoo import api, fields, models, _
-import pytz
+
+
+def _time_slots_15min():
+    slots = []
+    for h in range(24):
+        for m in range(0, 60, 15):
+            val = f"{h:02d}:{m:02d}"
+            slots.append((val, val))
+    return slots
 
 
 class GBBrigadeArrival(models.Model):
     """Global Brigades - Arrival Info (Warning only, no blocking)."""
     _name = "gb.brigade.arrival"
     _description = "Global Brigades - Arrival Info"
-    _order = "date_time_arrival, id"
+    _order = "date, time_slot, id"
 
     brigade_id = fields.Many2one(
         "gb.brigade",
@@ -23,13 +31,41 @@ class GBBrigadeArrival(models.Model):
 
     title = fields.Char(string="Airline", required=True)
     flight_number = fields.Char(string="Flight #")
-    date_time_arrival = fields.Datetime(string="Arrival DateTime")
 
-    date_time_arrival_panama = fields.Char(
-        string="Arrival Time Panama",
-        compute="_compute_date_time_arrival_panama",
-        store=False,
+    # LEGADO - conservado para seguridad
+    date_time_arrival = fields.Datetime(
+        string="Arrival DateTime (legacy)",
+        help="Deprecated. Use 'date' + 'time_slot' instead.",
     )
+
+    # NUEVOS CAMPOS
+    date = fields.Date(
+        string="Date",
+        help="Arrival date in Panama time.",
+    )
+
+    time_slot = fields.Selection(
+        selection=_time_slots_15min(),
+        string="Time (Panama)",
+        help="Arrival time in Panama time (UTC-5).",
+    )
+
+    date_time_display = fields.Char(
+        string="Arrival DateTime",
+        compute="_compute_date_time_display",
+        store=True,
+        readonly=True,
+    )
+
+    @api.depends("date", "time_slot")
+    def _compute_date_time_display(self):
+        for rec in self:
+            if rec.date and rec.time_slot:
+                rec.date_time_display = f"{rec.date} {rec.time_slot}"
+            elif rec.date:
+                rec.date_time_display = str(rec.date)
+            else:
+                rec.date_time_display = False
 
     flight_through_sap = fields.Char(string="Through SAP / Stopover")
 
@@ -65,17 +101,6 @@ class GBBrigadeArrival(models.Model):
     special_transport = fields.Boolean(string="Special Transport Needed?")
     extra_charge = fields.Char(string="Extra Charge / Notes")
 
-    @api.depends("date_time_arrival")
-    def _compute_date_time_arrival_panama(self):
-        tz_panama = pytz.timezone("America/Panama")
-        for rec in self:
-            if rec.date_time_arrival:
-                dt_utc = fields.Datetime.from_string(rec.date_time_arrival)
-                dt_panama = pytz.utc.localize(dt_utc).astimezone(tz_panama)
-                rec.date_time_arrival_panama = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
-            else:
-                rec.date_time_arrival_panama = False
-
     @api.depends("passenger_ids")
     def _compute_n_pax(self):
         for rec in self:
@@ -92,14 +117,11 @@ class GBBrigadeArrival(models.Model):
             if not rec.brigade_id:
                 rec.available_passenger_ids = False
                 continue
-
             all_roster = rec.brigade_id.roster_ids
             other_arrivals_passengers = rec.brigade_id.arrival_ids.filtered(
                 lambda a: a.id != rec.id
             ).mapped("passenger_ids")
-
-            used = other_arrivals_passengers
-            available = (all_roster - used) | rec.passenger_ids
+            available = (all_roster - other_arrivals_passengers) | rec.passenger_ids
             rec.available_passenger_ids = available
 
     @api.onchange("passenger_ids")
@@ -108,50 +130,33 @@ class GBBrigadeArrival(models.Model):
         for rec in self:
             if not rec.brigade_id or not rec.passenger_ids:
                 continue
-
             passenger_ids = rec.passenger_ids.ids
             Arrival = self.env["gb.brigade.arrival"]
-
             other_arrivals = Arrival.search([
                 ("brigade_id", "=", rec.brigade_id.id),
                 ("id", "!=", rec.id),
                 ("passenger_ids", "in", passenger_ids),
             ])
-
             if not other_arrivals:
                 continue
-
             conflicts = {}
             for other in other_arrivals:
-                common = other.passenger_ids.filtered(
-                    lambda p: p.id in passenger_ids
-                )
+                common = other.passenger_ids.filtered(lambda p: p.id in passenger_ids)
                 for p in common:
                     conflicts.setdefault(
                         p.partner_id.name or p.display_name, []
                     ).append(
                         _("Arrival: %(title)s (%(date)s)") % {
                             "title": other.title or "",
-                            "date": fields.Datetime.to_string(
-                                other.date_time_arrival
-                            ) if other.date_time_arrival else "",
+                            "date": str(other.date_time_display) if other.date_time_display else "",
                         }
                     )
-
             if conflicts:
-                lines = []
-                for name, entries in conflicts.items():
-                    lines.append(f"- {name}: " + "; ".join(entries))
-
-                message = (
-                    "These passengers already appear in another Arrival of this brigade:\n"
-                    + "\n".join(lines)
-                )
-
+                lines = [f"- {name}: " + "; ".join(entries) for name, entries in conflicts.items()]
                 return {
                     "warning": {
                         "title": _("Passenger already in another Arrival"),
-                        "message": message,
+                        "message": "These passengers already appear in another Arrival of this brigade:\n" + "\n".join(lines),
                     }
                 }
 
@@ -160,7 +165,7 @@ class GBBrigadeDeparture(models.Model):
     """Global Brigades - Departure Info (Warning only, no blocking)."""
     _name = "gb.brigade.departure"
     _description = "Global Brigades - Departure Info"
-    _order = "date_time_departure, id"
+    _order = "date, time_slot, id"
 
     brigade_id = fields.Many2one(
         "gb.brigade",
@@ -171,13 +176,41 @@ class GBBrigadeDeparture(models.Model):
 
     title = fields.Char(string="Airline", required=True)
     flight_number = fields.Char(string="Flight #")
-    date_time_departure = fields.Datetime(string="Departure DateTime")
 
-    date_time_departure_panama = fields.Char(
-        string="Departure Time Panama",
-        compute="_compute_date_time_departure_panama",
-        store=False,
+    # LEGADO - conservado para seguridad
+    date_time_departure = fields.Datetime(
+        string="Departure DateTime (legacy)",
+        help="Deprecated. Use 'date' + 'time_slot' instead.",
     )
+
+    # NUEVOS CAMPOS
+    date = fields.Date(
+        string="Date",
+        help="Departure date in Panama time.",
+    )
+
+    time_slot = fields.Selection(
+        selection=_time_slots_15min(),
+        string="Time (Panama)",
+        help="Departure time in Panama time (UTC-5).",
+    )
+
+    date_time_display = fields.Char(
+        string="Departure DateTime",
+        compute="_compute_date_time_display",
+        store=True,
+        readonly=True,
+    )
+
+    @api.depends("date", "time_slot")
+    def _compute_date_time_display(self):
+        for rec in self:
+            if rec.date and rec.time_slot:
+                rec.date_time_display = f"{rec.date} {rec.time_slot}"
+            elif rec.date:
+                rec.date_time_display = str(rec.date)
+            else:
+                rec.date_time_display = False
 
     flight_through_sap = fields.Char(string="Through SAP / Stopover")
 
@@ -213,17 +246,6 @@ class GBBrigadeDeparture(models.Model):
     special_transport = fields.Boolean(string="Special Transport Needed?")
     extra_charge = fields.Char(string="Extra Charge / Notes")
 
-    @api.depends("date_time_departure")
-    def _compute_date_time_departure_panama(self):
-        tz_panama = pytz.timezone("America/Panama")
-        for rec in self:
-            if rec.date_time_departure:
-                dt_utc = fields.Datetime.from_string(rec.date_time_departure)
-                dt_panama = pytz.utc.localize(dt_utc).astimezone(tz_panama)
-                rec.date_time_departure_panama = dt_panama.strftime("%m/%d/%Y %H:%M:%S")
-            else:
-                rec.date_time_departure_panama = False
-
     @api.depends("passenger_ids")
     def _compute_n_pax(self):
         for rec in self:
@@ -240,14 +262,11 @@ class GBBrigadeDeparture(models.Model):
             if not rec.brigade_id:
                 rec.available_passenger_ids = False
                 continue
-
             all_roster = rec.brigade_id.roster_ids
             other_departures_passengers = rec.brigade_id.departure_ids.filtered(
                 lambda d: d.id != rec.id
             ).mapped("passenger_ids")
-
-            used = other_departures_passengers
-            available = (all_roster - used) | rec.passenger_ids
+            available = (all_roster - other_departures_passengers) | rec.passenger_ids
             rec.available_passenger_ids = available
 
     @api.onchange("passenger_ids")
@@ -256,49 +275,32 @@ class GBBrigadeDeparture(models.Model):
         for rec in self:
             if not rec.brigade_id or not rec.passenger_ids:
                 continue
-
             passenger_ids = rec.passenger_ids.ids
             Departure = self.env["gb.brigade.departure"]
-
             other_departures = Departure.search([
                 ("brigade_id", "=", rec.brigade_id.id),
                 ("id", "!=", rec.id),
                 ("passenger_ids", "in", passenger_ids),
             ])
-
             if not other_departures:
                 continue
-
             conflicts = {}
             for other in other_departures:
-                common = other.passenger_ids.filtered(
-                    lambda p: p.id in passenger_ids
-                )
+                common = other.passenger_ids.filtered(lambda p: p.id in passenger_ids)
                 for p in common:
                     conflicts.setdefault(
                         p.partner_id.name or p.display_name, []
                     ).append(
                         _("Departure: %(title)s (%(date)s)") % {
                             "title": other.title or "",
-                            "date": fields.Datetime.to_string(
-                                other.date_time_departure
-                            ) if other.date_time_departure else "",
+                            "date": str(other.date_time_display) if other.date_time_display else "",
                         }
                     )
-
             if conflicts:
-                lines = []
-                for name, entries in conflicts.items():
-                    lines.append(f"- {name}: " + "; ".join(entries))
-
-                message = (
-                    "These passengers already appear in another Departure of this brigade:\n"
-                    + "\n".join(lines)
-                )
-
+                lines = [f"- {name}: " + "; ".join(entries) for name, entries in conflicts.items()]
                 return {
                     "warning": {
                         "title": _("Passenger already in another Departure"),
-                        "message": message,
+                        "message": "These passengers already appear in another Departure of this brigade:\n" + "\n".join(lines),
                     }
                 }

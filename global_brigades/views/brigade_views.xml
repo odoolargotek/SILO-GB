@@ -428,8 +428,9 @@
         <list editable="bottom">
             <field name="title" required="1"/>
             <field name="flight_number"/>
-            <field name="date_time_arrival"/>
-            <field name="date_time_arrival_panama" string="Panama Time" readonly="1"/>
+            <field name="date" string="Date"/>
+            <field name="time_slot" string="Time (Panama)"/>
+            <field name="date_time_display" string="Arrival DateTime" readonly="1"/>
             <field name="flight_through_sap"/>
             <field name="arrival_hotel_id" string="Arrival Hotel / City / Time"/>
             <field name="passenger_ids"
@@ -447,8 +448,8 @@
                     <group>
                         <field name="title" required="1"/>
                         <field name="flight_number"/>
-                        <field name="date_time_arrival"/>
-                        <field name="date_time_arrival_panama" string="Panama Time" readonly="1"/>
+                        <field name="date" string="Date"/>
+                        <field name="time_slot" string="Time (Panama)"/>
                         <field name="flight_through_sap"/>
                     </group>
                     <group>
@@ -476,8 +477,9 @@
         <list editable="bottom">
             <field name="title" required="1"/>
             <field name="flight_number"/>
-            <field name="date_time_departure"/>
-            <field name="date_time_departure_panama" string="Panama Time" readonly="1"/>
+            <field name="date" string="Date"/>
+            <field name="time_slot" string="Time (Panama)"/>
+            <field name="date_time_display" string="Departure DateTime" readonly="1"/>
             <field name="flight_through_sap"/>
             <field name="departure_hotel_id" string="Departure Hotel / City"/>
             <field name="passenger_ids"
@@ -495,8 +497,8 @@
                     <group>
                         <field name="title" required="1"/>
                         <field name="flight_number"/>
-                        <field name="date_time_departure"/>
-                        <field name="date_time_departure_panama" string="Panama Time" readonly="1"/>
+                        <field name="date" string="Date"/>
+                        <field name="time_slot" string="Time (Panama)"/>
                         <field name="flight_through_sap"/>
                     </group>
                     <group>
