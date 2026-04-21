@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_gb_brigade_roster" model="ir.actions.report">
+        <field name="name">Brigade Roster</field>
+        <field name="model">gb.brigade</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">global_brigades.report_gb_brigade_roster_template</field>
+        <field name="report_file">global_brigades.report_gb_brigade_roster_template</field>
+        <field name="print_report_name">'Roster - %s' % (object.name or '')</field>
+        <field name="binding_model_id" ref="model_gb_brigade"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_gb_brigade_roster_template">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="page">
+
+                        <style>
+                            body { font-family: Arial, sans-serif; }
+                            @page {
+                                size: A4 landscape;
+                                margin: 10mm 12mm;
+                            }
+                            .gb-title  { font-size: 16px; font-weight: 700; color: #1e3a5f; }
+                            .gb-sub    { font-size: 9px;  color: #6b7280; }
+                            .gb-code   { font-size: 10px; font-weight: 700; }
+                            .gb-date   { font-size: 8px;  color: #9ca3af; }
+                            .gb-logo   { max-width: 100px; max-height: 70px; }
+                            .gb-section-title {
+                                background: #214e7a; color: #fff;
+                                font-size: 9px; font-weight: 700;
+                                padding: 3px 7px; text-transform: uppercase;
+                                margin-bottom: 0;
+                            }
+                            .gb-table { width: 100%; border-collapse: collapse; font-size: 7.5px; }
+                            .gb-table th {
+                                background: #dbe7f3; color: #1f2937;
+                                border: 1px solid #9ca3af; padding: 2px 3px;
+                                text-align: left; font-weight: 700;
+                            }
+                            .gb-table td {
+                                border: 1px solid #9ca3af; padding: 2px 3px; vertical-align: top;
+                            }
+                            .gb-wrap { white-space: pre-wrap; word-break: break-word; }
+                            .text-muted { color: #6b7280; }
+                        </style>
+
+                        <!-- Header -->
+                        <table style="width:100%; border-collapse:collapse; margin-bottom:8px;">
+                            <tr>
+                                <td style="vertical-align:top; width:75%;">
+                                    <div class="gb-title"><t t-esc="o.name or ''"/></div>
+                                    <div class="gb-sub">Brigade Roster
+                                        <t t-if="o.lodging_facility_id">
+                                            &#183; <t t-esc="o.lodging_facility_id.display_name"/>
+                                        </t>
+                                    </div>
+                                    <div style="margin-top:2px;">
+                                        <span class="gb-code">
+                                            <t t-esc="o.external_brigade_code or o.brigade_code or ''"/>
+                                        </span>
+                                    </div>
+                                </td>
+                                <td style="width:25%; text-align:right; vertical-align:top;">
+                                    <t t-if="o.university_logo">
+                                        <img t-att-src="image_data_uri(o.university_logo)" class="gb-logo"/>
+                                    </t>
+                                    <div class="gb-date" style="margin-top:4px;">Generated
+                                        <t t-esc="context_timestamp(datetime.datetime.now()).strftime('%b %d, %Y')"/>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Volunteers -->
+                        <div class="gb-section-title">
+                            Volunteer Roster (<t t-esc="len(o.roster_ids)"/> Participants)
+                        </div>
+                        <table class="gb-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:2%;">#</th>
+                                    <th style="width:11%;">Name</th>
+                                    <th style="width:3%;">M/F</th>
+                                    <th style="width:6%;">DOB</th>
+                                    <th style="width:8%;">Role</th>
+                                    <th style="width:7%;">Passport #</th>
+                                    <th style="width:6%;">Exp.</th>
+                                    <th style="width:6%;">Citizenship</th>
+                                    <th style="width:3%;">ESP</th>
+                                    <th style="width:3%;">S.A.</th>
+                                    <th style="width:10%;">Email</th>
+                                    <th style="width:7%;">Phone</th>
+                                    <th style="width:9%;">Emerg. Email</th>
+                                    <th style="width:7%;">Diet</th>
+                                    <th style="width:7%;">Medical / Allergy</th>
+                                    <th style="width:7%;">MED</th>
+                                    <th style="width:4%;">T-Shirt</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <t t-foreach="o.roster_ids.sorted(key=lambda r: (r.sequence, r.id))" t-as="r">
+                                    <tr>
+                                        <td><t t-esc="r.line_number or r_index + 1"/></td>
+                                        <td class="gb-wrap"><t t-esc="r.partner_id.name if r.partner_id else ''"/></td>
+                                        <td style="text-align:center;">
+                                            <t t-if="r.gender == 'male'">M</t>
+                                            <t t-elif="r.gender == 'female'">F</t>
+                                            <t t-else=""><t t-esc="r.gender or ''"/></t>
+                                        </td>
+                                        <td><t t-esc="r.birthdate.strftime('%Y-%m-%d') if r.birthdate else ''"/></td>
+                                        <td class="gb-wrap"><t t-esc="r.brigade_role or ''"/></td>
+                                        <td><t t-esc="r.passport_no or ''"/></td>
+                                        <td><t t-esc="r.passport_expiry.strftime('%Y-%m-%d') if r.passport_expiry else ''"/></td>
+                                        <td><t t-esc="r.citizenship or ''"/></td>
+                                        <td style="text-align:center;">
+                                            <t t-if="r.spanish_speaker">Y</t><t t-else="">N</t>
+                                        </td>
+                                        <td style="text-align:center;">
+                                            <t t-if="r.sa">&#10003;</t><t t-else=""></t>
+                                        </td>
+                                        <td class="gb-wrap"><t t-esc="r.email or ''"/></td>
+                                        <td><t t-esc="r.phone_display or ''"/></td>
+                                        <td class="gb-wrap"><t t-esc="r.emergency_contact_email or ''"/></td>
+                                        <td class="gb-wrap"><t t-esc="r.diet or ''"/></td>
+                                        <td class="gb-wrap">
+                                            <t t-if="r.medical_condition"><div><t t-esc="r.medical_condition"/></div></t>
+                                            <t t-if="r.allergy"><div><t t-esc="r.allergy"/></div></t>
+                                        </td>
+                                        <td class="gb-wrap"><t t-esc="r.medications or ''"/></td>
+                                        <td style="text-align:center;"><t t-esc="r.tshirt_size or ''"/></td>
+                                    </tr>
+                                </t>
+                            </tbody>
+                        </table>
+
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>
