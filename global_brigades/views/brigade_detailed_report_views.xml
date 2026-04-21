@@ -310,6 +310,94 @@
                             </table>
                         </div>
 
+                        <!-- ============================================================ -->
+                        <!-- ARRIVALS                                                      -->
+                        <!-- ============================================================ -->
+                        <div class="gb-section gb-avoid-break">
+                            <div class="gb-section-title">Arrivals (<t t-esc="len(o.arrival_ids)"/>)</div>
+                            <table class="gb-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:18%;">Title</th>
+                                        <th style="width:12%;">Flight #</th>
+                                        <th style="width:16%;">Date / Time (Panama)</th>
+                                        <th style="width:8%;">Through SAP</th>
+                                        <th style="width:16%;">Arrival Hotel</th>
+                                        <th style="width:5%;"># Pax</th>
+                                        <th style="width:17%;">Passengers</th>
+                                        <th style="width:8%;">Extra Charge</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.arrival_ids" t-as="arr">
+                                        <tr>
+                                            <td class="gb-wrap"><t t-esc="arr.title or ''"/></td>
+                                            <td><t t-esc="arr.flight_number or ''"/></td>
+                                            <td><t t-esc="arr.date_time_display or ''"/></td>
+                                            <td style="text-align:center;">
+                                                <t t-if="arr.flight_through_sap">&#10003;</t>
+                                            </td>
+                                            <td class="gb-wrap"><t t-esc="arr.arrival_hotel_id.display_name if arr.arrival_hotel_id else ''"/></td>
+                                            <td style="text-align:center;"><t t-esc="arr.n_pax or ''"/></td>
+                                            <td class="gb-wrap">
+                                                <t t-foreach="arr.passenger_ids" t-as="pax">
+                                                    <div><t t-esc="pax.partner_id.name if pax.partner_id else ''"/></div>
+                                                </t>
+                                            </td>
+                                            <td class="gb-wrap"><t t-esc="arr.extra_charge or ''"/></td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="not o.arrival_ids">
+                                        <tr><td colspan="8" style="text-align:center; color:#9ca3af; font-style:italic;">No arrivals registered</td></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <!-- ============================================================ -->
+                        <!-- DEPARTURES                                                    -->
+                        <!-- ============================================================ -->
+                        <div class="gb-section gb-avoid-break">
+                            <div class="gb-section-title">Departures (<t t-esc="len(o.departure_ids)"/>)</div>
+                            <table class="gb-table">
+                                <thead>
+                                    <tr>
+                                        <th style="width:18%;">Title</th>
+                                        <th style="width:12%;">Flight #</th>
+                                        <th style="width:16%;">Date / Time (Panama)</th>
+                                        <th style="width:8%;">Through SAP</th>
+                                        <th style="width:16%;">Departure Hotel</th>
+                                        <th style="width:5%;"># Pax</th>
+                                        <th style="width:17%;">Passengers</th>
+                                        <th style="width:8%;">Extra Charge</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <t t-foreach="o.departure_ids" t-as="dep">
+                                        <tr>
+                                            <td class="gb-wrap"><t t-esc="dep.title or ''"/></td>
+                                            <td><t t-esc="dep.flight_number or ''"/></td>
+                                            <td><t t-esc="dep.date_time_display or ''"/></td>
+                                            <td style="text-align:center;">
+                                                <t t-if="dep.flight_through_sap">&#10003;</t>
+                                            </td>
+                                            <td class="gb-wrap"><t t-esc="dep.departure_hotel_id.display_name if dep.departure_hotel_id else ''"/></td>
+                                            <td style="text-align:center;"><t t-esc="dep.n_pax or ''"/></td>
+                                            <td class="gb-wrap">
+                                                <t t-foreach="dep.passenger_ids" t-as="pax">
+                                                    <div><t t-esc="pax.partner_id.name if pax.partner_id else ''"/></div>
+                                                </t>
+                                            </td>
+                                            <td class="gb-wrap"><t t-esc="dep.extra_charge or ''"/></td>
+                                        </tr>
+                                    </t>
+                                    <t t-if="not o.departure_ids">
+                                        <tr><td colspan="8" style="text-align:center; color:#9ca3af; font-style:italic;">No departures registered</td></tr>
+                                    </t>
+                                </tbody>
+                            </table>
+                        </div>
+
                         <!-- Additional Information -->
                         <div class="gb-section gb-avoid-break">
                             <div class="gb-section-title">Additional Information &amp; Observations</div>
@@ -346,7 +434,7 @@
                                 </tr>
                             </table>
 
-                            <!-- Staff table -->
+                            <!-- Staff table — Name first, then Role -->
                             <div class="gb-section-title">
                                 Temporary Staff Roster (<t t-esc="len(o.staff_ids)"/> Members)
                             </div>
@@ -354,13 +442,13 @@
                                 <thead>
                                     <tr>
                                         <th style="width:4%;">#</th>
+                                        <th style="width:22%;">Name</th>
                                         <th style="width:18%;">Role</th>
-                                        <th style="width:20%;">Name</th>
                                         <th style="width:8%;">Gender</th>
                                         <th style="width:22%;">Diet / Restrictions</th>
                                         <th style="width:14%;">Allergy</th>
-                                        <th style="width:7%;">Start</th>
-                                        <th style="width:7%;">End</th>
+                                        <th style="width:6%;">Start</th>
+                                        <th style="width:6%;">End</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -368,17 +456,17 @@
                                         <tr>
                                             <td><t t-esc="s.line_number or s_index + 1"/></td>
                                             <td class="gb-wrap">
+                                                <t t-esc="s.person_id.display_name if s.person_id else ''"/>
+                                                <t t-if="s.professional_registration">
+                                                    <br/><span class="text-muted">(Reg. <t t-esc="s.professional_registration"/>)</span>
+                                                </t>
+                                            </td>
+                                            <td class="gb-wrap">
                                                 <t t-if="s.brigade_role_default">
                                                     <t t-esc="s.brigade_role_default.name"/>
                                                 </t>
                                                 <t t-elif="s.staff_role">
                                                     <t t-esc="s.staff_role"/>
-                                                </t>
-                                            </td>
-                                            <td class="gb-wrap">
-                                                <t t-esc="s.person_id.display_name if s.person_id else ''"/>
-                                                <t t-if="s.professional_registration">
-                                                    <br/><span class="text-muted">(Reg. <t t-esc="s.professional_registration"/>)</span>
                                                 </t>
                                             </td>
                                             <td>
@@ -436,7 +524,7 @@
                                 </tr>
                             </table>
 
-                            <!-- Volunteers table (landscape: 18 columns) -->
+                            <!-- Volunteers table (landscape) -->
                             <div class="gb-section-title">
                                 Volunteer Roster (<t t-esc="len(o.roster_ids)"/> Participants)
                             </div>
