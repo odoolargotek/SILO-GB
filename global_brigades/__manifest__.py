@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 {
     "name": "Global Brigades",
-    "version": "18.0.1.0.7",
+    "version": "18.0.1.0.8",
     "summary": "Customizations for Global Brigades",
     "description": """
 Logistics and volunteer management for Global Brigades:
@@ -43,6 +43,7 @@ Logistics and volunteer management for Global Brigades:
         "views/brigade_transport_report_views.xml",
         "views/sa_notification_brigade_view.xml",
         "views/brigade_detailed_report_views.xml",
+        "data/paperformat_landscape.xml",
         "views/brigade_roster_report_views.xml",
         "data/brigade_detailed_report_action.xml",
     ],

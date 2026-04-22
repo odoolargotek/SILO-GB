@@ -9,20 +9,17 @@
         <field name="print_report_name">'Roster - %s' % (object.name or '')</field>
         <field name="binding_model_id" ref="model_gb_brigade"/>
         <field name="binding_type">report</field>
+        <field name="paperformat_id" ref="global_brigades.paperformat_gb_landscape"/>
     </record>
 
     <template id="report_gb_brigade_roster_template">
         <t t-call="web.html_container">
             <t t-foreach="docs" t-as="o">
                 <t t-call="web.external_layout">
-                    <div class="page" style="width:277mm;">
+                    <div class="page">
 
                         <style>
                             body { font-family: Arial, sans-serif; }
-                            @page {
-                                size: A4 landscape;
-                                margin: 10mm 12mm;
-                            }
                             .gb-title  { font-size: 16px; font-weight: 700; color: #1e3a5f; }
                             .gb-sub    { font-size: 9px;  color: #6b7280; }
                             .gb-code   { font-size: 10px; font-weight: 700; }
