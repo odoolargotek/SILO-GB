@@ -43,11 +43,10 @@
                             }
                             .gb-wrap { white-space: pre-wrap; word-break: break-word; }
                             .text-muted { color: #6b7280; font-size: 7px; }
-                            .gb-inline-note { display:block; margin-top:1px; font-size:7px; color:#9ca3af; font-style:italic; }
                             .gb-header-bar { border-bottom: 2px solid #214e7a; padding-bottom: 5px; margin-bottom: 7px; }
                         </style>
 
-                        <!-- HEADER PROPIO (sin web.external_layout) -->
+                        <!-- HEADER -->
                         <div class="gb-header-bar">
                             <table style="width:100%; border-collapse:collapse;">
                                 <tr>
@@ -102,9 +101,6 @@
                                         <td><t t-esc="s.line_number or s_index + 1"/></td>
                                         <td class="gb-wrap">
                                             <t t-esc="s.person_id.display_name if s.person_id else ''"/>
-                                            <t t-if="s.internal_note">
-                                                <span class="gb-inline-note"><t t-esc="s.internal_note"/></span>
-                                            </t>
                                         </td>
                                         <td class="gb-wrap">
                                             <t t-if="s.brigade_role_default"><t t-esc="s.brigade_role_default.name"/></t>
@@ -120,7 +116,7 @@
                                         <td class="gb-wrap"><t t-esc="s.diet or ''"/></td>
                                         <td class="gb-wrap"><t t-esc="s.allergy or ''"/></td>
                                         <td class="text-muted"><t t-esc="s.professional_registration or ''"/></td>
-                                        <td class="gb-wrap"></td>
+                                        <td class="gb-wrap"><t t-esc="s.internal_note or ''"/></td>
                                     </tr>
                                 </t>
                                 <t t-if="not o.staff_ids">
